@@ -290,7 +290,7 @@ const chg = v => { const x=n2(v); if(x==null) return '';
   return `<div><span class="chg ${x>=0?'up':'dn'}">${x>=0?'+':''}${x.toFixed(2)}%</span></div>`; };
 const trk = r => { if(r.ret==null) return '';
   const neg = String(r.ret).trim().startsWith('-');
-  return `<div class="trk ${neg?'dn':'up'}">現 ${fmt(r.cur)} ${r.ret}</div>`; };
+  return `<div class="trk ${neg?'dn':'up'}">現損益 ${fmt(r.cur)} ${r.ret}</div>`; };
 const lv = (v,cls) => { const f=fmt(v); return f?`<span class="lv ${cls}">${f}</span>`:'<span class="dash">—</span>'; };
 
 const HOLD={'26':[60,'1–3 個月'],'34':[20,'2–4 週'],'35':[20,'2–4 週'],'28':[8,'5–10 日'],'33':[4,'3–5 日'],'29':[4,'3–5 日']};
