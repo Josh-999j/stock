@@ -97,6 +97,7 @@ td.r{text-align:right}
 .trk{font-family:"IBM Plex Mono",monospace;font-size:11px;margin-top:3px;color:var(--muted)}
 .trk.up{color:var(--up)}
 .trk.dn{color:var(--down)}
+.trk.n{color:var(--ink)}
 .lv{font-family:"IBM Plex Mono",monospace;font-size:14px;white-space:nowrap}
 .lv.buy{color:var(--accent);font-weight:600}
 .lv.stop{color:var(--down)}
@@ -326,7 +327,8 @@ const chg = v => { const x=n2(v); if(x==null) return '';
 const trk = r => { if(r.ret==null) return '';
   const neg = String(r.ret).trim().startsWith('-');
   const lbl = r.d!=null ? `損益${r.d}D` : '現損益';
-  return `<div class="trk ${neg?'dn':'up'}">${lbl} ${fmt(r.cur)} ${r.ret}</div>`; };
+  const cls = r.d===0 ? 'n' : (neg?'dn':'up');
+  return `<div class="trk ${cls}">${lbl} ${fmt(r.cur)} ${r.ret}</div>`; };
 const lv = (v,cls) => { const f=fmt(v); return f?`<span class="lv ${cls}">${f}</span>`:'<span class="dash">—</span>'; };
 
 const HOLD={'26':[60,'1–3 個月'],'34':[20,'2–4 週'],'35':[20,'2–4 週'],'28':[8,'5–10 日'],'33':[4,'3–5 日'],'29':[4,'3–5 日']};
