@@ -239,6 +239,13 @@ footer b{color:var(--ink-2);font-weight:600}
   .sub{font-size:14.5px}
   footer{font-size:13.5px!important}
 }
+.cond-cell,.rr-cell{display:none}
+.unlocked .cond-cell,.unlocked .rr-cell{display:table-cell}
+@media (max-width:760px){ .unlocked .cond-cell,.unlocked .rr-cell{display:block} }
+.gear{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);
+  font-size:16px;box-shadow:var(--shadow);flex:none}
+.gear.on{color:var(--accent);border-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -251,6 +258,7 @@ footer b{color:var(--ink-2);font-weight:600}
     <div class="meta">
       <div><div class="k">資料日</div><div class="v num" id="m-date">—</div></div>
       <div><div class="k">加權指數</div><div class="v num" id="m-idx">—</div></div>
+      <button type="button" class="gear" id="gear" title="成立條件／風報比" aria-label="顯示成立條件與風報比">⚙</button>
     </div>
   </header>
 
@@ -267,8 +275,8 @@ footer b{color:var(--ink-2);font-weight:600}
       <table>
         <thead><tr>
           <th>#</th><th>個股</th><th>策略</th><th class="r">收盤</th>
-          <th class="r">理想買點</th><th class="r">停損</th><th class="r">停利</th><th class="r">風報比</th><th class="r">建議持有期</th>
-          <th>題材</th><th>成立條件</th>
+          <th class="r">理想買點</th><th class="r">停損</th><th class="r">停利</th><th class="r rr-cell">風報比</th><th class="r">建議持有期</th>
+          <th>題材</th><th class="cond-cell">成立條件</th>
         </tr></thead>
         <tbody id="tb-rank"><tr><td colspan="11" class="empty">載入中…</td></tr></tbody>
       </table>
@@ -389,6 +397,25 @@ $('rail').addEventListener('click', e => {
   const b = e.target.closest('button[data-d]'); if(!b) return;
   cur = b.dataset.d; renderRail(); renderDay(DAYS.find(x=>x.date===cur));
 });
+
+const gearBtn = $('gear');
+if(gearBtn){
+  gearBtn.addEventListener('click', () => {
+    const unlocked = document.body.classList.contains('unlocked');
+    if(unlocked){
+      document.body.classList.remove('unlocked');
+      gearBtn.classList.remove('on');
+      return;
+    }
+    const pw = prompt('輸入密碼以顯示成立條件');
+    if(pw === '1020'){
+      document.body.classList.add('unlocked');
+      gearBtn.classList.add('on');
+    } else if(pw !== null){
+      alert('密碼錯誤');
+    }
+  });
+}
 
 function apply(docs){
   DAYS = docs.filter(Boolean).sort((a,b)=> String(b.date).localeCompare(String(a.date)));
