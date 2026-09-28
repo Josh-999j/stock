@@ -55,7 +55,7 @@ h1{font-family:"Noto Serif TC",serif;font-weight:700;font-size:clamp(25px,4.2vw,
 .meta .v{font-size:19px;font-weight:600;margin-top:1px}
 
 /* date nav (XQ style) */
-.dnav{display:flex;align-items:center;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+.dnav{position:relative;display:flex;align-items:center;gap:6px;margin-bottom:22px;flex-wrap:wrap}
 .dnav button{
   border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
   height:34px;min-width:34px;padding:0 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;
@@ -69,6 +69,33 @@ h1{font-family:"Noto Serif TC",serif;font-weight:700;font-size:clamp(25px,4.2vw,
 .dnav .latest[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500}
 :root[data-theme="dark"] .dnav .latest[aria-pressed="true"]{color:#0C1217}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .dnav .latest[aria-pressed="true"]{color:#0C1217}}
+.dnav .cal-btn{padding:0;width:34px}
+.dnav .cal-btn svg{width:17px;height:17px}
+.calwrap{position:static}
+.cal{position:absolute;top:42px;left:0;max-width:calc(100vw - 32px);box-sizing:border-box;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:12px;width:272px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.cal[hidden]{display:none}
+.cal .ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:600;font-size:14px}
+.cal .ch button{height:28px;min-width:28px;padding:0}
+.cal .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal .wk{font-size:11px;color:var(--muted);padding:3px 0}
+.cal .dd{height:32px;min-width:0;padding:0;border-radius:7px;font-size:13px;font-variant-numeric:tabular-nums}
+.cal .dd:disabled{opacity:1;color:var(--muted);border-color:transparent;background:transparent}
+.cal .dd.has{font-weight:600;color:var(--ink)}
+.cal .dd[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .cal .dd[aria-current="true"]{color:#0C1217}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cal .dd[aria-current="true"]{color:#0C1217}}
+.cal .note{margin-top:8px;font-size:11px;color:var(--muted)}
+/* P&L summary */
+.pnl{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin:0 0 18px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface);font-size:13px;color:var(--ink-2)}
+.pnl:empty{display:none}
+.pnl .big{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:600}
+.pnl .up{color:var(--up)} .pnl .dn{color:var(--down)}
+.pnl .k{color:var(--muted);font-size:12px}
+.pnl .sm{font-size:12px;color:var(--muted);flex-basis:100%}
+.trk .pc{font-size:15px;font-weight:600}
+.trk .lb{color:var(--muted)}
 .dnav .dtxt{margin-left:8px;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* sections */
@@ -274,10 +301,16 @@ footer b{color:var(--ink-2);font-weight:600}
     <button type="button" class="latest" id="d-latest">最新</button>
     <button type="button" class="arr" id="d-prev" title="前一日" aria-label="前一日">&#8249;</button>
     <button type="button" class="arr" id="d-next" title="後一日" aria-label="後一日">&#8250;</button>
+    <span class="calwrap">
+      <button type="button" class="cal-btn" id="d-cal" title="選擇日期" aria-label="選擇日期" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg></button>
+      <div class="cal" id="cal" role="dialog" aria-label="選擇指定日期" hidden></div>
+    </span>
     <span class="dtxt" id="d-txt">—</span>
   </nav>
 
   <div class="counts" id="counts"></div>
+
+  <div class="pnl" id="pnl"></div>
 
   <section id="sec-rank">
     <div class="shead">
@@ -337,7 +370,9 @@ const trk = r => { if(r.ret==null) return '';
   const neg = String(r.ret).trim().startsWith('-');
   const lbl = r.d!=null ? `損益${r.d}D` : '現損益';
   const cls = r.d===0 ? 'n' : (neg?'dn':'up');
-  return `<div class="trk ${cls}">${lbl} ${fmt(r.cur)} ${r.ret}</div>`; };
+  if(r.d===0) return `<div class="trk n"><span class="lb">今日入選</span></div>`;
+  const md = String(r.asof||'').slice(5).replace('-','/');
+  return `<div class="trk ${cls}"><span class="lb">${md} 收 ${fmt(r.cur)}・${r.d}天</span><br><span class="pc">${neg?'':'+'}${r.ret}</span></div>`; };
 const lv = (v,cls) => { const f=fmt(v); return f?`<span class="lv ${cls}">${f}</span>`:'<span class="dash">—</span>'; };
 
 const HOLD={'26':[60,'1–3 個月'],'34':[20,'2–4 週'],'35':[20,'2–4 週'],'28':[8,'5–10 日'],'33':[4,'3–5 日'],'29':[4,'3–5 日']};
@@ -360,6 +395,7 @@ function renderDay(d){
   $('m-idx').textContent  = d.taiex ? fmt(d.taiex) : '—';
 
   const rank = d.rank || [];
+  renderPnl(d, rank);
   $('c-rank').textContent = (rank.length ? `${rank.length} 檔` : '') + (d.backfill ? '・回補（規則排序）' : '');
   $('tb-rank').innerHTML = rank.length ? rank.map((r,i) => `
     <tr>
@@ -403,6 +439,56 @@ const cs = d.counts||{};
   $('cd-watch').innerHTML = w.length ? w.map(x=>card(x,'w')).join('') : '<div class="empty">無</div>';
   $('cd-avoid').innerHTML = a.length ? a.map(x=>card(x,'a')).join('') : '<div class="empty">無</div>';
 }
+
+function renderPnl(d, rank){
+  const el=$('pnl');
+  const rs=rank.filter(r=>r.ret!=null && r.d>0).map(r=>({n:r.name,v:parseFloat(r.ret)}));
+  if(!rank.length){ el.innerHTML=''; return; }
+  if(!rs.length){ el.innerHTML='<span class="k">這天是最新一天，下一個交易日收盤後才有損益</span>'; return; }
+  const avg=rs.reduce((a,b)=>a+b.v,0)/rs.length;
+  const win=rs.filter(x=>x.v>0).length, lose=rs.filter(x=>x.v<0).length;
+  const best=rs.reduce((a,b)=>b.v>a.v?b:a), worst=rs.reduce((a,b)=>b.v<a.v?b:a);
+  const r0=rank.find(r=>r.asof)||{}; const md=String(r0.asof||'').slice(5).replace('-','/');
+  const sg=v=>(v>=0?'+':'')+v.toFixed(2)+'%';
+  el.innerHTML=`<span><span class="k">前 ${rs.length} 檔平均損益</span> <span class="big ${avg>=0?'up':'dn'}">${sg(avg)}</span></span>`+
+    `<span><span class="up">賺 ${win} 檔</span>・<span class="dn">賠 ${lose} 檔</span></span>`+
+    `<span><span class="k">最好</span> ${esc(best.n)} <span class="${best.v>=0?'up':'dn'}">${sg(best.v)}</span>`+
+    `　<span class="k">最差</span> ${esc(worst.n)} <span class="${worst.v>=0?'up':'dn'}">${sg(worst.v)}</span></span>`+
+    `<span class="sm">以入選日收盤價買進、持有到 ${md} 收盤計算，未扣手續費與停損停利。</span>`;
+}
+
+let calMonth=null;
+function renderCal(){
+  const has=new Set(DAYS.map(x=>x.date));
+  const [y,m]=calMonth; const first=new Date(y,m,1); const lead=(first.getDay()+6)%7; const nd=new Date(y,m+1,0).getDate();
+  const ym=(yy,mm)=>yy*12+mm; const ds=DAYS.map(x=>x.date).sort();
+  const minYM=ym(+ds[0].slice(0,4),+ds[0].slice(5,7)-1), maxYM=ym(+ds[ds.length-1].slice(0,4),+ds[ds.length-1].slice(5,7)-1);
+  let h=`<div class="ch"><button type="button" data-m="-1" aria-label="上個月" ${ym(y,m)<=minYM?'disabled':''}>&#8249;</button><span>${y}年${m+1}月</span><button type="button" data-m="1" aria-label="下個月" ${ym(y,m)>=maxYM?'disabled':''}>&#8250;</button></div><div class="grid">`;
+  h+=['一','二','三','四','五','六','日'].map(w=>`<span class="wk">${w}</span>`).join('');
+  for(let i=0;i<lead;i++) h+='<span></span>';
+  for(let dd=1;dd<=nd;dd++){
+    const k=`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    const ok=has.has(k);
+    h+=`<button type="button" class="dd${ok?' has':''}" data-d="${k}" ${ok?'':'disabled'} aria-current="${k===cur?'true':'false'}">${dd}</button>`;
+  }
+  h+='</div><div class="note">粗體日期才有資料</div>';
+  $('cal').innerHTML=h;
+}
+function toggleCal(open){
+  const c=$('cal'); const o = open!=null ? open : c.hidden;
+  if(o){ calMonth=[+cur.slice(0,4), +cur.slice(5,7)-1]; renderCal(); }
+  c.hidden=!o; $('d-cal').setAttribute('aria-expanded', o?'true':'false');
+}
+$('d-cal').addEventListener('click', e => { e.stopPropagation(); toggleCal(); });
+$('cal').addEventListener('click', e => {
+  e.stopPropagation();
+  const mb=e.target.closest('button[data-m]');
+  if(mb){ let [y,m]=calMonth; m+=+mb.dataset.m; if(m<0){m=11;y--;} if(m>11){m=0;y++;} calMonth=[y,m]; renderCal(); return; }
+  const db=e.target.closest('button[data-d]');
+  if(db && !db.disabled){ goDay(DAYS.findIndex(x=>x.date===db.dataset.d)); toggleCal(false); }
+});
+document.addEventListener('click', () => { if(!$('cal').hidden) toggleCal(false); });
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('cal').hidden) toggleCal(false); });
 
 function renderRail(){
   const i = DAYS.findIndex(x=>x.date===cur);
