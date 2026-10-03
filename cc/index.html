@@ -40,6 +40,13 @@
   .machines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
   @media (max-width: 1100px) { .machines { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 700px)  { .machines { grid-template-columns: minmax(0, 1fr); } }
+  /* 手機：標題一行、只留中文，時間和資料更新排在標題下面一行 */
+  @media (max-width: 700px) {
+    header { flex-wrap: wrap; row-gap: 2px; padding: 8px 12px; }
+    header h1 { font-size: 18px; white-space: nowrap; }
+    header h1 .en, header .phase { display: none; }
+    header .meta { margin-left: 0; width: 100%; text-align: left; display: flex; flex-wrap: wrap; column-gap: 10px; font-size: 12px; }
+  }
   .machine { border: 1px solid var(--line); border-top: 4px solid var(--st); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; background: #fff; }
   .machine:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
   .machine .name { font-weight: bold; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -139,8 +146,8 @@
 <body>
 <header>
   <img id="logo" alt="" style="display:none;height:28px">
-  <h1>AI Project Control Center 專案控制中心</h1>
-  <span class="tag">Phase 1 · L1 + L2</span>
+  <h1><span class="en">AI Project Control Center </span>專案控制中心</h1>
+  <span class="tag phase">Phase 1 · L1 + L2</span>
   <div class="meta"><div id="clock"></div><div id="gen"></div></div>
 </header>
 <main id="app"></main>
