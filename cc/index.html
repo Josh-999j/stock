@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>專案控制中心</title>
+<style>
+  /* Phase 1：純方塊版面，美化（工廠素材）之後再換 */
+  :root {
+    --bg: #f3f5f8; --card: #fff; --line: #d9dee6; --text: #1f2933; --muted: #6b7785;
+    --FAILED: #d03b3b; --BLOCKED: #e07b1a; --STALE: #c9a000; --RUNNING: #1f9d3a; --WAITING: #2f6fd6; --IDLE: #8a94a0;
+    --red: #d03b3b; --orange: #e07b1a; --yellow: #c9a000; --blue: #2f6fd6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 6px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 16px; margin: 0; }
+  header .meta { margin-left: auto; color: var(--muted); font-size: 12px; text-align: right; }
+  main { padding: 8px 16px 24px; display: grid; gap: 8px; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; min-width: 0; }
+  .box h2 { font-size: 14px; margin: 0 0 8px; display: flex; gap: 6px; align-items: baseline; }
+  .box h2 small { color: var(--muted); font-weight: normal; }
+  .muted { color: var(--muted); }
+  .empty { color: var(--muted); padding: 6px 0; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+  .kpi { cursor: pointer; padding: 4px 10px; }
+  .kpi .label { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi .val { font-size: 20px; font-weight: bold; line-height: 1.2; white-space: nowrap; }
+  .kpi .sub { font-size: 11px; font-weight: normal; color: var(--muted); margin-left: 6px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .toolbar input, .toolbar select, button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: .5; }
+  .toolbar .pager { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+  .pager button.on { background: var(--text); color: #fff; }
+
+  .machines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 1100px) { .machines { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 700px)  { .machines { grid-template-columns: minmax(0, 1fr); } }
+  .machine { border: 1px solid var(--line); border-top: 4px solid var(--st); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; background: #fff; }
+  .machine:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .machine .name { font-weight: bold; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .machine dl { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; margin: 0; font-size: 11.5px; line-height: 1.4; }
+  .machine dt { color: var(--muted); }
+  .machine dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .machine .plain { font-size: 11px; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
+  .view-factory .machine .plain { text-align: center; }
+  .machine .reason { font-size: 11.5px; color: var(--st); min-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .machine.paused { opacity: .55; background: #f7f8fa; }
+  .modebtns { display: inline-flex; gap: 6px; margin-left: 12px; }
+  .modebtns button { font-size: 13px; }
+  /* 網路版（手機）只看：藏起會改東西的按鈕 */
+  body.web button.star, body.web .modebtns, body.web textarea.note, body.web .noteh { display: none; }
+  #gate { position: fixed; inset: 0; z-index: 99; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #gate form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px; width: 100%; max-width: 340px; display: grid; gap: 10px; }
+  #gate h2 { margin: 0; font-size: 18px; }
+  #gate input[type=password] { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; }
+  #gate button { font-size: 16px; padding: 8px; background: var(--text); color: #fff; border: 0; border-radius: 4px; }
+  textarea.note { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; resize: vertical; margin-bottom: 10px; }
+  /* 美術素材（有圖才會出現） */
+  .factory { position: relative; overflow: hidden; }
+  .factory[style*="--bg"]::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.82)), var(--bg) center / cover no-repeat; z-index: 0; }
+  .factory > * { position: relative; z-index: 1; }
+  .factory .machine { background: rgba(255,255,255,.92); }
+  .viewsw { margin-left: auto; display: inline-flex; gap: 0; }
+  .viewsw button { font-size: 12px; padding: 1px 8px; border-radius: 0; white-space: nowrap; }
+  .factory > h2 { flex-wrap: wrap; row-gap: 4px; }
+  .viewsw button:first-child { border-radius: 4px 0 0 4px; } .viewsw button:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
+  .viewsw button.on { background: var(--text); color: #fff; }
+  .art { position: relative; aspect-ratio: 5 / 4; flex: none; }
+  .art img.mc { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .art img.ic { position: absolute; transform: translate(-50%, -50%); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
+  .art.gray { filter: grayscale(1); }
+  .hero { display: flex; gap: 6px; align-items: center; min-width: 0; }
+  .hero-txt { min-width: 0; flex: 1; }
+  .view-compact .art { width: 42%; max-width: 110px; }
+  .view-compact .hero-txt .reason { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .view-factory .hero { flex-direction: column; align-items: stretch; }
+  .view-factory .art { width: 100%; }
+  .view-factory .hero-txt .name { font-size: 16px; text-align: center; }
+  .view-factory .hero-txt .reason { text-align: center; }
+  .machine .cardhead { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
+  .machine .cardhead > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  button.star { flex: none; border: 0; background: none; padding: 0 2px; font-size: 18px; line-height: 1; color: #c3c9d2; }
+  button.star.on { color: #f2b01e; }
+  button.star:hover { color: #f2b01e; }
+  .head button.star { font-size: 22px; }
+  .machine.slot { border-style: dashed; border-top: 1px dashed var(--line); color: var(--muted); align-items: center; justify-content: center; cursor: default; min-height: 120px; }
+  .badge { display: inline-block; padding: 0 6px; border-radius: 10px; font-size: 11px; font-weight: bold; color: #fff; background: var(--st); }
+  .tag { display: inline-block; padding: 0 4px; border-radius: 3px; font-size: 10.5px; border: 1px solid var(--line); color: var(--muted); margin-left: 4px; }
+  .tag-info { color: var(--WAITING); border-color: var(--WAITING); }
+  .model { display: inline-block; padding: 0 5px; margin-left: 4px; border-radius: 3px; font-size: 10.5px; font-weight: bold; color: #fff; }
+  .m-duo { background: linear-gradient(90deg, #d97757 50%, #222 50%); }
+  .m-code { background: #d97757; } .m-claude { background: #c9a27e; } .m-codex { background: #222; }
+  .m-gpt { background: #10a37f; } .m-none { background: #aaa; }
+  .tag-warn { color: var(--BLOCKED); border-color: var(--BLOCKED); }
+  .ok { color: var(--RUNNING); } .bad { color: var(--FAILED); } .warn { color: var(--BLOCKED); }
+
+  .panels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1100px) { .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px)  { .panels { grid-template-columns: minmax(0, 1fr); } }
+  .list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow: auto; }
+  .list li { padding: 5px 0; border-bottom: 1px solid #eef0f3; display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+  .list li:last-child { border-bottom: 0; }
+  .list .t { color: var(--muted); font-size: 12px; white-space: nowrap; min-width: 42px; }
+  .list .body { flex: 1; min-width: 0; }
+  .list .body .p { font-weight: bold; }
+  .list .body .x { font-size: 12px; color: var(--muted); word-break: break-word; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: var(--c, var(--IDLE)); flex: none; transform: translateY(1px); }
+  .section-title { font-size: 12px; color: var(--muted); margin: 8px 0 2px; }
+
+  .l3 { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; opacity: .6; }
+  .l3 input { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; }
+
+  /* 細節 */
+  #detail { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; padding: 24px; overflow: auto; z-index: 10; }
+  #detail.on { display: block; }
+  #detail .sheet { max-width: 1100px; margin: 0 auto; background: var(--bg); border-radius: 8px; padding: 14px; display: grid; gap: 12px; }
+  #detail .head { display: flex; gap: 10px; align-items: center; }
+  #detail .head h2 { margin: 0; font-size: 20px; }
+  #detail .head .close { margin-left: auto; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #eef0f3; vertical-align: top; word-break: break-word; }
+  th { color: var(--muted); font-weight: normal; white-space: nowrap; }
+  .kv th { width: 90px; }
+  .log { border-bottom: 1px solid #eef0f3; padding: 6px 0; }
+  .log .h { font-size: 12px; color: var(--muted); }
+  .log div { white-space: pre-wrap; word-break: break-word; }
+  code { background: #eef0f3; padding: 0 4px; border-radius: 3px; font-size: 12px; word-break: break-all; }
+  a { color: var(--WAITING); }
+  .nodata { max-width: 640px; margin: 60px auto; }
+</style>
+</head>
+<body>
+<header>
+  <img id="logo" alt="" style="display:none;height:28px">
+  <h1>AI Project Control Center 專案控制中心</h1>
+  <span class="tag">Phase 1 · L1 + L2</span>
+  <div class="meta"><div id="clock"></div><div id="gen"></div></div>
+</header>
+<main id="app"></main>
+<div id="detail" onclick="if(event.target===this)closeDetail()"><div class="sheet" id="sheet"></div></div>
+
+<script>window.CC_WEB = 1;</script>
+<script>
+const WEB = !!window.CC_WEB;  // 網路版：只看，不顯示停機／最愛／備註等按鈕
+if (WEB) document.body.classList.add("web");
+const STATUS =["FAILED","BLOCKED","STALE","RUNNING","WAITING","IDLE"];
+const TAGS = ["大C小C", "分散", "多平台"];
+const TAG_TIP = {"大C小C": "Claude 與 Codex 合作的專案", "分散": "同一個專案有不只一份資料夾", "多平台": "Codex 和 Claude 都有手動對話"};
+const tagHtml = m => (m.tags || []).map(t => `<span class="tag tag-${t === "分散" ? "warn" : "info"}" title="${esc(TAG_TIP[t] || "")}">${esc(t)}</span>`).join("");
+const ZH = {FAILED:"失敗",BLOCKED:"卡住",STALE:"停滯",RUNNING:"運行中",WAITING:"等待中",IDLE:"休眠"};
+const RES = {success:["成功","ok"],failed:["失敗","bad"],running:["執行中","ok"],pending:["待執行","muted"],missed:["未執行","warn"],todo:["今日","warn"],overdue:["逾期","bad"]};
+const SORTS = {
+  severity: ["依嚴重度（失敗→休眠）", null],
+  recent:   ["最近更新在前", (a, b) => (b.last_activity || "").localeCompare(a.last_activity || "")],
+  oldest:   ["最久沒動在前", (a, b) => (a.last_log || "0").localeCompare(b.last_log || "0")],
+  name:     ["名稱（英文字母／中文筆畫）", (a, b) => a.name.localeCompare(b.name, "zh-Hant")],
+  next:     ["下次執行最近", (a, b) => (a.next_run || "9999").localeCompare(b.next_run || "9999")],
+  success:  ["7日成功率低在前", (a, b) => rate(a) - rate(b)],
+};
+const rate = m => m.runs_7d ? m.success_7d / m.runs_7d : 2;
+const store = { get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+const ui = { page: 1, q: "", filter: "ALL", sort: store.get("cc.sort", "severity"), view: store.get("cc.view", "compact") };
+const MODEL_ZH = {"Claude+Codex": "Claude+Codex（大小C）", Code: "Code（Claude Code）", Codex: "Codex", Claude: "Claude（聊天）", ChatGPT: "ChatGPT"};
+const modelCls = x => ({"Claude+Codex": "duo", Code: "code", Codex: "codex", Claude: "claude", ChatGPT: "gpt"}[x] || "none");
+const modelChip = m => m.model ? `<span class="model m-${modelCls(m.model)}" title="型號：${esc(MODEL_ZH[m.model] || m.model)}">${esc(m.model)}</span>` : "";
+const opText = m => { const o = m.operator; if (!o) return ""; return `${esc(MODEL_ZH[o.who] || o.who)}・${esc(o.what)}${o.t ? " " + ago(o.t) : ""}`; };
+const autoText = m => { const a = m.automations || []; if (!a.length) return ""; const on = a.filter(x => x.on).length; return `${on} 個開著${a.length - on ? `・${a.length - on} 個停用` : ""}`; };
+const KIND_ZH = {stock: "股票", data: "資料", web: "網頁", spider: "爬蟲", tool: "工具", ai: "大C小C", general: "通用"};
+const A = () => (S && S.assets) || {machines: [], icons: []};
+const aurl = p => `assets/web/${p}?v=${A().ver || 0}`;
+// 機台圖：該狀態沒圖就退回其他狀態的圖；完全沒有素材就回傳空字串（網頁維持方塊樣式）
+function machineArt(m, paused) {
+  const ms = A().machines || [];
+  if (!ms.length) return "";
+  const st = paused ? "IDLE" : m.status;
+  const pick = [st, "IDLE", "WAITING", "RUNNING", ms[0]].find(x => ms.includes(x));
+  const L = Object.assign({cx: 0.52, cy: 0.43, size: 0.2}, (A().layout || {}).screen || {});
+  const kind = (A().icons || []).includes(m.kind) ? m.kind : ((A().icons || []).includes("general") ? "general" : "");
+  const icon = kind ? `<img class="ic" src="${aurl("icons/" + kind + ".png")}" alt="" style="left:${L.cx*100}%;top:${L.cy*100}%;width:${L.size*100}%">` : "";
+  return `<div class="art${paused ? " gray" : ""}" title="${esc(ZH[m.status] || "")}・${esc(KIND_ZH[m.kind] || "")}"><img class="mc" src="${aurl("machines/" + pick + ".png")}" alt="${esc(m.status)}">${icon}</div>`;
+}
+function setView(v) { ui.view = v; ui.page = 1; store.set("cc.view", v); render(); }
+if (!SORTS[ui.sort]) ui.sort = "severity";
+let S = null;
+
+// 機台開關：只存在這台電腦的瀏覽器，不改專案檔、不停排程
+//   maint＝停機保養：變灰、排最後、不列入提醒與 KPI
+//   off  ＝關機：從 Factory View 隱藏（篩選「已關機」可找回）
+let MODE = {};
+try { MODE = JSON.parse(store.get("cc.mode", "{}")) || {}; } catch (e) {}
+try { for (const id of JSON.parse(store.get("cc.paused", "[]"))) MODE[id] = MODE[id] || "maint"; } catch (e) {}  // 舊「暫停」轉成停機保養
+const modeOf = id => MODE[id] || "";
+const isPaused = id => !!MODE[id];          // 保養或關機：都不列入提醒與 KPI
+const isOff = id => MODE[id] === "off";
+const live = arr => arr.filter(x => !isPaused(x.pid));
+// 保養／關機備註：{id: {text, time}}，一樣只存在這台電腦的瀏覽器
+let NOTE = {};
+try { NOTE = JSON.parse(store.get("cc.modenote", "{}")) || {}; } catch (e) {}
+const noteOf = id => (NOTE[id] && NOTE[id].text) || "";
+function saveNote(id, text) {
+  if (text) NOTE[id] = {text, time: new Date().toLocaleString("sv").slice(0, 16)}; else delete NOTE[id];
+  store.set("cc.modenote", JSON.stringify(NOTE));
+}
+// 我的最愛：[id, ...]，只存在這台電腦的瀏覽器
+let FAV = [];
+try { FAV = JSON.parse(store.get("cc.fav", "[]")) || []; } catch (e) {}
+const isFav = id => FAV.includes(id);
+function toggleFav(id, ev) {
+  if (ev) ev.stopPropagation();  // 點星星不要打開詳細頁
+  FAV = isFav(id) ? FAV.filter(x => x !== id) : [...FAV, id];
+  store.set("cc.fav", JSON.stringify(FAV));
+  render();
+  if (ui.detail) openDetail(ui.detail);
+}
+const starBtn = m => `<button class="star${isFav(m.id) ? " on" : ""}" title="${isFav(m.id) ? "取消最愛" : "加入最愛（排到最前面）"}" onclick="toggleFav('${esc(m.id)}', event)">${isFav(m.id) ? "★" : "☆"}</button>`;
+function setMode(id, mode) {
+  if (mode) MODE[id] = mode; else delete MODE[id];
+  store.set("cc.mode", JSON.stringify(MODE));
+  try { localStorage.removeItem("cc.paused"); } catch (e) {}
+  render();
+  if (ui.detail) openDetail(ui.detail);
+}
+const MODE_BADGE = {maint: '<span class="badge" style="--st:var(--IDLE)">🔧 停機保養</span>', off: '<span class="badge" style="--st:#555">⏻ 已關機</span>'};
+const modeBtns = m => {
+  const md = modeOf(m.id), id = esc(m.id);
+  return md ? `<button onclick="setMode('${id}', '')">▶ 恢復運轉</button>`
+    : `<button onclick="setMode('${id}', 'maint')" title="暫時不管：變灰、排到最後、不列入提醒（不會停掉排程）">🔧 停機保養</button>
+       <button onclick="setMode('${id}', 'off')" title="從機台區隱藏；篩選「已關機」可以找回（不會停掉排程、不刪檔案）">⏻ 關機</button>`;
+};
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const stVar = st => `--st:var(--${st})`;
+const badge = st => `<span class="badge" style="${stVar(st)}">${st} ${ZH[st]||""}</span>`;
+const res = r => { const x = RES[r]; return x ? `<span class="${x[1]}">${x[0]}</span>` : esc(r||"—"); };
+function ago(ts) {
+  if (!ts) return "—";
+  const d = (Date.now() - new Date(ts.replace(" ", "T")).getTime()) / 60000;
+  if (d < 1) return "剛剛";
+  if (d < 60) return Math.round(d) + " 分鐘前";
+  if (d < 1440) return Math.round(d / 60) + " 小時前";
+  return Math.floor(d / 1440) + " 天前";
+}
+function until(ts) {
+  if (!ts) return "未排程";
+  const t = new Date(ts.replace(" ", "T")), n = new Date();
+  const day = (new Date(t.toDateString()) - new Date(n.toDateString())) / 864e5;
+  const hm = ts.slice(11, 16);
+  return day === 0 ? "今天 " + hm : day === 1 ? "明天 " + hm : ts.slice(5, 16);
+}
+const byId = id => S.machines.find(m => m.id === id);
+
+function filtered() {
+  const q = ui.q.trim().toLowerCase();
+  const cmp = SORTS[ui.sort][1];
+  const sorted = cmp ? [...S.machines].sort(cmp) : [...S.machines];
+  // 我的最愛排最前面，保養／關機的永遠排最後
+  const list = [...sorted.filter(m => !isPaused(m.id) && isFav(m.id)), ...sorted.filter(m => !isPaused(m.id) && !isFav(m.id)), ...sorted.filter(m => isPaused(m.id))];
+  return list.filter(m => {
+    if (ui.filter === "MAINT" || ui.filter === "OFF") { if (modeOf(m.id) !== ui.filter.toLowerCase()) return false; }
+    else if (isOff(m.id)) return false;  // 關機的只在「已關機」篩選裡出現
+    else if (ui.filter.startsWith("MODEL:")) { if (m.model !== ui.filter.slice(6)) return false; }
+    else if (ui.filter.startsWith("TAG:")) { if (!(m.tags || []).includes(ui.filter.slice(4))) return false; }
+    else if (ui.filter !== "ALL" && (m.status !== ui.filter || isPaused(m.id))) return false;
+    if (!q) return true;
+    const hay = [m.name, m.id, m.purpose, m.folder, m.git, m.next_step, m.owner,
+      ...(m.chats||[]).map(c => typeof c === "string" ? c : [c.source, c.title, c.url].join(" ")),
+      ...(m.failures||[]).map(f => f.error), ...(m.worklog||[]).map(w => [w.done, w.blocked, w.next, w.source].join(" "))
+    ].join(" ").toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+function mainChat(m) {
+  const c = m.footprint && m.footprint.main_chat;
+  return c ? `${c.platform}｜${c.title}` : "";
+}
+
+function footprintBox(m) {
+  const f = m.footprint;
+  if (!f) return "";
+  const plats = Object.entries(f.platforms || {}).map(([p, v]) =>
+    `<li><b>${esc(p)}</b>：${v.count - v.auto} 個對話${v.auto ? `＋${v.auto} 次自動執行` : ""}，最後 ${esc(v.last)}</li>`).join("");
+  const chats = (f.chats || []).map(c => `<tr><td>${esc(c.platform)}</td><td>${esc(c.title)}</td><td>${esc((c.last||"").slice(5))}</td></tr>`).join("");
+  const others = (f.others || []).map(o => `<li><code>${esc(o.path)}</code> <span class="muted">${esc(o.why)}${o.sessions ? `・${o.sessions} 個對話・最後 ${esc(o.last)}` : ""}${o.exists === false ? "・已不存在" : ""}${o.old_cloud ? "・早期雲端" : ""}</span></li>`).join("");
+  const cb = f.collab ? `<p>協作狀態：輪到 <b>${esc(f.collab["輪到"] || "—")}</b>｜目前任務 ${esc(f.collab["目前任務"] || "—")}｜大C上次檢查 ${esc(f.collab["大C上次檢查"] || "—")}｜小C上次檢查 ${esc(f.collab["小C上次檢查"] || "—")}</p>` : "";
+  return `<div class="box"><h2>在哪裡做過 <small>電腦上的 Codex／Claude Code 紀錄・只讀</small> ${tagHtml(m)}</h2>
+    ${cb}
+    <ul>${plats || '<li class="muted">電腦上找不到這個資料夾的 Codex／Claude Code 對話（可能是網頁版或雲端做的）</li>'}</ul>
+    ${chats ? `<table><tr><th>平台</th><th>對話名稱（新→舊，不含自動執行）</th><th>最後</th></tr>${chats}</table>` : ""}
+    ${others ? `<h2 style="margin-top:10px">其他位置</h2><ul>${others}</ul>` : ""}
+    ${(f.advice || []).length ? `<h2 style="margin-top:10px">整理建議 <small>只建議，不會自動執行</small></h2><ul>${f.advice.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
+  </div>`;
+}
+
+function distributionPanel() {
+  const spread = S.machines.filter(m => !isPaused(m.id) && (m.footprint?.advice || []).length);
+  const un = S.unregistered || [];
+  const active = un.filter(u => u.exists && !u.old_cloud), history = un.filter(u => !u.exists || u.old_cloud);
+  const unRow = u => `<li><span class="body"><span class="p">${esc(u.path)}</span>
+      <div class="x">${esc(u.platforms.join("、"))} ${u.manual} 個對話${u.sessions > u.manual ? `＋${u.sessions - u.manual} 次自動` : ""}・最後 ${esc(u.last)}${u.collab ? "・大C小C" : ""}</div>
+      <div class="x">${esc(u.titles.join("／"))}</div></span></li>`;
+  return `<section class="box"><h2>專案分布整理 <small>只讀分析，不會改動任何專案；要轉移或封存請先跟 Claude 說</small></h2>
+    <div class="panels" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <div><div class="section-title">需要整理的專案（${spread.length}）</div>
+        <ul class="list">${spread.map(m => `<li onclick="openDetail('${esc(m.id)}')"><span class="body"><span class="p">${esc(m.name)}</span> ${tagHtml(m)}
+          ${m.footprint.advice.map(a => `<div class="x">${esc(a)}</div>`).join("")}</span></li>`).join("") || '<li class="empty">沒有</li>'}</ul></div>
+      <div><div class="section-title">有在做、但還沒登錄的資料夾（${active.length}）</div>
+        <ul class="list">${active.map(unRow).join("") || '<li class="empty">沒有</li>'}</ul></div>
+      <div><div class="section-title">舊位置／早期雲端（歷史，${history.length}）</div>
+        <ul class="list">${history.map(unRow).join("") || '<li class="empty">沒有</li>'}</ul></div>
+    </div></section>`;
+}
+
+function machineCard(m) {
+  const sr = m.runs_7d ? Math.round(m.success_7d * 100 / m.runs_7d) + "%" : "—";
+  const p = isPaused(m.id);
+  return `<div class="machine${p ? " paused" : ""}" style="${stVar(p ? "IDLE" : m.status)}" onclick="openDetail('${esc(m.id)}')">
+    <div class="cardhead"><span>${p ? MODE_BADGE[modeOf(m.id)] : badge(m.status)}${modelChip(m)}${m.demo ? '<span class="tag">DEMO</span>' : ""}${tagHtml(m.tags ? Object.assign({}, m, {tags: m.tags.filter(t => t !== "大C小C")}) : m)}</span>${starBtn(m)}</div>
+    ${(() => { const art = machineArt(m, p), nm = `<div class="name" title="${esc(m.name)}">${esc(m.name)}</div>
+    ${m.plain ? `<div class="plain" title="${esc(m.plain)}">${esc(m.plain)}</div>` : ""}
+    ${(p || m.status === "IDLE") && noteOf(m.id) ? `<div class="reason" title="${esc(noteOf(m.id))}">📝 ${esc(noteOf(m.id))}</div>`
+      : `<div class="reason" title="${esc((m.status_reasons||[]).join("；"))}">${esc((m.status_reasons||[])[0] || "")}</div>`}`;
+      return art ? `<div class="hero">${art}<div class="hero-txt">${nm}</div></div>` : nm; })()}
+    <dl>
+      ${opText(m) ? `<dt>執行者</dt><dd title="${opText(m)}">${opText(m)}</dd>` : ""}
+      <dt>最後更新</dt><dd>${ago(m.last_activity)}</dd>
+      ${m.last_run ? `<dt>最後執行</dt><dd>${res(m.last_result)} · ${ago(m.last_run)}${m.runs_7d ? `（7日 ${sr}）` : ""}</dd>` : ""}
+      ${m.next_run ? `<dt>下次執行</dt><dd>${until(m.next_run)}</dd>` : ""}
+      <dt>下一步</dt><dd title="${esc(m.next_step)}">${esc(m.next_step || "—")}</dd>
+      ${autoText(m) ? `<dt>自動化</dt><dd title="${esc((m.automations||[]).map(a => a.name + (a.on ? "" : "（停用）")).join("、"))}">${autoText(m)}</dd>` : ""}
+      ${mainChat(m) ? `<dt>主要對話</dt><dd title="${esc(mainChat(m))}">${esc(mainChat(m))}</dd>` : ""}
+      ${m.site ? `<dt>網站</dt><dd><a href="${esc(m.site)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(m.site.replace(/^https?:\/\//, "").replace(/\/$/, ""))}</a></dd>` : ""}
+    </dl>
+  </div>`;
+}
+
+function render() {
+  const app = document.getElementById("app");
+  if (!S) {
+    app.innerHTML = `<div class="box nodata"><h2>還沒有資料</h2>
+      <p>找不到 <code>state.js</code>。請先在這個資料夾執行 <code>open_dashboard.bat</code>（或 <code>py -3 collector.py</code>）。</p></div>`;
+    return;
+  }
+  const hasArt = (A().machines || []).length > 0;
+  const ps = hasArt && ui.view === "factory" ? 5 : (S.config.page_size || 10);
+  // 提醒、排程、失敗、KPI 都排除保養／關機的機台；Activity Feed 只排除關機的
+  const today = live(S.today_tasks), rems = live(S.reminders), fails = live(S.failed_jobs), scheds = live(S.schedules);
+  const act = S.machines.filter(m => !isPaused(m.id));
+  const cnt = Object.fromEntries(STATUS.map(s => [s, act.filter(m => m.status === s).length]));
+  const k = Object.assign({}, S.kpi, {projects: act.length, running: cnt.RUNNING, failed: cnt.FAILED,
+                                      stale: cnt.STALE, blocked: cnt.BLOCKED, today_tasks: today.length});
+  const list = filtered();
+  const pages = Math.max(1, Math.ceil(list.length / ps));
+  ui.page = Math.min(ui.page, pages);
+  const slice = list.slice((ui.page - 1) * ps, ui.page * ps);
+  const slots = Array.from({length: ps - slice.length}, () => `<div class="machine slot">空機位</div>`).join("");
+
+  const todayRows = today.map(t => `<li onclick="openDetail('${esc(t.pid)}')">
+      <span class="t">${esc(t.time || "下一步")}</span>
+      <span class="body"><span class="p">${esc(t.project)}</span> ${esc(t.title)}</span>${res(t.state)}</li>`).join("");
+  const remRows = rems.map(r => `<li ${r.pid ? `onclick="openDetail('${esc(r.pid)}')"` : ""}>
+      <span class="dot" style="--c:var(--${r.level})"></span>
+      <span class="body"><span class="p">${esc(r.project)}</span><div class="x">${esc(r.text)}</div></span></li>`).join("");
+
+  app.innerHTML = `
+  <section class="kpis">
+    ${kpi("Projects 專案", k.projects, `${cnt.IDLE} 休眠・${S.machines.filter(m => modeOf(m.id) === "maint").length} 保養・${S.machines.filter(m => isOff(m.id)).length} 關機`, "ALL")}
+    ${kpi("Running 運行中", k.running, `${cnt.WAITING} 等待中`, "RUNNING")}
+    ${kpi("Today's Tasks 今日", k.today_tasks, "排程＋今日下一步", "")}
+    ${kpi("Failed 失敗", k.failed, `${k.blocked} 卡住`, "FAILED", k.failed ? "bad" : "")}
+    ${kpi("Stale 停滯", k.stale, `>${S.config.stale_days} 天沒動`, "STALE", k.stale ? "warn" : "")}
+    ${kpi("7 日成功率", k.success_rate_7d == null ? "—" : k.success_rate_7d + "%", `${k.runs_7d} 次執行`, "")}
+  </section>
+
+  <section class="box factory ${hasArt ? "view-" + ui.view : ""}" ${A().bg ? `style="--bg:url('${aurl("bg_factory.jpg")}')"` : ""}>
+    <h2>Factory View 機台 <small>每頁 ${ps} 台</small>
+      ${hasArt ? `<span class="viewsw"><button class="${ui.view==="compact"?"on":""}" onclick="setView('compact')">精簡（10 台）</button><button class="${ui.view==="factory"?"on":""}" onclick="setView('factory')">工廠大圖（5 台）</button></span>` : ""}</h2>
+    <div class="toolbar">
+      <select id="flt" onchange="ui.filter=this.value;ui.page=1;render()">
+        <option value="ALL">全部 (${S.machines.filter(m => !isOff(m.id)).length})</option>
+        ${STATUS.map(s => `<option value="${s}" ${ui.filter===s?"selected":""}>${s} ${ZH[s]} (${cnt[s]||0})</option>`).join("")}
+        <option value="MAINT" ${ui.filter==="MAINT"?"selected":""}>🔧 停機保養 (${S.machines.filter(m => modeOf(m.id) === "maint").length})</option>
+        <option value="OFF" ${ui.filter==="OFF"?"selected":""}>⏻ 已關機 (${S.machines.filter(m => isOff(m.id)).length})</option>
+        ${["Claude+Codex","Code","Codex","Claude","ChatGPT"].map(x => `<option value="MODEL:${x}" ${ui.filter==="MODEL:"+x?"selected":""}>型號：${x} (${S.machines.filter(m => m.model === x && !isOff(m.id)).length})</option>`).join("")}
+        ${TAGS.map(t => `<option value="TAG:${t}" ${ui.filter==="TAG:"+t?"selected":""}>標籤：${t} (${S.machines.filter(m => (m.tags||[]).includes(t)).length})</option>`).join("")}
+      </select>
+      <select onchange="ui.sort=this.value;ui.page=1;store.set('cc.sort',this.value);render()" title="排序">
+        ${Object.entries(SORTS).map(([k, v]) => `<option value="${k}" ${ui.sort===k?"selected":""}>排序：${v[0]}</option>`).join("")}
+      </select>
+      <input id="q" type="search" placeholder="搜尋：專案、資料夾、對話、關鍵字、失敗原因…" value="${esc(ui.q)}" style="flex:1;min-width:200px"
+        oninput="ui.q=this.value;ui.page=1;render();const e=document.getElementById('q');e.focus();e.setSelectionRange(e.value.length,e.value.length)">
+      <span class="muted">顯示 ${list.length ? (ui.page-1)*ps+1 : 0}–${Math.min(ui.page*ps, list.length)} / ${list.length}</span>
+      <div class="pager">
+        <button ${ui.page<=1?"disabled":""} onclick="ui.page--;render()">‹ 上一頁</button>
+        ${Array.from({length: pages}, (_, i) => `<button class="${ui.page===i+1?"on":""}" onclick="ui.page=${i+1};render()">${i+1}</button>`).join("")}
+        <button ${ui.page>=pages?"disabled":""} onclick="ui.page++;render()">下一頁 ›</button>
+      </div>
+    </div>
+    <div class="machines">${slice.map(machineCard).join("")}${slots}</div>
+  </section>
+
+  <section class="panels">
+    <div class="box"><h2>Schedule Monitor 排程 <small>${scheds.length} 個 · 只顯示不執行</small></h2>
+      <ul class="list">${scheds.map(s => `<li onclick="openDetail('${esc(s.pid)}')">
+        <span class="t">${esc(s.time)}</span>
+        <span class="body"><span class="p">${esc(s.project)}</span> ${esc(s.job)}
+          <div class="x">下次 ${until(s.next_run)} · 上次 ${s.last_run ? ago(s.last_run) : "—"}</div></span>
+        ${res(s.last_result)}</li>`).join("") || '<li class="empty">沒有排程</li>'}</ul></div>
+
+    <div class="box"><h2>今日提醒 <small>${today.length} 任務 · ${rems.length} 提醒</small></h2>
+      <div class="section-title">今日任務</div>
+      <ul class="list">${todayRows || '<li class="empty">今天沒有排定任務</li>'}</ul>
+      <div class="section-title">需要注意</div>
+      <ul class="list">${remRows || '<li class="empty">一切正常</li>'}</ul></div>
+
+    <div class="box"><h2>Failed Jobs 失敗 <small>${fails.length}</small></h2>
+      <ul class="list">${fails.map(f => `<li onclick="openDetail('${esc(f.pid)}')">
+        <span class="dot" style="--c:var(--red)"></span>
+        <span class="body"><span class="p">${esc(f.project)}</span> ${esc(f.job)}
+          <div class="x bad">${esc(f.error)}${f.streak > 1 ? ` · 連續 ${f.streak} 次` : ""}</div>
+          <div class="x">${ago(f.time)}</div></span>
+        <button disabled title="L3 才啟用">Retry</button></li>`).join("") || '<li class="empty">沒有失敗的排程</li>'}</ul></div>
+
+    <div class="box"><h2>Activity Feed 動態 <small>最新 ${S.feed.length}</small></h2>
+      <ul class="list">${S.feed.filter(f => !isOff(f.pid)).map(f => `<li onclick="openDetail('${esc(f.pid)}')">
+        <span class="dot" style="--c:var(--${f.kind==="run" ? (f.result==="failed"?"red":f.result==="running"?"blue":"RUNNING") : (f.blocked?"orange":"IDLE")})"></span>
+        <span class="body"><span class="p">${esc(f.project)}</span> <span class="muted">${esc(f.source)}</span>
+          <div class="x">${esc(f.text)}</div></span>
+        <span class="t">${ago(f.t)}</span></li>`).join("") || '<li class="empty">沒有動態</li>'}</ul></div>
+  </section>
+
+  ${distributionPanel()}
+
+  <section class="box l3" title="L3 功能，本期只保留版面位置">
+    <input disabled placeholder="AI Assistant 指令列（L3）：/status /retry /report /add /help">
+    <div style="display:flex;gap:6px">${["/status","/retry","/report","/add","/help"].map(c => `<button disabled>${c}</button>`).join("")}</div>
+  </section>`;
+}
+
+function kpi(label, val, sub, filter, cls) {
+  const click = filter ? `onclick="ui.filter='${filter}';ui.page=1;render()"` : "";
+  return `<div class="box kpi" ${click}><div class="label">${label}</div><div class="val ${cls||""}">${esc(val)}<span class="sub">${esc(sub)}</span></div></div>`;
+}
+
+function link(url, text) {
+  return /^https?:\/\//.test(url||"") ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text || url)}</a>` : esc(text || url || "—");
+}
+const fileUrl = p => "file:///" + String(p).replace(/\\/g, "/").split("/").map(encodeURIComponent).join("/").replace(/^([A-Za-z])%3A/, "$1:");
+
+function openDetail(id) {
+  const m = byId(id); if (!m) return;
+  ui.detail = id;
+  const chats = (m.chats||[]).map(c => typeof c === "string"
+    ? `<li>${esc(c)}</li>` : `<li>${esc(c.source||"")}｜${link(c.url, c.title || c.url)}</li>`).join("");
+  document.getElementById("sheet").innerHTML = `
+    <div class="head" style="${stVar(m.status)}">${isPaused(m.id) ? MODE_BADGE[modeOf(m.id)] : badge(m.status)}${starBtn(m)}<h2>${esc(m.name)}</h2><span class="modebtns">${modeBtns(m)}</span>
+      <span class="muted">${esc(m.id)}</span><button class="close" onclick="closeDetail()">關閉 (Esc)</button></div>
+    <div class="grid2">
+      <div class="box"><h2>專案登錄卡</h2><table class="kv">
+        ${m.window ? `<tr><th>主視窗</th><td>${esc(m.window.platform)}「${esc(m.window.title)}」<span class="muted">（卡片名稱跟著這個視窗；專案原名：${esc(m.orig_name || "—")}）</span></td></tr>` : ""}
+        <tr><th>這是做什麼的</th><td><b>${esc(m.plain || "（還沒有白話說明）")}</b></td></tr>
+        <tr><th>目的（原文）</th><td class="muted">${esc(m.purpose || "—")}</td></tr>
+        <tr><th>狀態原因</th><td>${esc((m.status_reasons||[]).join("；"))}</td></tr>
+        <tr><th>下一步</th><td><b>${esc(m.next_step || "—")}</b>${m.next_due ? ` <span class="muted">(${esc(m.next_due)})</span>` : ""}</td></tr>
+        ${m.progress_now ? `<tr><th>目前進度</th><td>${esc(m.progress_now)}</td></tr>` : ""}
+        <tr><th>資料夾</th><td><a href="${fileUrl(m.folder)}">${esc(m.folder)}</a></td></tr>
+        ${m.site ? `<tr><th>網站</th><td>${link(m.site)}</td></tr>` : ""}
+        <tr><th>Git</th><td>${link(m.git)}</td></tr>
+        <tr><th>負責人</th><td>${esc(m.owner || "—")}</td></tr>
+        <tr><th>最後更新</th><td>${esc(m.last_activity || "—")}（${ago(m.last_activity)}）</td></tr>
+        ${m.card_path ? `<tr><th>登錄卡</th><td><code>${esc(m.card_path)}</code></td></tr>`
+          : `<tr><th>來源</th><td>${m.origin === "collab" ? "協作狀態.json（尚未建立 project.json）" : "_Monitor（PROGRESS.md）"}</td></tr>`}
+      </table></div>
+      <div class="box"><h2>相關對話 <small>${(m.chats||[]).length}</small></h2>
+        <ul>${chats || '<li class="muted">尚未登錄</li>'}</ul>
+        <h2 class="noteh">備註 <small>關機／停機保養／休眠的原因，打字自動存${NOTE[m.id] ? `・${esc(NOTE[m.id].time)}` : ""}</small></h2>
+        <textarea class="note" rows="3" placeholder="例：併到紅蝦網，十月底再看" oninput="saveNote('${esc(m.id)}', this.value.trim()); render()">${esc(noteOf(m.id))}</textarea>
+        <h2>排程</h2>
+        <table><tr><th>名稱</th><th>時間</th><th>下次</th><th>上次結果</th></tr>
+        ${(m.schedules||[]).map(s => `<tr><td>${esc(s.name)}</td><td>${esc(s.days)} ${esc(s.time)}</td><td>${until(s.next_run)}</td>
+          <td>${res(s.last_result)} ${s.last_error ? `<div class="bad">${esc(s.last_error)}</div>` : ""}</td></tr>`).join("") || '<tr><td colspan="4" class="muted">沒有排程</td></tr>'}
+        </table></div>
+    </div>
+    <div class="box"><h2>型號與自動化 ${modelChip(m)}</h2>
+      <p>主型號：<b>${esc(MODEL_ZH[m.model] || "—")}</b>　也用過：${esc((m.models || []).map(x => MODEL_ZH[x] || x).join("、") || "—")}　執行者：${opText(m) || "—"}</p>
+      ${(m.automations || []).length ? `<table><tr><th>種類</th><th>名稱</th><th>狀態</th></tr>${m.automations.map(a => `<tr><td>${esc(a.kind)}</td><td>${esc(a.name)}</td><td>${a.on ? '<span class="ok">開著</span>' : '<span class="muted">停用</span>'}</td></tr>`).join("")}</table>` : '<p class="muted">沒有找到掛在這個資料夾的 Windows 排程或 Codex 定時任務。</p>'}
+    </div>
+    ${footprintBox(m)}
+    <div class="grid2">
+      <div class="box"><h2>工作日誌 <small>最新 ${(m.worklog||[]).length} 筆</small></h2>
+        ${(m.worklog||[]).map(w => `<div class="log"><div class="h">${esc(w.time)} · ${esc(w.source)}</div>
+          ${w.done ? `<div>✔ ${esc(w.done)}</div>` : ""}
+          ${w.blocked ? `<div class="warn">⛔ ${esc(w.blocked)}</div>` : ""}
+          ${w.next ? `<div class="muted">→ ${esc(w.next)}</div>` : ""}</div>`).join("") || '<div class="empty">沒有日誌</div>'}</div>
+      <div class="box"><h2>執行紀錄 <small>最新 ${(m.runs||[]).length} 筆</small></h2>
+        <table><tr><th>排程</th><th>開始</th><th>結果</th><th>原因</th></tr>
+        ${(m.runs||[]).map(r => `<tr><td>${esc(r.job)}</td><td>${esc((r.start||"").slice(5,16))}</td><td>${res(r.result)}</td><td class="bad">${esc(r.error||"")}</td></tr>`).join("") || '<tr><td colspan="4" class="muted">沒有執行紀錄</td></tr>'}
+        </table></div>
+    </div>`;
+  document.getElementById("detail").classList.add("on");
+}
+function closeDetail() { ui.detail = null; document.getElementById("detail").classList.remove("on"); }
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+
+// 網路版（手機看）：publish_web.py 會在頁面加 window.CC_WEB=1。
+// 資料是 state.enc（AES-256-GCM，PBKDF2-SHA256 60 萬次），在瀏覽器裡用密碼解開；密碼只記在這支手機。
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function decryptState(pw) {
+  const r = await fetch("state.enc?t=" + Date.now(), {cache: "no-store"});
+  if (!r.ok) throw new Error("讀不到資料（" + r.status + "）");
+  const v = await r.json();
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name: "PBKDF2", salt: b64(v.salt), iterations: v.iter, hash: "SHA-256"},
+    base, {name: "AES-GCM", length: 256}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(v.iv)}, key, b64(v.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function askPassword(msg) {
+  let g = document.getElementById("gate");
+  if (!g) {
+    g = document.createElement("div"); g.id = "gate";
+    g.innerHTML = `<form><h2>專案控制中心</h2><p class="muted" id="gatemsg"></p>
+      <input type="password" id="gatepw" placeholder="密碼" autocomplete="current-password">
+      <label class="muted"><input type="checkbox" id="gatekeep" checked> 這支手機記住密碼</label>
+      <button>打開</button></form>`;
+    document.body.appendChild(g);
+    g.querySelector("form").onsubmit = e => {
+      e.preventDefault();
+      const pw = document.getElementById("gatepw").value;
+      if (document.getElementById("gatekeep").checked) store.set("cc.pw", pw); else sessionStorage.setItem("cc.pw", pw);
+      g.remove(); load();
+    };
+  }
+  document.getElementById("gatemsg").textContent = msg || "只有站主看得到，請輸入密碼。";
+}
+let webBusy = false;
+async function loadWeb() {
+  if (webBusy) return;
+  let pw = ""; try { pw = sessionStorage.getItem("cc.pw") || store.get("cc.pw", ""); } catch (e) {}
+  if (!pw) { askPassword(); return; }
+  webBusy = true;
+  try { S = await decryptState(pw); afterLoad(); }
+  catch (e) {
+    const bad = e && e.name === "OperationError";
+    if (bad) { try { localStorage.removeItem("cc.pw"); sessionStorage.removeItem("cc.pw"); } catch (x) {} }
+    if (!S) askPassword(bad ? "密碼不對，請再試一次。" : "讀取失敗：" + (e.message || e));
+  } finally { webBusy = false; }
+}
+
+function afterLoad() {
+  const typing = document.activeElement && document.activeElement.id === "q";
+  const noting = document.activeElement && document.activeElement.classList.contains("note");
+  if (!typing) render();
+  if (ui.detail && !noting) openDetail(ui.detail);  // 正在打備註時不重畫，免得字被洗掉
+  const lg = document.getElementById("logo");
+  if (S && S.assets && S.assets.logo) { lg.src = aurl("logo.png"); lg.style.display = ""; } else lg.style.display = "none";
+  document.getElementById("gen").textContent = S ? `資料更新 ${S.generated_at}（${ago(S.generated_at)}）` : "";
+}
+
+// file:// 不能 fetch，所以重新注入 <script src="state.js">（同 _Monitor 的作法）
+function load() {
+  if (WEB) return loadWeb();
+  const s = document.createElement("script");
+  s.src = "state.js?t=" + Date.now();
+  s.onload = () => {
+    S = window.__CC_STATE__ || null; s.remove();
+    afterLoad();
+  };
+  s.onerror = () => { s.remove(); if (!S) render(); };
+  document.head.appendChild(s);
+}
+function tick() { document.getElementById("clock").textContent = new Date().toLocaleString("zh-TW", {hour12: false, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit"}); }
+load(); tick();
+setInterval(load, 30000); setInterval(tick, 1000);
+</script>
+</body>
+</html>
