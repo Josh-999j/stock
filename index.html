@@ -610,7 +610,7 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .cfg2 .pdet .ov{color:var(--warn)} .cfg2 #p-sel{max-width:100%}
 /* v6.31 */
 .cfg2 h2.tt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap} .cfg2 h2.tt .why{font-size:12px;color:var(--muted);font-weight:400;margin-left:auto}
-.cfg2 .tm{color:var(--up);font-size:18px;margin:18px 0 4px}
+.cfg2 .tm{color:var(--up);font-size:18px;margin:18px 0 4px} .cfg2 .yrs{font-size:15px;color:var(--ink-2);margin:0 0 6px} .cfg2 .yrs b{color:var(--up)}
 .cfg2 .pdet .pt{font-size:12px;color:var(--muted);margin-bottom:2px} .cfg2 .pdet span{color:var(--accent);font-weight:600} .cfg2 .pdet .star{color:var(--warn);font-size:12px;min-width:0;display:inline}
 .cfg2 .go{font:inherit;font-size:15px;font-weight:700;padding:8px 18px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
 .cfg .vw{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px;color:var(--ink-2);margin:4px 0 8px}
@@ -757,7 +757,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.33</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.34</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -853,7 +853,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.33（2026-10-06）<br>
+    <b>版本</b>　v6.34（2026-10-06）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1204,7 +1204,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261006190208', HAS_AV = true, JC = {};
+const BUILD = '20261006233611', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
