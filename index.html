@@ -2,6 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("hx_theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>紅蝦ㄟㄞ法</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -760,13 +761,14 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.44</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.45</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
     <div class="meta">
       <div><div class="k">資料日</div><div class="v num" id="m-date">—</div></div>
       <div><div class="k">加權指數</div><div class="v num" id="m-idx">—</div><div class="mk-wrap"><button type="button" class="mk-badge mk-green" id="mk-badge" aria-expanded="false" aria-controls="mk-box"><span class="dot"></span>大盤正常</button></div></div>
+      <button type="button" class="gear" id="theme" title="切換深色／淺色" aria-label="切換深色／淺色">🌙</button>
       <button type="button" class="gear" id="gear" title="解鎖成立條件、風報比與紀錄" aria-label="解鎖成立條件、風報比與紀錄">⚙</button>
     </div>
     </div>
@@ -856,7 +858,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.44（2026-10-07）<br>
+    <b>版本</b>　v6.45（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1207,7 +1209,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007001001', HAS_AV = true, JC = {};
+const BUILD = '20261007003820', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
@@ -1628,6 +1630,11 @@ function apply(docs){
   renderRail(); renderDay(DAYS.find(d=>d.date===cur));
 }
 
+/* v6.45：深色／淺色切換（記在這台裝置） */
+(function(){ const b=$('theme'), root=document.documentElement, mq=matchMedia('(prefers-color-scheme: dark)');
+  const cur=()=>root.dataset.theme||(mq.matches?'dark':'light'), ic=()=>{ b.textContent=cur()==='dark'?'☀':'🌙'; b.title=cur()==='dark'?'切換成淺色':'切換成深色'; };
+  b.addEventListener('click',()=>{ const n=cur()==='dark'?'light':'dark'; root.dataset.theme=n; try{ localStorage.setItem('hx_theme',n); }catch(e){} ic(); });
+  ic(); })();
 const PUB_DOCS = [{"date":"2026-10-06","taiex":null,"universe":36,"counts":{"26":17,"28":7,"29":0,"33":0,"34":9,"35":4},"backfill":true,"rank":[],"watch":[],"avoid":[],"rest":[{"code":"2375","name":"凱美","industry":"鋁質電解電容","strategies":["26"],"close":125.5,"chg":-0.4,"cur":125.5,"ret":"0.00%","asof":"2026-10-06","amt":2.43,"vol":1941,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2484","name":"希華","industry":"石英元件","strategies":["26"],"close":80.4,"chg":-6.94,"cur":80.4,"ret":"0.00%","asof":"2026-10-06","amt":16.3,"vol":19822,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2492","name":"華新科","industry":"MLCC","strategies":["26"],"close":389.5,"chg":5.7,"cur":389.5,"ret":"0.00%","asof":"2026-10-06","amt":213.51,"vol":56423,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"3026","name":"禾伸堂","industry":"電子元件代理商","strategies":["26"],"close":796.0,"chg":-2.57,"cur":796.0,"ret":"0.00%","asof":"2026-10-06","amt":46.75,"vol":5809,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"3221","name":"台嘉碩","industry":"濾波器","strategies":["26"],"close":52.4,"chg":-5.92,"cur":52.4,"ret":"0.00%","asof":"2026-10-06","amt":1.6,"vol":3007,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"3289","name":"宜特","industry":"檢測驗證服務","strategies":["26"],"close":143.0,"chg":1.42,"cur":143.0,"ret":"0.00%","asof":"2026-10-06","amt":0.7,"vol":490,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4540","name":"全球傳動","industry":"滑軌","strategies":["26"],"close":59.3,"chg":-2.15,"cur":59.3,"ret":"0.00%","asof":"2026-10-06","amt":0.86,"vol":1447,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4768","name":"晶呈科技","industry":"工業氣體","strategies":["26"],"close":370.0,"chg":1.37,"cur":370.0,"ret":"0.00%","asof":"2026-10-06","amt":3.6,"vol":963,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4906","name":"正文","industry":"無線網路設備系統(WLAN)","strategies":["26"],"close":43.0,"chg":2.02,"cur":43.0,"ret":"0.00%","asof":"2026-10-06","amt":8.06,"vol":18600,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4971","name":"IET-KY","industry":"光通訊元件磊晶","strategies":["26"],"close":585.0,"chg":0.17,"cur":585.0,"ret":"0.00%","asof":"2026-10-06","amt":18.78,"vol":3132,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4977","name":"眾達-KY","industry":"光纖主動元件","strategies":["26"],"close":173.5,"chg":-0.86,"cur":173.5,"ret":"0.00%","asof":"2026-10-06","amt":3.25,"vol":1854,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"5425","name":"台半","industry":"二極體","strategies":["26"],"close":100.5,"chg":-4.74,"cur":100.5,"ret":"0.00%","asof":"2026-10-06","amt":19.81,"vol":19630,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6127","name":"九豪","industry":"被動元件上游","strategies":["26"],"close":56.8,"chg":-1.73,"cur":56.8,"ret":"0.00%","asof":"2026-10-06","amt":2.53,"vol":4432,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6207","name":"雷科","industry":"設備儀器商","strategies":["26"],"close":143.5,"chg":-5.59,"cur":143.5,"ret":"0.00%","asof":"2026-10-06","amt":17.56,"vol":11984,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6432","name":"今展科","industry":"電感","strategies":["26"],"close":64.2,"chg":-4.32,"cur":64.2,"ret":"0.00%","asof":"2026-10-06","amt":0.39,"vol":595,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6488","name":"環球晶","industry":"矽晶圓","strategies":["26"],"close":1205.0,"chg":2.12,"cur":1205.0,"ret":"0.00%","asof":"2026-10-06","amt":168.36,"vol":13914,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6706","name":"惠特","industry":"LED設備","strategies":["26"],"close":148.0,"chg":-2.31,"cur":148.0,"ret":"0.00%","asof":"2026-10-06","amt":3.6,"vol":2376,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"1785","name":"光洋科","industry":"其他半導體耗材","strategies":["28"],"close":110.5,"chg":7.8,"cur":110.5,"ret":"0.00%","asof":"2026-10-06","amt":48.24,"vol":43917,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2313","name":"華通","industry":"印刷電路板","strategies":["28"],"close":252.0,"chg":1.41,"cur":252.0,"ret":"0.00%","asof":"2026-10-06","amt":245.94,"vol":97518,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2368","name":"金像電","industry":"印刷電路板","strategies":["28"],"close":1260.0,"chg":3.7,"cur":1260.0,"ret":"0.00%","asof":"2026-10-06","amt":271.9,"vol":21665,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"3491","name":"昇達科","industry":"通訊設備零組件","strategies":["28"],"close":1715.0,"chg":5.21,"cur":1715.0,"ret":"0.00%","asof":"2026-10-06","amt":76.7,"vol":4502,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6187","name":"萬潤","industry":"封測用設備","strategies":["28"],"close":1535.0,"chg":3.02,"cur":1535.0,"ret":"0.00%","asof":"2026-10-06","amt":86.75,"vol":5715,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6197","name":"佳必琪","industry":"連接器","strategies":["28"],"close":365.0,"chg":5.8,"cur":365.0,"ret":"0.00%","asof":"2026-10-06","amt":27.07,"vol":7473,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6278","name":"台表科","industry":"電子製造服務","strategies":["28"],"close":234.0,"chg":6.36,"cur":234.0,"ret":"0.00%","asof":"2026-10-06","amt":44.58,"vol":19489,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2421","name":"建準","industry":"散熱風扇馬達","strategies":["34"],"close":173.0,"chg":2.06,"cur":173.0,"ret":"0.00%","asof":"2026-10-06","amt":6.42,"vol":3717,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2881","name":"富邦金","industry":"金控","strategies":["34"],"close":154.5,"chg":1.64,"cur":154.5,"ret":"0.00%","asof":"2026-10-06","amt":25.54,"vol":16607,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2884","name":"玉山金","industry":"金控","strategies":["34"],"close":45.45,"chg":1.45,"cur":45.45,"ret":"0.00%","asof":"2026-10-06","amt":5.5,"vol":12126,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2890","name":"永豐金","industry":"金控","strategies":["34"],"close":45.4,"chg":3.06,"cur":45.4,"ret":"0.00%","asof":"2026-10-06","amt":9.04,"vol":20036,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2891","name":"中信金","industry":"金控","strategies":["34","35"],"close":68.4,"chg":1.48,"cur":68.4,"ret":"0.00%","asof":"2026-10-06","amt":20.28,"vol":29788,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"2892","name":"第一金","industry":"金控","strategies":["34"],"close":38.55,"chg":1.31,"cur":38.55,"ret":"0.00%","asof":"2026-10-06","amt":5.03,"vol":13123,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"3693","name":"營邦","industry":"伺服器機殼","strategies":["34"],"close":716.0,"chg":3.92,"cur":716.0,"ret":"0.00%","asof":"2026-10-06","amt":17.27,"vol":2431,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"6669","name":"緯穎","industry":"伺服器","strategies":["34"],"close":2290.0,"chg":6.51,"cur":2290.0,"ret":"0.00%","asof":"2026-10-06","amt":120.12,"vol":5284,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"8069","name":"元太","industry":"電子紙","strategies":["34"],"close":149.0,"chg":1.71,"cur":149.0,"ret":"0.00%","asof":"2026-10-06","amt":16.08,"vol":10797,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"1504","name":"東元","industry":"電機","strategies":["35"],"close":71.1,"chg":3.04,"cur":71.1,"ret":"0.00%","asof":"2026-10-06","amt":5.33,"vol":7573,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4147","name":"中裕","industry":"新藥研發","strategies":["35"],"close":61.3,"chg":2.17,"cur":61.3,"ret":"0.00%","asof":"2026-10-06","amt":0.42,"vol":694,"r5":null,"r10":null,"r20":null,"mx":null},{"code":"4938","name":"和碩","industry":"電子製造服務","strategies":["35"],"close":90.0,"chg":1.47,"cur":90.0,"ret":"0.00%","asof":"2026-10-06","amt":5.24,"vol":5832,"r5":null,"r10":null,"r20":null,"mx":null}],"mk":{"c":"green","t":"大盤正常","m":"","dd":0.0}}];   // v6.12：沒登入只有每日策略
 apply(PUB_DOCS);
 setMode(MODE);
