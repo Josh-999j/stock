@@ -776,7 +776,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.70</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.71</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -873,7 +873,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.70（2026-10-07）<br>
+    <b>版本</b>　v6.71（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1224,7 +1224,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007023420', HAS_AV = true, JC = {};
+const BUILD = '20261007023526', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1244,7 +1244,7 @@ function kdata(code){
 }
 function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（電腦版 K 線視窗）
   const LW = LightweightCharts, cs0 = getComputedStyle(document.documentElement), cv = n => cs0.getPropertyValue(n).trim();
-  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f97316',10:'#3b82f6',20:'#22c55e',60:'#a855f7',120:'#ec4899',240:'#06b6d4'};
+  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#ea580c',10:'#2563eb',20:'#16a34a',60:'#c084fc',120:'#f472b6',240:'#67e8f9'};   // v6.71：短均深色（橘藍綠）、長均淺色（紫粉青），深淺對比
   const KCL = {dif:'#facc15', mac:'#2563eb', k:'#d946ef', d:'#14b8a6'};   // v6.61：MACD 黃／深藍、KD 桃紅／藍綠，兩兩對比明顯（線也加粗）   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
   const sma = (a, n) => { let s = 0; return a.map((x, i) => { s += x; if(i >= n) s -= a[i-n]; return i < n-1 ? null : s/n; }); };
   const ema = (a, n) => { const k = 2/(n+1); let e = null; return a.map(x => e = e == null ? x : x*k + e*(1-k)); };
@@ -1343,6 +1343,7 @@ function kshow(code, name){
   if(was && KPOP.style.left){ /* 換下一檔：留在原位置 */ }
   else if(desk && pf.l != null){ KPOP.style.left = Math.min(Math.max(0, pf.l), innerWidth - 120) + 'px'; KPOP.style.top = Math.min(Math.max(0, pf.t), innerHeight - 80) + 'px'; }
   else { KPOP.style.left = Math.max(8, (innerWidth - KPOP.offsetWidth) / 2) + 'px'; KPOP.style.top = Math.max(8, (innerHeight - KPOP.offsetHeight) / 2) + 'px'; }
+  if(desk && !KPOP.dataset.mu){ KPOP.dataset.mu = '1'; KPOP.addEventListener('mouseup', () => { if(KDESK() && !KPOP.hidden) kpSet({w:KPOP.offsetWidth, h:KPOP.offsetHeight}); }); }   // 拉完右下角放開時也存
   if(desk && !KRO && window.ResizeObserver){ let tm = null; KRO = new ResizeObserver(() => { if(KPOP.hidden) return; clearTimeout(tm); tm = setTimeout(() => kpSet({w:KPOP.offsetWidth, h:KPOP.offsetHeight}), 400); }); KRO.observe(KPOP); }
 }
 document.addEventListener('click', e => {
