@@ -757,7 +757,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.36</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.37</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -853,7 +853,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.36（2026-10-06）<br>
+    <b>版本</b>　v6.37（2026-10-06）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1204,7 +1204,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261006234156', HAS_AV = true, JC = {};
+const BUILD = '20261006234507', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
@@ -1435,7 +1435,7 @@ function initWH(){
       let tail='';
       if(!latest){
         if(r.st==='new') tail = '<td class="na2">隔天開盤</td><td><span class="wtag n">待進場</span></td><td>—</td>';
-        else tail = `<td>${f(r.ed)} ${r.ep}</td><td>${r.st==='hold'?'<span class="wtag h">持有中</span>':`<span class="wtag o">已出場 ${f(r.xd)}</span>`} ${sg(r.ret)}</td><td>${sg(r.hi)}</td>`;
+        else tail = `<td>${f(r.ed)} ${r.ep}</td><td>${r.st==='hold'?'<span class="wtag h">持有中</span>':`<span class="wtag o">${r.xr || '已出場'} ${f(r.xd)}</span>`} ${sg(r.ret)}</td><td>${sg(r.hi)}</td>`;
       }
       return `<tr><th>${esc(r.name)}<span class="n">${esc(r.code)}</span></th><td class="tx">${esc(r.ind)}</td><td>${f(r.wd)} ${r.wc}</td><td>${r.cc}</td><td>${(r.cc*0.92).toFixed(2)}</td>${tail}</tr>`;
     }).join('') : `<tr><td colspan="${head.length}" class="na">這天沒有確認買點</td></tr>`;
