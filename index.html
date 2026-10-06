@@ -759,7 +759,11 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .sipop.gpop{position:fixed;z-index:60;width:min(340px,calc(100vw - 24px));background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px -10px rgba(0,0,0,.35);padding:12px 14px;font-size:13.5px;line-height:1.5}
 .sipop.gpop[hidden]{display:none}
 .sipop.gpop{max-height:calc(100vh - 16px);overflow:auto}   /* v6.49 */
-.sipop .kbox{margin-top:8px;border-top:1px solid var(--line-2);padding-top:6px} .sipop .kbox .kinfo{font-size:11px;line-height:16px;height:64px;overflow:hidden;color:var(--muted);font-variant-numeric:tabular-nums} .sipop .kbox .kinfo>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kbtn{border:0;background:none;padding:0 0 0 5px;margin:0;cursor:pointer;line-height:1;color:var(--accent);vertical-align:middle;-webkit-tap-highlight-color:transparent}   /* v6.56 */
+.kbtn svg{width:19px;height:19px;display:inline-block;vertical-align:-4px} .kbtn:hover svg{transform:scale(1.15)}
+.sipop.kpop{width:min(380px,calc(100vw - 16px));z-index:70} .kpop .kp-h{display:flex;align-items:center;gap:8px;margin:-2px 0 4px;font-size:15px} .kpop .kp-h span{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:13px}
+.kpop .kp-x{margin-left:auto;border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px} .kpop .kbox{border-top:0;margin-top:0;padding-top:0}
+.sipop .kbox{margin-top:8px;border-top:1px solid var(--line-2);padding-top:6px} .sipop .kbox .kinfo{font-size:11px;line-height:16px;height:80px;overflow:hidden;color:var(--muted);font-variant-numeric:tabular-nums} .sipop .kbox .kinfo>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sipop .kbox .kinfo b{color:var(--ink)} .sipop .kbox .kinfo .up{color:var(--up)} .sipop .kbox .kinfo .dn{color:var(--down)} .sipop .kbox .kc{height:300px}
 .sipop .kbox .plab{position:absolute;left:3px;top:1px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surface);padding:0 3px;border-radius:3px;z-index:5;pointer-events:none}
 body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-cards #view-rich tbody th{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
@@ -769,7 +773,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div>
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.55</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.57</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -866,7 +870,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.55（2026-10-07）<br>
+    <b>版本</b>　v6.57（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1217,7 +1221,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007014023', HAS_AV = true, JC = {};
+const BUILD = '20261007014521', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1265,11 +1269,13 @@ function drawK(el, info, S){
   chart.timeScale().setVisibleLogicalRange({from:T.length-120, to:T.length+1});
   const f = x => x == null ? '—' : (+x).toLocaleString('zh-TW', {maximumFractionDigits:2});
   const show = i => { if(i == null || i < 0) i = T.length-1; const pc = S.c[i-1] ?? S.o[i], ch = (S.c[i]/pc - 1)*100;
-    // v6.54：固定 4 行、不換行（高度不變，圖才不會跳）
-    info.innerHTML = `<div><b>${T[i].slice(2).replace(/-/g,'/')}</b> 收 <b class="${ch>=0?'up':'dn'}">${f(S.c[i])}（${ch>=0?'+':''}${ch.toFixed(2)}%）</b> 量 ${f(S.v[i])} 張</div>`+
+    // v6.57：固定 5 行、不換行（高度不變，圖才不會跳），每個數字都標名稱
+    const sp = (c, s) => `<span style="color:${c}">${s}</span>`, sg = x => (x >= 0 ? '+' : '') + f(x);
+    info.innerHTML = `<div><b>${T[i].replace(/-/g,'/')}</b>　收 <b class="${ch>=0?'up':'dn'}">${f(S.c[i])}（${ch>=0?'+':''}${ch.toFixed(2)}%）</b>　量 ${f(S.v[i])} 張</div>`+
       `<div>開 ${f(S.o[i])}　高 ${f(S.h[i])}　低 ${f(S.l[i])}</div>`+
-      `<div>`+[5,10,20,60,120,240].map(n => `<span style="color:${MAC[n]}">${n} ${f(L[n][i])}</span>`).join(' ')+`</div>`+
-      `<div><span style="color:#f5b301">DIF ${f(dif[i])}</span> <span style="color:#3b82f6">MACD ${f(mac[i])}</span> OSC ${f(osc[i])}　<span style="color:#f5b301">K ${f(KD[i][0])}</span> <span style="color:#3b82f6">D ${f(KD[i][1])}</span></div>`; };
+      `<div>均線　`+[5,10,20].map(n => sp(MAC[n], `${n}日 ${f(L[n][i])}`)).join('　')+`</div>`+
+      `<div><span style="visibility:hidden">均線</span>　`+[60,120,240].map(n => sp(MAC[n], `${n}日 ${f(L[n][i])}`)).join('　')+`</div>`+
+      `<div>MACD：${sp('#f5b301','DIF '+f(dif[i]))}　${sp('#3b82f6','MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp('#f5b301','K '+Math.round(KD[i][0]))}　${sp('#3b82f6','D '+Math.round(KD[i][1]))}</div>`; };
   chart.subscribeCrosshairMove(p => show(p && p.time ? T.indexOf(p.time) : null)); show(null);
 }
 function addK(host, code){
@@ -1281,14 +1287,14 @@ function addK(host, code){
 let CARDS = {};
 const GPOP = document.createElement('div'); GPOP.className = 'sipop gpop'; GPOP.hidden = true; document.body.appendChild(GPOP);
 function gshow(el, code){
-  GPOP.innerHTML = CARDS[code]; addK(GPOP, code); GPOP.hidden = false;   // v6.49：小卡下面加 K 線
+  GPOP.innerHTML = CARDS[code]; GPOP.hidden = false;
   const r = el.getBoundingClientRect(), w = GPOP.offsetWidth, h = GPOP.offsetHeight;
   const left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
   let top = r.bottom + 6; if(top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
   GPOP.style.left = left + 'px'; GPOP.style.top = top + 'px';
 }
 document.addEventListener('click', e => {
-  if(!document.body.classList.contains('has-cards') || e.target.closest('.gpop')) return;
+  if(!document.body.classList.contains('has-cards') || e.target.closest('.gpop') || e.target.closest('.kbtn')) return;
   const el = e.target.closest('#view-daily .nm, #view-watch tbody th, #view-rich tbody th');
   if(!el){ GPOP.hidden = true; return; }
   const box = el.closest('tr, .card'), t = box && box.querySelector('.cd, .n'), m = t && t.textContent.match(/\d{4}/);
@@ -1296,6 +1302,30 @@ document.addEventListener('click', e => {
 });
 window.addEventListener('scroll', () => { GPOP.hidden = true; }, {passive:true});
 document.addEventListener('keydown', e => { if(e.key === 'Escape') GPOP.hidden = true; });
+/* v6.56：股票名稱旁的 K 線圖示（登入後），點了開獨立的 K 線視窗 */
+const KICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v9M9 3v9M14 2v6" stroke="#3b82f6" stroke-width="1.4" stroke-linecap="round"/><rect x="2.7" y="7" width="2.6" height="4.5" rx=".4" fill="#3b82f6"/><rect x="7.7" y="5" width="2.6" height="5" rx=".4" fill="#e5383b"/><rect x="12.7" y="3.2" width="2.6" height="3.6" rx=".4" fill="#e5383b"/><circle cx="14.5" cy="14.5" r="5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M18.2 18.2L22 22" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+const KSEL = '#view-daily .nm, #view-watch tbody th, #view-rich tbody th, .fp .si';
+function kcode(el){ if(el.matches('.si')) return el.dataset.k; const box = el.closest('tr, .card'), t = box && box.querySelector('.cd, .n'), m = t && t.textContent.match(/\d{4,6}[A-Z]?/); return m && m[0]; }
+function kname(el){ if(el.matches('th')){ const n = [...el.childNodes].find(x => x.nodeType === 3 && x.textContent.trim()); return n ? n.textContent.trim() : ''; }
+  return el.textContent.replace(/\d{4,6}[A-Z]?/, '').trim(); }
+let KBQ = false;
+function addKBtns(){ KBQ = false; if(!document.body.classList.contains('unlocked')) return;
+  document.querySelectorAll(KSEL).forEach(el => { if(el.dataset.kb) return; const c = kcode(el); if(!c) return; el.dataset.kb = '1';
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'kbtn'; b.dataset.code = c; b.dataset.name = kname(el); b.title = '看 K 線'; b.setAttribute('aria-label', '看 '+c+' K 線'); b.innerHTML = KICON;
+    if(el.matches('th')){ const n = el.querySelector('.n'); n ? el.insertBefore(b, n) : el.appendChild(b); } else if(el.matches('.si')) el.after(b); else el.appendChild(b); }); }
+new MutationObserver(() => { if(!KBQ){ KBQ = true; setTimeout(addKBtns, 60); } }).observe(document.body, {childList:true, subtree:true});
+const KPOP = document.createElement('div'); KPOP.className = 'sipop gpop kpop'; KPOP.hidden = true; document.body.appendChild(KPOP);
+function kshow(code, name){
+  KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span><button type="button" class="kp-x" aria-label="關閉">×</button></div>`;
+  addK(KPOP, code); GPOP.hidden = true; KPOP.hidden = false;
+  KPOP.style.left = Math.max(8, (innerWidth - KPOP.offsetWidth) / 2) + 'px'; KPOP.style.top = Math.max(8, (innerHeight - KPOP.offsetHeight) / 2) + 'px';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.kbtn');
+  if(b){ e.stopPropagation(); e.preventDefault(); kshow(b.dataset.code, b.dataset.name); return; }
+  if(!KPOP.hidden && (e.target.closest('.kp-x') || !e.target.closest('.kpop'))) KPOP.hidden = true;
+}, true);
+document.addEventListener('keydown', e => { if(e.key === 'Escape') KPOP.hidden = true; });
 (function(){ const b=document.getElementById('mk-badge'), x=document.getElementById('mk-box'); if(!b||!x) return;
   b.addEventListener('click', () => { if(x.classList.contains('mk-green')){ x.hidden = !x.hidden; b.setAttribute('aria-expanded', String(!x.hidden)); }
     else { const d=x.querySelector('details'); if(d) d.open = !d.open; x.scrollIntoView({block:'nearest'}); } }); })();
@@ -1386,7 +1416,7 @@ function initOwner(){
     const pop = root.querySelector('.sipop'), cards = root.querySelector('.sicards'); if(!pop || !cards) return;
     let cur = null;
     const show = el => { const c = cards.querySelector('.sicard[data-k="'+el.dataset.k+'"]'); if(!c) return;
-      pop.innerHTML = c.innerHTML; addK(pop, el.dataset.k); pop.hidden = false; cur = el;
+      pop.innerHTML = c.innerHTML; pop.hidden = false; cur = el;
       const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect(), w = pop.offsetWidth;
       let left = r.left - rr.left; if(left + w > rr.width) left = Math.max(0, rr.width - w);
       pop.style.left = left + 'px'; pop.style.top = (r.bottom - rr.top + 6) + 'px'; };
