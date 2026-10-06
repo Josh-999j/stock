@@ -802,7 +802,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
     <div class="meta">
       <div><div class="k">資料日</div><div class="v num" id="m-date">—</div></div>
-      <div><div class="k">加權指數</div><div class="v num" id="m-idx">—</div><div class="mk-wrap"><button type="button" class="mk-badge mk-green" id="mk-badge" aria-expanded="false" aria-controls="mk-box"><span class="dot"></span>大盤正常</button></div></div>
+      <div><div class="k">加權指數</div><div class="v num" id="m-idx">—</div><div class="mk-wrap"><button type="button" class="mk-badge mk-green" id="mk-badge" aria-expanded="false" aria-controls="mk-box"><span class="dot"></span>大盤正常</button><div class="mk-am" title="大盤監控 06:00 收集">今晨　費半 <span class="up">+0.34%</span>　那斯達克 <span class="up">+0.45%</span>　台指期夜盤 <span class="dn">-0.06%</span>　VIX 15.0</div></div></div>
       <button type="button" class="gear" id="theme" title="切換深色／淺色" aria-label="切換深色／淺色">🌙</button>
       <button type="button" class="gear" id="gear" title="解鎖成立條件、風報比與紀錄" aria-label="解鎖成立條件、風報比與紀錄">⚙</button>
     </div>
@@ -1246,7 +1246,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007030517', HAS_AV = true, JC = {};
+const BUILD = '20261007063001', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
