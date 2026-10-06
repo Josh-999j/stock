@@ -774,7 +774,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.59</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.60</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -871,7 +871,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.59（2026-10-07）<br>
+    <b>版本</b>　v6.60（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1222,7 +1222,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007015639', HAS_AV = true, JC = {};
+const BUILD = '20261007015712', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1274,8 +1274,8 @@ function drawK(el, info, S){
     const sp = (c, s) => `<span style="color:${c}">${s}</span>`, sg = x => (x >= 0 ? '+' : '') + f(x);
     info.innerHTML = `<div><b>${T[i].replace(/-/g,'/')}</b>　收 <b class="${ch>=0?'up':'dn'}">${f(S.c[i])}（${ch>=0?'+':''}${ch.toFixed(2)}%）</b>　量 ${f(S.v[i])} 張</div>`+
       `<div>開 ${f(S.o[i])}　高 ${f(S.h[i])}　低 ${f(S.l[i])}</div>`+
-      `<div>均線　`+[5,10,20].map(n => sp(MAC[n], `${n}日 ${f(L[n][i])}`)).join('　')+`</div>`+
-      `<div><span style="visibility:hidden">均線</span>　`+[60,120,240].map(n => sp(MAC[n], `${n}日 ${f(L[n][i])}`)).join('　')+`</div>`+
+      `<div>`+[5,10,20].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
+      `<div>`+[60,120,240].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
       `<div>MACD：${sp('#f5b301','DIF '+f(dif[i]))}　${sp('#3b82f6','MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp('#f5b301','K '+Math.round(KD[i][0]))}　${sp('#3b82f6','D '+Math.round(KD[i][1]))}</div>`; };
   chart.subscribeCrosshairMove(p => show(p && p.time ? T.indexOf(p.time) : null)); show(null);
 }
