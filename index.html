@@ -774,7 +774,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.60</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.61</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -871,7 +871,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.60（2026-10-07）<br>
+    <b>版本</b>　v6.61（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1222,7 +1222,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007015712', HAS_AV = true, JC = {};
+const BUILD = '20261007015754', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1242,7 +1242,8 @@ function kdata(code){
 }
 function drawK(el, info, S){
   const LW = LightweightCharts, cs0 = getComputedStyle(document.documentElement), cv = n => cs0.getPropertyValue(n).trim();
-  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f97316',10:'#3b82f6',20:'#22c55e',60:'#a855f7',120:'#ec4899',240:'#06b6d4'};   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
+  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f97316',10:'#3b82f6',20:'#22c55e',60:'#a855f7',120:'#ec4899',240:'#06b6d4'};
+  const KCL = {dif:'#facc15', mac:'#2563eb', k:'#d946ef', d:'#14b8a6'};   // v6.61：MACD 黃／深藍、KD 桃紅／藍綠，兩兩對比明顯（線也加粗）   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
   const sma = (a, n) => { let s = 0; return a.map((x, i) => { s += x; if(i >= n) s -= a[i-n]; return i < n-1 ? null : s/n; }); };
   const ema = (a, n) => { const k = 2/(n+1); let e = null; return a.map(x => e = e == null ? x : x*k + e*(1-k)); };
   const T = S.d.map(d => { d = String(d); return d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6); });
@@ -1257,12 +1258,12 @@ function drawK(el, info, S){
   chart.addSeries(LW.HistogramSeries, {priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false}, 1)
     .setData(T.map((t, i) => ({time:t, value:S.v[i], color:(S.c[i] >= (S.c[i-1] ?? S.o[i])) ? UP+'cc' : DN+'cc'})));
   const v5 = sma(S.v, 5), v10 = sma(S.v, 10);
-  for(const [m, c] of [[v5,'#f5b301'],[v10,'#3b82f6']]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 1).setData(T.map((t, i) => m[i] == null ? {time:t} : {time:t, value:m[i]}));
+  for(const [m, c] of [[v5,MAC[5]],[v10,MAC[10]]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 1).setData(T.map((t, i) => m[i] == null ? {time:t} : {time:t, value:m[i]}));
   const e12 = ema(S.c, 12), e26 = ema(S.c, 26), dif = e12.map((x, i) => x - e26[i]), mac = ema(dif, 9), osc = dif.map((x, i) => x - mac[i]);
   chart.addSeries(LW.HistogramSeries, {priceLineVisible:false, lastValueVisible:false}, 2).setData(T.map((t, i) => ({time:t, value:osc[i], color:osc[i] >= 0 ? UP+'aa' : DN+'aa'})));
-  for(const [m, c] of [[dif,'#f5b301'],[mac,'#3b82f6']]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
+  for(const [m, c] of [[dif,KCL.dif],[mac,KCL.mac]]) chart.addSeries(LW.LineSeries, {...nl, color:c, lineWidth:2}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
   let K = 50, D = 50; const KD = S.c.map((x, i) => { const a = Math.max(0, i-8), lo = Math.min(...S.l.slice(a, i+1)), hi = Math.max(...S.h.slice(a, i+1)); K = K*2/3 + (hi > lo ? (x-lo)/(hi-lo)*100 : 50)/3; D = D*2/3 + K/3; return [K, D]; });
-  for(const [j, c] of [[0,'#f5b301'],[1,'#3b82f6']]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 3).setData(T.map((t, i) => ({time:t, value:KD[i][j]})));
+  for(const [j, c] of [[0,KCL.k],[1,KCL.d]]) chart.addSeries(LW.LineSeries, {...nl, color:c, lineWidth:2}, 3).setData(T.map((t, i) => ({time:t, value:KD[i][j]})));
   const ps = chart.panes(), SF = [4,1.3,1.3,1.3], NM = ['K線','成交量','MACD','KD'];
   ps.forEach((p, i) => { if(p.setStretchFactor) p.setStretchFactor(SF[i]); });
   requestAnimationFrame(() => ps.forEach((p, i) => { const h = p.getHTMLElement && p.getHTMLElement(); if(!h) return; const td = h.querySelector('td:nth-child(2)') || h; td.style.position = 'relative';
@@ -1276,7 +1277,7 @@ function drawK(el, info, S){
       `<div>開 ${f(S.o[i])}　高 ${f(S.h[i])}　低 ${f(S.l[i])}</div>`+
       `<div>`+[5,10,20].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
       `<div>`+[60,120,240].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
-      `<div>MACD：${sp('#f5b301','DIF '+f(dif[i]))}　${sp('#3b82f6','MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp('#f5b301','K '+Math.round(KD[i][0]))}　${sp('#3b82f6','D '+Math.round(KD[i][1]))}</div>`; };
+      `<div>MACD：${sp(KCL.dif,'DIF '+f(dif[i]))}　${sp(KCL.mac,'MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp(KCL.k,'K '+Math.round(KD[i][0]))}　${sp(KCL.d,'D '+Math.round(KD[i][1]))}</div>`; };
   chart.subscribeCrosshairMove(p => show(p && p.time ? T.indexOf(p.time) : null)); show(null);
 }
 function addK(host, code){
