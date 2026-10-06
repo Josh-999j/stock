@@ -757,7 +757,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.35</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.36</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -853,7 +853,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.35（2026-10-06）<br>
+    <b>版本</b>　v6.36（2026-10-06）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1204,7 +1204,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261006233845', HAS_AV = true, JC = {};
+const BUILD = '20261006234156', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
@@ -1347,6 +1347,13 @@ function initOwner(){
 let SECRETS = null;
 const sec = (d, r) => (SECRETS && SECRETS[d.date] && SECRETS[d.date][r.code]) || {};
 const b64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+/* v6.36：加密內容先 gzip 壓縮；瀏覽器用 DecompressionStream 解開（太舊的瀏覽器改用 pako） */
+async function unz(buf, z){
+  if(!z) return new TextDecoder().decode(buf);
+  if('DecompressionStream' in window) return await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  if(!window.pako) await new Promise((ok, ng) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js'; sc.onload = ok; sc.onerror = ng; document.head.appendChild(sc); });
+  return pako.ungzip(new Uint8Array(buf), {to:'string'});
+}
 async function openVault(pw, V){
   const key0 = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
   const derive = salt => crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(salt), iterations:V.iter, hash:'SHA-256'},
@@ -1357,7 +1364,7 @@ async function openVault(pw, V){
     const w = await Promise.any(V.users.map(async u => JSON.parse(new TextDecoder().decode(await dec(await derive(u.salt), u.iv, u.ct))))).catch(() => null);
     if(!w) throw new Error('密碼錯誤');
     const dk = await crypto.subtle.importKey('raw', b64(w.k), 'AES-GCM', false, ['decrypt']);
-    const o = JSON.parse(new TextDecoder().decode(await dec(dk, V.iv, V.ct)));
+    const o = JSON.parse(await unz(await dec(dk, V.iv, V.ct), V.z));
     o.role = w.role; o._dk = dk; return o;   // v6.30：留著金鑰，解開之後才下載的部分（data/v*.json）
   }
   const pt = await dec(await derive(V.salt), V.iv, V.ct);
@@ -1569,14 +1576,15 @@ $('gear').addEventListener('click', async () => {
     document.body.classList.add('unlocked'); document.body.classList.toggle('owner', v.role==='owner'); g.classList.add('on'); $('tabs').hidden = false;
     const d=DAYS.find(x=>x.date===cur); if(d) renderDay(d); setMode(MODE);
     const on = () => document.body.classList.contains('unlocked');
-    const part = n => getJ(n).then(async X => { const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(X.iv)}, v._dk, b64(X.ct)); return JSON.parse(new TextDecoder().decode(pt)); });
+    const part = n => getJ(n).then(async X => { const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(X.iv)}, v._dk, b64(X.ct)); return JSON.parse(await unz(pt, X.z)); });
     part('vrich').then(h => { if(!on()) return; $('rich-body').innerHTML = h || '<p>尚無大富翁資料</p>'; initRich(); })
       .catch(e => { console.error('vrich', e); if(on()) $('rich-body').innerHTML = '<p class="note">大富翁資料下載失敗，請重新整理再試</p>'; });
     part('vcards').then(c => { if(!on()) return; CARDS = c || {}; document.body.classList.toggle('has-cards', Object.keys(CARDS).length > 0);
       const d2=DAYS.find(x=>x.date===cur); if(d2) renderDay(d2); setMode(MODE); }).catch(e => console.error('vcards', e));
     part('vdays').then(days => { if(on()){ apply(days); setMode(MODE); } }).catch(e => console.error('vdays', e));
+    let pend = null;   // v6.36：站主／進階分頁下載完之前，齒輪一直轉
     if(v.role==='owner'){
-      openOwner(pw).then(o => { if(!on()) return;
+      pend = openOwner(pw).then(o => { if(!on()) return;
            $('fplan-body').innerHTML = o.fplan || '<p>尚無 Fyo方案資料</p>'; $('cfg-body').innerHTML = o.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            const wr = $('wh-rules'); if(wr && o.wrules) wr.textContent = o.wrules;   // v6.14：谷底飛龍規則只給站主
@@ -1585,12 +1593,13 @@ $('gear').addEventListener('click', async () => {
            document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner();
            const d3=DAYS.find(x=>x.date===cur); if(d3) renderDay(d3); setMode(MODE); }).catch(e => console.error('owner', e));
     } else if(v.role==='adv' && HAS_AV){   // v6.9：進階開資產模擬；v6.15 再加 Fyo方案
-      openVault(pw, await getJ('avault').catch(() => null) || {users:[]}).then(a => { if(!on()) return;
+      pend = getJ('avault').then(A => openVault(pw, A)).then(a => { if(!on()) return;
            $('cfg-body').innerHTML = a.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            if(a.fplan){ $('fplan-body').innerHTML = a.fplan; try{ initOwner(); }catch(e){} }
            document.querySelectorAll('#tabs .own').forEach(b => b.hidden = !(b.dataset.v==='cfg' || (b.dataset.v==='fplan' && a.fplan))); }).catch(e => console.error('adv', e));
     }
+    if(pend) await pend.catch(() => {});
   }catch(e){ alert(String(e && e.message).startsWith('下載失敗') ? '資料下載失敗，請重新整理再試' : '帳號錯誤'); }
   finally{ g.classList.remove('busy'); }
 });
