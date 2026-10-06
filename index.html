@@ -796,7 +796,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.75</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.76</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -895,7 +895,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.75（2026-10-07）<br>
+    <b>版本</b>　v6.76（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1246,7 +1246,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007025043', HAS_AV = true, JC = {};
+const BUILD = '20261007030517', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1451,8 +1451,10 @@ function ksetPaint(){ const a = kmaGet(), p = KPOP.querySelector('.kset'); if(!p
   p.innerHTML = '<div class="kset-p">顯示：<label><input type="checkbox" checked disabled> K線</label>' + [['vol','成交量'],['macd','MACD'],['kd','KD']].map(([k, n]) => `<label><input type="checkbox" data-pv="${k}"${pv[k] ? ' checked' : ''}> ${n}</label>`).join('') + '</div>' + a.map((m, j) => `<label class="km"><input type="checkbox" data-j="${j}" data-k="on"${m.on ? ' checked' : ''}> MA <input type="number" data-j="${j}" data-k="n" min="2" max="600" value="${m.n}"> 日 <input type="color" data-j="${j}" data-k="c" value="${m.c}"></label>`).join('') +
     '<div class="kset-b"><button type="button" class="kset-rs">恢復預設</button><span>改了馬上套用，記在這台裝置</span></div>'; }
 function kredraw(){ const b = KPOP.querySelector('.kbox'); if(b) b.remove(); addK(KPOP, KPOP.dataset.code, KDESK() ? {...kpGet(), save:true} : null); }
+KPOP.addEventListener('input', e => { const x = e.target.closest('.kset input[type=color]'); if(!x) return; clearTimeout(KPOP._ct); KPOP._ct = setTimeout(() => { const a = kmaGet(); a[+x.dataset.j].c = x.value; kmaSet(a); kredraw(); }, 250); });   // v6.76 手機選色即時套用
 KPOP.addEventListener('change', e => { const x = e.target.closest('.kset input'); if(!x) return;
-  if(x.dataset.pv){ const pv = kpvGet(); pv[x.dataset.pv] = x.checked; kpvSet(pv); kpSet({sf:null}); kredraw(); return; }   // v6.74 各區開關（各區高度比例重來） const a = kmaGet(), j = +x.dataset.j, k = x.dataset.k;
+  if(x.dataset.pv){ const pv = kpvGet(); pv[x.dataset.pv] = x.checked; kpvSet(pv); kpSet({sf:null}); kredraw(); return; }   // v6.74 各區開關（各區高度比例重來）
+  const a = kmaGet(), j = +x.dataset.j, k = x.dataset.k;   // v6.76：這行之前被註解吃掉，均線設定全部失效
   if(k === 'on') a[j].on = x.checked ? 1 : 0; else if(k === 'n'){ const n = Math.round(+x.value); if(!(n >= 2 && n <= 600)) return; a[j].n = n; } else a[j].c = x.value;
   kmaSet(a); kredraw(); });
 (function(){ const b=document.getElementById('mk-badge'), x=document.getElementById('mk-box'); if(!b||!x) return;
