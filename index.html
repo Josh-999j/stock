@@ -607,7 +607,7 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .cfg2 .pc b{font-size:17px} .cfg2 .pc span{font-size:13px;color:var(--ink-2)} .cfg2 .pc i{font-style:normal;font-size:12px;color:var(--muted)} .cfg2 .pc em{font-style:normal}
 .cfg2 .pc.on{border:2px solid var(--accent);background:var(--accent-soft)}
 .cfg2 .pc.over{opacity:.55} .cfg2 .pc .ov{color:var(--warn)}
-.cfg2 tr.over td{opacity:.5}
+.cfg2 tr.over td:not(.best){opacity:.5}
 .cfg2 [hidden]{display:none!important}
 .cfg2 .pdet{background:var(--surface-2);border-radius:8px;padding:10px 14px;font-size:14px;margin:6px 0}
 .cfg2 .pdet div{margin:3px 0} .cfg2 .pdet span{display:inline-block;min-width:96px;color:var(--muted);font-size:13px}
@@ -765,7 +765,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.49</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.50</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -862,7 +862,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.49（2026-10-07）<br>
+    <b>版本</b>　v6.50（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1213,7 +1213,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007012333', HAS_AV = true, JC = {};
+const BUILD = '20261007013154', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
