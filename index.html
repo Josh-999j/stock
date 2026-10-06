@@ -776,7 +776,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.69</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.70</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -873,7 +873,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.69（2026-10-07）<br>
+    <b>版本</b>　v6.70（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1224,7 +1224,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007023304', HAS_AV = true, JC = {};
+const BUILD = '20261007023420', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1242,7 +1242,7 @@ function kdata(code){
     .catch(e => { delete KC[code]; throw e; });
   return KC[code];
 }
-function drawK(el, info, S){
+function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（電腦版 K 線視窗）
   const LW = LightweightCharts, cs0 = getComputedStyle(document.documentElement), cv = n => cs0.getPropertyValue(n).trim();
   const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f97316',10:'#3b82f6',20:'#22c55e',60:'#a855f7',120:'#ec4899',240:'#06b6d4'};
   const KCL = {dif:'#facc15', mac:'#2563eb', k:'#d946ef', d:'#14b8a6'};   // v6.61：MACD 黃／深藍、KD 桃紅／藍綠，兩兩對比明顯（線也加粗）   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
@@ -1267,11 +1267,12 @@ function drawK(el, info, S){
   for(const [m, c] of [[dif,KCL.dif],[mac,KCL.mac]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
   let K = 50, D = 50; const KD = S.c.map((x, i) => { const a = Math.max(0, i-8), lo = Math.min(...S.l.slice(a, i+1)), hi = Math.max(...S.h.slice(a, i+1)); K = K*2/3 + (hi > lo ? (x-lo)/(hi-lo)*100 : 50)/3; D = D*2/3 + K/3; return [K, D]; });
   for(const [j, c] of [[0,KCL.k],[1,KCL.d]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 3).setData(T.map((t, i) => ({time:t, value:KD[i][j]})));
-  const ps = chart.panes(), SF = [4,1.3,1.3,1.3], NM = ['K線','成交量','MACD','KD'];
+  const ps = chart.panes(), SF = (P && Array.isArray(P.sf) && P.sf.length === 4 && P.sf.every(x => x > 10)) ? P.sf : [4,1.3,1.3,1.3], NM = ['K線','成交量','MACD','KD'];
   ps.forEach((p, i) => { if(p.setStretchFactor) p.setStretchFactor(SF[i]); });
   requestAnimationFrame(() => ps.forEach((p, i) => { const h = p.getHTMLElement && p.getHTMLElement(); if(!h) return; const td = h.querySelector('td:nth-child(2)') || h; td.style.position = 'relative';
     const lb = document.createElement('div'); lb.className = 'plab'; lb.textContent = NM[i]; td.appendChild(lb); }));
-  const vr = () => chart.timeScale().setVisibleLogicalRange({from:Math.max(0, T.length-120), to:T.length+11});   // v6.64：開圖預設最近 120 天（等版面量好再設一次）
+  const NB = (P && P.bars >= 20 && P.bars <= 2000) ? P.bars : 132;
+  const vr = () => chart.timeScale().setVisibleLogicalRange({from:Math.max(0, T.length+11-NB), to:T.length+11});   // v6.64：開圖預設最近 120 天（等版面量好再設一次）
   vr(); setTimeout(vr, 60); setTimeout(vr, 300);
   const f = x => x == null ? '—' : (+x).toLocaleString('zh-TW', {maximumFractionDigits:2});
   const show = i => { if(i == null || i < 0) i = T.length-1; const pc = S.c[i-1] ?? S.o[i], ch = (S.c[i]/pc - 1)*100;
@@ -1283,10 +1284,13 @@ function drawK(el, info, S){
       `<div>`+[60,120,240].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
       `<div>MACD：${sp(KCL.dif,'DIF '+f(dif[i]))}　${sp(KCL.mac,'MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp(KCL.k,'K '+Math.round(KD[i][0]))}　${sp(KCL.d,'D '+Math.round(KD[i][1]))}</div>`; };
   chart.subscribeCrosshairMove(p => show(p && p.time ? T.indexOf(p.time) : null)); show(null);
+  if(P && P.save){ let tm = null; const sv = () => { clearTimeout(tm); tm = setTimeout(() => { if(!el.isConnected) return; const r = chart.timeScale().getVisibleLogicalRange();
+      kpSet({sf: chart.panes().map(p => p.getHeight()), bars: r ? Math.round(r.to - r.from) : undefined}); }, 500); };
+    setTimeout(() => { el.addEventListener('mouseup', sv); el.addEventListener('wheel', sv, {passive:true}); chart.timeScale().subscribeVisibleLogicalRangeChange(sv); }, 600); }
 }
-function addK(host, code){
+function addK(host, code, P){
   const box = document.createElement('div'); box.className = 'kbox'; box.innerHTML = '<div class="kinfo">K 線載入中…</div><div class="kc"></div>'; host.appendChild(box);
-  Promise.all([kdata(code), lw()]).then(([S]) => { if(box.isConnected) drawK(box.querySelector('.kc'), box.querySelector('.kinfo'), S); })
+  Promise.all([kdata(code), lw()]).then(([S]) => { if(box.isConnected) drawK(box.querySelector('.kc'), box.querySelector('.kinfo'), S, P); })
     .catch(() => { box.querySelector('.kinfo').textContent = location.hostname.endsWith('github.io') ? 'K 線在新網址才有：redshrimp.pages.dev' : 'K 線暫時無法載入，請稍後再試'; const k = box.querySelector('.kc'); if(k) k.remove(); });
 }
 /* v6.6：全站個股小卡（解鎖後；點股票名稱） */
@@ -1321,14 +1325,25 @@ function addKBtns(){ KBQ = false; if(!document.body.classList.contains('unlocked
     if(el.matches('th')){ const n = el.querySelector('.n'); n ? el.insertBefore(b, n) : el.appendChild(b); } else if(el.matches('.si')) el.after(b); else el.appendChild(b); }); }
 new MutationObserver(() => { if(!KBQ){ KBQ = true; setTimeout(addKBtns, 60); } }).observe(document.body, {childList:true, subtree:true});
 const KPOP = document.createElement('div'); KPOP.className = 'sipop gpop kpop'; KPOP.hidden = true; document.body.appendChild(KPOP);
+/* v6.70：電腦版 K 線視窗記住大小、位置、各區比例、縮放（記在這台裝置）；換下一檔不跳回中間 */
+const KPK = 'hx_kpop', KDESK = () => matchMedia('(min-width:900px) and (hover:hover)').matches;
+const kpGet = () => { try{ return JSON.parse(localStorage.getItem(KPK)) || {}; }catch(e){ return {}; } };
+const kpSet = o => { try{ localStorage.setItem(KPK, JSON.stringify({...kpGet(), ...o})); }catch(e){} };
+let KRO = null;
 function kshow(code, name){
+  const was = !KPOP.hidden, desk = KDESK(), pf = desk ? kpGet() : {};
   KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span><button type="button" class="kp-x" aria-label="關閉">×</button></div>`;
-  addK(KPOP, code); GPOP.hidden = true; KPOP.hidden = false;
+  addK(KPOP, code, desk ? {...pf, save:true} : null); GPOP.hidden = true;
+  if(desk && pf.w && pf.h){ KPOP.style.width = Math.min(pf.w, innerWidth - 16) + 'px'; KPOP.style.height = Math.min(pf.h, innerHeight - 16) + 'px'; }
+  KPOP.hidden = false;
   const hd = KPOP.querySelector('.kp-h');   // v6.68：電腦版按住標題列可以拖動視窗
   hd.addEventListener('mousedown', ev => { if(ev.target.closest('.kp-x')) return; ev.preventDefault(); const sx = ev.clientX - KPOP.offsetLeft, sy = ev.clientY - KPOP.offsetTop;
     const mv = e2 => { KPOP.style.left = Math.min(Math.max(0, e2.clientX - sx), innerWidth - 60) + 'px'; KPOP.style.top = Math.min(Math.max(0, e2.clientY - sy), innerHeight - 40) + 'px'; };
-    const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); }; addEventListener('mousemove', mv); addEventListener('mouseup', up); });
-  KPOP.style.left = Math.max(8, (innerWidth - KPOP.offsetWidth) / 2) + 'px'; KPOP.style.top = Math.max(8, (innerHeight - KPOP.offsetHeight) / 2) + 'px';
+    const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); if(KDESK()) kpSet({l:KPOP.offsetLeft, t:KPOP.offsetTop}); }; addEventListener('mousemove', mv); addEventListener('mouseup', up); });
+  if(was && KPOP.style.left){ /* 換下一檔：留在原位置 */ }
+  else if(desk && pf.l != null){ KPOP.style.left = Math.min(Math.max(0, pf.l), innerWidth - 120) + 'px'; KPOP.style.top = Math.min(Math.max(0, pf.t), innerHeight - 80) + 'px'; }
+  else { KPOP.style.left = Math.max(8, (innerWidth - KPOP.offsetWidth) / 2) + 'px'; KPOP.style.top = Math.max(8, (innerHeight - KPOP.offsetHeight) / 2) + 'px'; }
+  if(desk && !KRO && window.ResizeObserver){ let tm = null; KRO = new ResizeObserver(() => { if(KPOP.hidden) return; clearTimeout(tm); tm = setTimeout(() => kpSet({w:KPOP.offsetWidth, h:KPOP.offsetHeight}), 400); }); KRO.observe(KPOP); }
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.kbtn');
