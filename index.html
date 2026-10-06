@@ -774,7 +774,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.65</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.66</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -871,7 +871,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.65（2026-10-07）<br>
+    <b>版本</b>　v6.66（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1222,7 +1222,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007020134', HAS_AV = true, JC = {};
+const BUILD = '20261007020415', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1248,28 +1248,28 @@ function drawK(el, info, S){
   const ema = (a, n) => { const k = 2/(n+1); let e = null; return a.map(x => e = e == null ? x : x*k + e*(1-k)); };
   const T = S.d.map(d => { d = String(d); return d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6); });
   const chart = LW.createChart(el, {autoSize:true, layout:{background:{color:'transparent'}, textColor:cv('--muted')||'#888', fontSize:10, panes:{separatorColor:cv('--line')||'#ccc'}, attributionLogo:true},
-    grid:{vertLines:{visible:false}, horzLines:{visible:false}}, rightPriceScale:{borderVisible:false}, timeScale:{borderVisible:false, rightOffset:6, fixLeftEdge:true, fixRightEdge:false},   /* v6.65：右邊留 6 根的空間 */
+    grid:{vertLines:{visible:false}, horzLines:{visible:false}}, rightPriceScale:{borderVisible:false}, timeScale:{borderVisible:false, rightOffset:12, fixLeftEdge:true, fixRightEdge:false},   /* v6.66：右邊留 12 根的空間 */
     crosshair:{mode:0}, localization:{locale:'zh-TW'},
     handleScroll:{mouseWheel:false, pressedMouseMove:true, horzTouchDrag:true, vertTouchDrag:false}, handleScale:{axisPressedMouseMove:false, mouseWheel:true, pinch:true}, kineticScroll:{touch:false, mouse:false}});   // v6.55：不上下拖動、不慣性滑，畫面不跳
   const nl = {priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, lineWidth:1};
   chart.addSeries(LW.CandlestickSeries, {upColor:UP, downColor:DN, borderUpColor:UP, borderDownColor:DN, wickUpColor:UP, wickDownColor:DN, priceLineVisible:false, lastValueVisible:false}, 0)
     .setData(T.map((t, i) => ({time:t, open:S.o[i], high:S.h[i], low:S.l[i], close:S.c[i]})));
   chart.addSeries(LW.LineSeries, {color:'#64748b', lineVisible:false, lastValueVisible:true, priceLineVisible:false, crosshairMarkerVisible:false}, 0).setData(T.map((x, i) => ({time:x, value:S.c[i]})));   // v6.63：最新價標籤改灰底（不用紅綠，免得像漲停）
-  const L = {}; for(const n of [5,10,20,60,120,240]){ L[n] = sma(S.c, n); chart.addSeries(LW.LineSeries, {...nl, color:MAC[n], lineWidth:n >= 60 ? 2 : 1}, 0).setData(T.map((t, i) => L[n][i] == null ? {time:t} : {time:t, value:L[n][i]})); }
+  const L = {}; for(const n of [5,10,20,60,120,240]){ L[n] = sma(S.c, n); chart.addSeries(LW.LineSeries, {...nl, color:MAC[n]}, 0).setData(T.map((t, i) => L[n][i] == null ? {time:t} : {time:t, value:L[n][i]})); }
   chart.addSeries(LW.HistogramSeries, {priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false}, 1)
     .setData(T.map((t, i) => ({time:t, value:S.v[i], color:(S.c[i] >= (S.c[i-1] ?? S.o[i])) ? UP+'cc' : DN+'cc'})));
   const v5 = sma(S.v, 5), v10 = sma(S.v, 10);
   for(const [m, c] of [[v5,MAC[5]],[v10,MAC[10]]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 1).setData(T.map((t, i) => m[i] == null ? {time:t} : {time:t, value:m[i]}));
   const e12 = ema(S.c, 12), e26 = ema(S.c, 26), dif = e12.map((x, i) => x - e26[i]), mac = ema(dif, 9), osc = dif.map((x, i) => x - mac[i]);
   chart.addSeries(LW.HistogramSeries, {priceLineVisible:false, lastValueVisible:false}, 2).setData(T.map((t, i) => ({time:t, value:osc[i], color:osc[i] >= 0 ? UP+'aa' : DN+'aa'})));
-  for(const [m, c] of [[dif,KCL.dif],[mac,KCL.mac]]) chart.addSeries(LW.LineSeries, {...nl, color:c, lineWidth:2}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
+  for(const [m, c] of [[dif,KCL.dif],[mac,KCL.mac]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
   let K = 50, D = 50; const KD = S.c.map((x, i) => { const a = Math.max(0, i-8), lo = Math.min(...S.l.slice(a, i+1)), hi = Math.max(...S.h.slice(a, i+1)); K = K*2/3 + (hi > lo ? (x-lo)/(hi-lo)*100 : 50)/3; D = D*2/3 + K/3; return [K, D]; });
-  for(const [j, c] of [[0,KCL.k],[1,KCL.d]]) chart.addSeries(LW.LineSeries, {...nl, color:c, lineWidth:2}, 3).setData(T.map((t, i) => ({time:t, value:KD[i][j]})));
+  for(const [j, c] of [[0,KCL.k],[1,KCL.d]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 3).setData(T.map((t, i) => ({time:t, value:KD[i][j]})));
   const ps = chart.panes(), SF = [4,1.3,1.3,1.3], NM = ['K線','成交量','MACD','KD'];
   ps.forEach((p, i) => { if(p.setStretchFactor) p.setStretchFactor(SF[i]); });
   requestAnimationFrame(() => ps.forEach((p, i) => { const h = p.getHTMLElement && p.getHTMLElement(); if(!h) return; const td = h.querySelector('td:nth-child(2)') || h; td.style.position = 'relative';
     const lb = document.createElement('div'); lb.className = 'plab'; lb.textContent = NM[i]; td.appendChild(lb); }));
-  const vr = () => chart.timeScale().setVisibleLogicalRange({from:Math.max(0, T.length-120), to:T.length+5});   // v6.64：開圖預設最近 120 天（等版面量好再設一次）
+  const vr = () => chart.timeScale().setVisibleLogicalRange({from:Math.max(0, T.length-120), to:T.length+11});   // v6.64：開圖預設最近 120 天（等版面量好再設一次）
   vr(); setTimeout(vr, 60); setTimeout(vr, 300);
   const f = x => x == null ? '—' : (+x).toLocaleString('zh-TW', {maximumFractionDigits:2});
   const show = i => { if(i == null || i < 0) i = T.length-1; const pc = S.c[i-1] ?? S.o[i], ch = (S.c[i]/pc - 1)*100;
