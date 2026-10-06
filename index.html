@@ -765,7 +765,12 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .sipop.kpop{width:min(380px,calc(100vw - 16px));z-index:70} .kpop .kp-h{display:flex;align-items:center;gap:8px;margin:-2px 0 4px;font-size:15px} .kpop .kp-h span{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:13px}
 @media (min-width:900px) and (hover:hover){.sipop.kpop{width:640px;height:600px;min-width:380px;min-height:460px;max-width:96vw;max-height:94vh;resize:both;overflow:hidden;display:flex;flex-direction:column}
  .kpop .kp-h{cursor:move;user-select:none} .kpop .kbox{flex:1;display:flex;flex-direction:column;min-height:0} .kpop .kbox .kc{flex:1;height:auto;min-height:240px}}   /* v6.68 */
-.kpop .kp-x{margin-left:auto;border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px} .kpop .kbox{border-top:0;margin-top:0;padding-top:0}
+.kpop .kp-g{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}   /* v6.72 */
+.kpop .kset{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin:0 0 6px;font-size:12px}
+.kpop .kset .km{display:flex;align-items:center;gap:4px} .kpop .kset input[type=number]{width:52px;padding:1px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
+.kpop .kset input[type=color]{width:28px;height:22px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer} .kpop .kset-b{grid-column:1/-1;display:flex;gap:8px;align-items:center;color:var(--muted)}
+.kpop .kset-b button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:1px 8px;font:inherit;cursor:pointer}
+.kpop .kp-x{margin-left:4px;border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px} .kpop .kbox{border-top:0;margin-top:0;padding-top:0}
 .sipop .kbox{margin-top:8px;border-top:1px solid var(--line-2);padding-top:6px} .sipop .kbox .kinfo{font-size:11px;line-height:16px;height:80px;overflow:hidden;color:var(--muted);font-variant-numeric:tabular-nums} .sipop .kbox .kinfo>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sipop .kbox .kinfo b{color:var(--ink)} .sipop .kbox .kinfo .up{color:var(--up)} .sipop .kbox .kinfo .dn{color:var(--down)} .sipop .kbox .kc{height:300px}
 .sipop .kbox .plab{position:absolute;left:3px;top:1px;font-size:10px;font-weight:700;color:var(--muted);background:var(--surface);padding:0 3px;border-radius:3px;z-index:5;pointer-events:none}
@@ -776,7 +781,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.71</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.72</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -873,7 +878,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.71（2026-10-07）<br>
+    <b>版本</b>　v6.72（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1224,7 +1229,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007023526', HAS_AV = true, JC = {};
+const BUILD = '20261007024047', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1242,9 +1247,12 @@ function kdata(code){
     .catch(e => { delete KC[code]; throw e; });
   return KC[code];
 }
+const KMA0 = [{n:5,c:'#f59e0b',on:1},{n:10,c:'#38bdf8',on:1},{n:20,c:'#22c55e',on:1},{n:60,c:'#eab308',on:1},{n:120,c:'#c08457',on:1},{n:240,c:'#e040fb',on:1}];   // v6.72 預設（接近 XQ）
+const kmaGet = () => { try{ const a = JSON.parse(localStorage.getItem('hx_kma')); if(Array.isArray(a) && a.length === 6) return a; }catch(e){} return KMA0.map(x => ({...x})); };
+const kmaSet = a => { try{ localStorage.setItem('hx_kma', JSON.stringify(a)); }catch(e){} };
 function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（電腦版 K 線視窗）
   const LW = LightweightCharts, cs0 = getComputedStyle(document.documentElement), cv = n => cs0.getPropertyValue(n).trim();
-  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#ea580c',10:'#2563eb',20:'#16a34a',60:'#c084fc',120:'#f472b6',240:'#67e8f9'};   // v6.71：短均深色（橘藍綠）、長均淺色（紫粉青），深淺對比
+  const UP = '#e5383b', DN = '#16a34a', MAS = kmaGet().filter(m => m.on && m.n >= 2 && m.n <= 600);   // v6.72：均線天數／顏色／開關照使用者設定（⚙ 均線）
   const KCL = {dif:'#facc15', mac:'#2563eb', k:'#d946ef', d:'#14b8a6'};   // v6.61：MACD 黃／深藍、KD 桃紅／藍綠，兩兩對比明顯（線也加粗）   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
   const sma = (a, n) => { let s = 0; return a.map((x, i) => { s += x; if(i >= n) s -= a[i-n]; return i < n-1 ? null : s/n; }); };
   const ema = (a, n) => { const k = 2/(n+1); let e = null; return a.map(x => e = e == null ? x : x*k + e*(1-k)); };
@@ -1257,11 +1265,12 @@ function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（�
   chart.addSeries(LW.CandlestickSeries, {upColor:UP, downColor:DN, borderUpColor:UP, borderDownColor:DN, wickUpColor:UP, wickDownColor:DN, priceLineVisible:false, lastValueVisible:false}, 0)
     .setData(T.map((t, i) => ({time:t, open:S.o[i], high:S.h[i], low:S.l[i], close:S.c[i]})));
   chart.addSeries(LW.LineSeries, {color:'#64748b', lineVisible:false, lastValueVisible:true, priceLineVisible:false, crosshairMarkerVisible:false}, 0).setData(T.map((x, i) => ({time:x, value:S.c[i]})));   // v6.63：最新價標籤改灰底（不用紅綠，免得像漲停）
-  const L = {}; for(const n of [5,10,20,60,120,240]){ L[n] = sma(S.c, n); chart.addSeries(LW.LineSeries, {...nl, color:MAC[n], lineWidth:n >= 60 ? 1.5 : 1}, 0)   /* v6.67：長均線稍粗 1.5 */.setData(T.map((t, i) => L[n][i] == null ? {time:t} : {time:t, value:L[n][i]})); }
+  const L = MAS.map(m => sma(S.c, m.n));
+  MAS.forEach((m, j) => chart.addSeries(LW.LineSeries, {...nl, color:m.c, lineWidth:m.n >= 60 ? 1.5 : 1}, 0).setData(T.map((t, i) => L[j][i] == null ? {time:t} : {time:t, value:L[j][i]})));
   chart.addSeries(LW.HistogramSeries, {priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false}, 1)
     .setData(T.map((t, i) => ({time:t, value:S.v[i], color:(S.c[i] >= (S.c[i-1] ?? S.o[i])) ? UP+'cc' : DN+'cc'})));
   const v5 = sma(S.v, 5), v10 = sma(S.v, 10);
-  for(const [m, c] of [[v5,MAC[5]],[v10,MAC[10]]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 1).setData(T.map((t, i) => m[i] == null ? {time:t} : {time:t, value:m[i]}));
+  for(const [m, c] of [[v5,'#f59e0b'],[v10,'#38bdf8']]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 1).setData(T.map((t, i) => m[i] == null ? {time:t} : {time:t, value:m[i]}));
   const e12 = ema(S.c, 12), e26 = ema(S.c, 26), dif = e12.map((x, i) => x - e26[i]), mac = ema(dif, 9), osc = dif.map((x, i) => x - mac[i]);
   chart.addSeries(LW.HistogramSeries, {priceLineVisible:false, lastValueVisible:false}, 2).setData(T.map((t, i) => ({time:t, value:osc[i], color:osc[i] >= 0 ? UP+'aa' : DN+'aa'})));
   for(const [m, c] of [[dif,KCL.dif],[mac,KCL.mac]]) chart.addSeries(LW.LineSeries, {...nl, color:c}, 2).setData(T.map((t, i) => ({time:t, value:m[i]})));
@@ -1280,8 +1289,8 @@ function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（�
     const sp = (c, s) => `<span style="color:${c}">${s}</span>`, sg = x => (x >= 0 ? '+' : '') + f(x);
     info.innerHTML = `<div><b>${T[i].replace(/-/g,'/')}</b>　收 <b class="${ch>=0?'up':'dn'}">${f(S.c[i])}（${ch>=0?'+':''}${ch.toFixed(2)}%）</b>　量 ${f(S.v[i])} 張</div>`+
       `<div>開 ${f(S.o[i])}　高 ${f(S.h[i])}　低 ${f(S.l[i])}</div>`+
-      `<div>`+[5,10,20].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
-      `<div>`+[60,120,240].map(n => sp(MAC[n], `MA${n} ${f(L[n][i])}`)).join('　')+`</div>`+
+      `<div>`+MAS.slice(0,3).map((m, j) => sp(m.c, `MA${m.n} ${f(L[j][i])}`)).join('　')+`</div>`+
+      `<div>`+MAS.slice(3).map((m, j) => sp(m.c, `MA${m.n} ${f(L[j+3][i])}`)).join('　')+`</div>`+
       `<div>MACD：${sp(KCL.dif,'DIF '+f(dif[i]))}　${sp(KCL.mac,'MACD9 '+f(mac[i]))}　OSC ${sg(osc[i])}　｜　KD：${sp(KCL.k,'K '+Math.round(KD[i][0]))}　${sp(KCL.d,'D '+Math.round(KD[i][1]))}</div>`; };
   chart.subscribeCrosshairMove(p => show(p && p.time ? T.indexOf(p.time) : null)); show(null);
   if(P && P.save){ let tm = null; const sv = () => { clearTimeout(tm); tm = setTimeout(() => { if(!el.isConnected) return; const r = chart.timeScale().getVisibleLogicalRange();
@@ -1332,7 +1341,8 @@ const kpSet = o => { try{ localStorage.setItem(KPK, JSON.stringify({...kpGet(), 
 let KRO = null;
 function kshow(code, name){
   const was = !KPOP.hidden, desk = KDESK(), pf = desk ? kpGet() : {};
-  KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span><button type="button" class="kp-x" aria-label="關閉">×</button></div>`;
+  KPOP.dataset.code = code; KPOP.dataset.name = name || '';
+  KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span><button type="button" class="kp-g" title="均線設定">⚙ 均線</button><button type="button" class="kp-x" aria-label="關閉">×</button></div><div class="kset" hidden></div>`;
   addK(KPOP, code, desk ? {...pf, save:true} : null); GPOP.hidden = true;
   if(desk && pf.w && pf.h){ KPOP.style.width = Math.min(pf.w, innerWidth - 16) + 'px'; KPOP.style.height = Math.min(pf.h, innerHeight - 16) + 'px'; }
   KPOP.hidden = false;
@@ -1350,8 +1360,18 @@ document.addEventListener('click', e => {
   const b = e.target.closest('.kbtn');
   if(b){ e.stopPropagation(); e.preventDefault(); kshow(b.dataset.code, b.dataset.name); return; }
   if(!KPOP.hidden && (e.target.closest('.kp-x') || !e.target.closest('.kpop'))) KPOP.hidden = true;
+  const g = e.target.closest('.kp-g'); if(g){ const p = KPOP.querySelector('.kset'); p.hidden = !p.hidden; if(!p.hidden) ksetPaint(); }
+  const rs = e.target.closest('.kset-rs'); if(rs){ kmaSet(KMA0.map(x => ({...x}))); ksetPaint(); kredraw(); }
 }, true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') KPOP.hidden = true; });
+/* v6.72：均線設定面板（天數、顏色、開關；記在這台裝置） */
+function ksetPaint(){ const a = kmaGet(), p = KPOP.querySelector('.kset'); if(!p) return;
+  p.innerHTML = a.map((m, j) => `<label class="km"><input type="checkbox" data-j="${j}" data-k="on"${m.on ? ' checked' : ''}> MA <input type="number" data-j="${j}" data-k="n" min="2" max="600" value="${m.n}"> 日 <input type="color" data-j="${j}" data-k="c" value="${m.c}"></label>`).join('') +
+    '<div class="kset-b"><button type="button" class="kset-rs">恢復預設</button><span>改了馬上套用，記在這台裝置</span></div>'; }
+function kredraw(){ const b = KPOP.querySelector('.kbox'); if(b) b.remove(); addK(KPOP, KPOP.dataset.code, KDESK() ? {...kpGet(), save:true} : null); }
+KPOP.addEventListener('change', e => { const x = e.target.closest('.kset input'); if(!x) return; const a = kmaGet(), j = +x.dataset.j, k = x.dataset.k;
+  if(k === 'on') a[j].on = x.checked ? 1 : 0; else if(k === 'n'){ const n = Math.round(+x.value); if(!(n >= 2 && n <= 600)) return; a[j].n = n; } else a[j].c = x.value;
+  kmaSet(a); kredraw(); });
 (function(){ const b=document.getElementById('mk-badge'), x=document.getElementById('mk-box'); if(!b||!x) return;
   b.addEventListener('click', () => { if(x.classList.contains('mk-green')){ x.hidden = !x.hidden; b.setAttribute('aria-expanded', String(!x.hidden)); }
     else { const d=x.querySelector('details'); if(d) d.open = !d.open; x.scrollIntoView({block:'nearest'}); } }); })();
