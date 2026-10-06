@@ -774,7 +774,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.58</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.59</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -871,7 +871,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.58（2026-10-07）<br>
+    <b>版本</b>　v6.59（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1222,7 +1222,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007014553', HAS_AV = true, JC = {};
+const BUILD = '20261007015639', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1242,7 +1242,7 @@ function kdata(code){
 }
 function drawK(el, info, S){
   const LW = LightweightCharts, cs0 = getComputedStyle(document.documentElement), cv = n => cs0.getPropertyValue(n).trim();
-  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f5b301',10:'#3b82f6',20:'#22c55e',60:'#eab308',120:'#c084fc',240:'#ec4899'};
+  const UP = '#e5383b', DN = '#16a34a', MAC = {5:'#f97316',10:'#3b82f6',20:'#22c55e',60:'#a855f7',120:'#ec4899',240:'#06b6d4'};   // v6.59：短期 5/10/20 橘藍綠、長期 60/120/240 紫粉青（長期線較粗）
   const sma = (a, n) => { let s = 0; return a.map((x, i) => { s += x; if(i >= n) s -= a[i-n]; return i < n-1 ? null : s/n; }); };
   const ema = (a, n) => { const k = 2/(n+1); let e = null; return a.map(x => e = e == null ? x : x*k + e*(1-k)); };
   const T = S.d.map(d => { d = String(d); return d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6); });
@@ -1253,7 +1253,7 @@ function drawK(el, info, S){
   const nl = {priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, lineWidth:1};
   chart.addSeries(LW.CandlestickSeries, {upColor:UP, downColor:DN, borderUpColor:UP, borderDownColor:DN, wickUpColor:UP, wickDownColor:DN, priceLineVisible:false}, 0)
     .setData(T.map((t, i) => ({time:t, open:S.o[i], high:S.h[i], low:S.l[i], close:S.c[i]})));
-  const L = {}; for(const n of [5,10,20,60,120,240]){ L[n] = sma(S.c, n); chart.addSeries(LW.LineSeries, {...nl, color:MAC[n]}, 0).setData(T.map((t, i) => L[n][i] == null ? {time:t} : {time:t, value:L[n][i]})); }
+  const L = {}; for(const n of [5,10,20,60,120,240]){ L[n] = sma(S.c, n); chart.addSeries(LW.LineSeries, {...nl, color:MAC[n], lineWidth:n >= 60 ? 2 : 1}, 0).setData(T.map((t, i) => L[n][i] == null ? {time:t} : {time:t, value:L[n][i]})); }
   chart.addSeries(LW.HistogramSeries, {priceFormat:{type:'volume'}, priceLineVisible:false, lastValueVisible:false}, 1)
     .setData(T.map((t, i) => ({time:t, value:S.v[i], color:(S.c[i] >= (S.c[i-1] ?? S.o[i])) ? UP+'cc' : DN+'cc'})));
   const v5 = sma(S.v, 5), v10 = sma(S.v, 10);
