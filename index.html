@@ -757,7 +757,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.32</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.33</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -853,7 +853,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.32（2026-10-06）<br>
+    <b>版本</b>　v6.33（2026-10-06）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1204,7 +1204,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261006145851', HAS_AV = true, JC = {};
+const BUILD = '20261006174154', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
@@ -1353,13 +1353,12 @@ async function openVault(pw, V){
     key0, {name:'AES-GCM', length:256}, false, ['decrypt']);
   const dec = (key, iv, ct) => crypto.subtle.decrypt({name:'AES-GCM', iv:b64(iv)}, key, b64(ct));
   if(V.v===2){   // v4.5：多使用者
-    for(const u of V.users){
-      let w; try{ w = JSON.parse(new TextDecoder().decode(await dec(await derive(u.salt), u.iv, u.ct))); }catch(e){ continue; }
-      const dk = await crypto.subtle.importKey('raw', b64(w.k), 'AES-GCM', false, ['decrypt']);
-      const o = JSON.parse(new TextDecoder().decode(await dec(dk, V.iv, V.ct)));
-      o.role = w.role; o._dk = dk; return o;   // v6.30：留著金鑰，解開之後才下載的部分（data/vdays.json）
-    }
-    throw new Error('密碼錯誤');
+    // v6.33：每位使用者同時試（原本一個一個試，排在後面的帳號要等好幾次）
+    const w = await Promise.any(V.users.map(async u => JSON.parse(new TextDecoder().decode(await dec(await derive(u.salt), u.iv, u.ct))))).catch(() => null);
+    if(!w) throw new Error('密碼錯誤');
+    const dk = await crypto.subtle.importKey('raw', b64(w.k), 'AES-GCM', false, ['decrypt']);
+    const o = JSON.parse(new TextDecoder().decode(await dec(dk, V.iv, V.ct)));
+    o.role = w.role; o._dk = dk; return o;   // v6.30：留著金鑰，解開之後才下載的部分（data/v*.json）
   }
   const pt = await dec(await derive(V.salt), V.iv, V.ct);
   const o = JSON.parse(new TextDecoder().decode(pt)); o.role = 'owner'; return o;
@@ -1562,32 +1561,36 @@ $('gear').addEventListener('click', async () => {
     const v = await openVault(pw, await getJ('vault'));
     SECRETS = v.secrets || {};
     if(v.days) apply(v.days);   // v6.12：完整的每日選股（ㄟㄞ八法、觀察區、量小區）只在加密區
-    CARDS = v.cards || {}; document.body.classList.toggle('has-cards', Object.keys(CARDS).length > 0);
     $('rec-body').innerHTML = v.records || '<p>尚無紀錄</p>';
     $('watch-body').innerHTML = v.watch || '<p>尚無谷底飛龍資料</p>';
-    $('rich-body').innerHTML = v.rich || '<p>尚無大富翁資料</p>';
-    initRich();
+    $('rich-body').innerHTML = '<p class="note">大富翁資料下載中…</p>';
     initWH();
+    // v6.33：登入後先顯示，其他部分在背景下載（大富翁、個股小卡、其他日子、站主／進階分頁）
+    document.body.classList.add('unlocked'); document.body.classList.toggle('owner', v.role==='owner'); g.classList.add('on'); $('tabs').hidden = false;
+    const d=DAYS.find(x=>x.date===cur); if(d) renderDay(d); setMode(MODE);
+    const on = () => document.body.classList.contains('unlocked');
+    const part = n => getJ(n).then(async X => { const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(X.iv)}, v._dk, b64(X.ct)); return JSON.parse(new TextDecoder().decode(pt)); });
+    part('vrich').then(h => { if(!on()) return; $('rich-body').innerHTML = h || '<p>尚無大富翁資料</p>'; initRich(); })
+      .catch(e => { console.error('vrich', e); if(on()) $('rich-body').innerHTML = '<p class="note">大富翁資料下載失敗，請重新整理再試</p>'; });
+    part('vcards').then(c => { if(!on()) return; CARDS = c || {}; document.body.classList.toggle('has-cards', Object.keys(CARDS).length > 0);
+      const d2=DAYS.find(x=>x.date===cur); if(d2) renderDay(d2); setMode(MODE); }).catch(e => console.error('vcards', e));
+    part('vdays').then(days => { if(on()){ apply(days); setMode(MODE); } }).catch(e => console.error('vdays', e));
     if(v.role==='owner'){
-      try{ const o = await openOwner(pw); $('fplan-body').innerHTML = o.fplan || '<p>尚無 Fyo方案資料</p>'; $('cfg-body').innerHTML = o.cfg || '<p>尚無正二模擬資料</p>';
+      openOwner(pw).then(o => { if(!on()) return;
+           $('fplan-body').innerHTML = o.fplan || '<p>尚無 Fyo方案資料</p>'; $('cfg-body').innerHTML = o.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            const wr = $('wh-rules'); if(wr && o.wrules) wr.textContent = o.wrules;   // v6.14：谷底飛龍規則只給站主
            $('asset-body').innerHTML = o.asset || '<p>尚無稼栩資產資料</p>';   // v6.19：只給站主
            SECRETS = o.secrets || {}; fillRX(o.rx);   // v6.16：成立條件／風報比、規則文字只給站主
-           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner(); }catch(e){}
+           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner();
+           const d3=DAYS.find(x=>x.date===cur); if(d3) renderDay(d3); setMode(MODE); }).catch(e => console.error('owner', e));
     } else if(v.role==='adv' && HAS_AV){   // v6.9：進階開資產模擬；v6.15 再加 Fyo方案
-      try{ const a = await openVault(pw, await getJ('avault')); $('cfg-body').innerHTML = a.cfg || '<p>尚無正二模擬資料</p>';
+      openVault(pw, await getJ('avault').catch(() => null) || {users:[]}).then(a => { if(!on()) return;
+           $('cfg-body').innerHTML = a.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            if(a.fplan){ $('fplan-body').innerHTML = a.fplan; try{ initOwner(); }catch(e){} }
-           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = !(b.dataset.v==='cfg' || (b.dataset.v==='fplan' && a.fplan))); }catch(e){}
+           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = !(b.dataset.v==='cfg' || (b.dataset.v==='fplan' && a.fplan))); }).catch(e => console.error('adv', e));
     }
-    document.body.classList.add('unlocked'); document.body.classList.toggle('owner', v.role==='owner'); g.classList.add('on'); $('tabs').hidden = false;
-    const d=DAYS.find(x=>x.date===cur); if(d) renderDay(d); setMode(MODE);
-    getJ('vdays').then(async X => {   // v6.30：其他日子的完整資料，登入後在背景下載
-      if(!document.body.classList.contains('unlocked') || !v._dk) return;
-      const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(X.iv)}, v._dk, b64(X.ct));
-      if(document.body.classList.contains('unlocked')){ apply(JSON.parse(new TextDecoder().decode(pt))); setMode(MODE); }
-    }).catch(e => console.error('vdays', e));
   }catch(e){ alert(String(e && e.message).startsWith('下載失敗') ? '資料下載失敗，請重新整理再試' : '帳號錯誤'); }
   finally{ g.classList.remove('busy'); }
 });
