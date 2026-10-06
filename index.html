@@ -56,6 +56,7 @@ h1{font-family:"Noto Serif TC",serif;font-weight:700;font-size:clamp(25px,4.2vw,
 
 /* date nav (XQ style) */
 .dnav{position:relative;display:flex;align-items:center;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+#view-daily .dnav{position:sticky;top:0;z-index:30;background:var(--bg);padding:8px 0;margin-bottom:14px;box-shadow:0 6px 8px -8px rgba(0,0,0,.5)}   /* v6.40：日期列凍結在畫面最上面 */
 .dnav button{
   border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
   height:34px;min-width:34px;padding:0 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;
@@ -757,7 +758,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.39</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.40</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -853,7 +854,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.39（2026-10-06）<br>
+    <b>版本</b>　v6.40（2026-10-06）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1204,7 +1205,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261006235250', HAS_AV = true, JC = {};
+const BUILD = '20261006235510', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
