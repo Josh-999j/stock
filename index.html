@@ -774,7 +774,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.63</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.64</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -871,7 +871,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.63（2026-10-07）<br>
+    <b>版本</b>　v6.64（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1222,7 +1222,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007015940', HAS_AV = true, JC = {};
+const BUILD = '20261007020036', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1269,7 +1269,8 @@ function drawK(el, info, S){
   ps.forEach((p, i) => { if(p.setStretchFactor) p.setStretchFactor(SF[i]); });
   requestAnimationFrame(() => ps.forEach((p, i) => { const h = p.getHTMLElement && p.getHTMLElement(); if(!h) return; const td = h.querySelector('td:nth-child(2)') || h; td.style.position = 'relative';
     const lb = document.createElement('div'); lb.className = 'plab'; lb.textContent = NM[i]; td.appendChild(lb); }));
-  chart.timeScale().setVisibleLogicalRange({from:T.length-120, to:T.length+1});
+  const vr = () => chart.timeScale().setVisibleLogicalRange({from:Math.max(0, T.length-120), to:T.length-1});   // v6.64：開圖預設最近 120 天（等版面量好再設一次）
+  vr(); setTimeout(vr, 60); setTimeout(vr, 300);
   const f = x => x == null ? '—' : (+x).toLocaleString('zh-TW', {maximumFractionDigits:2});
   const show = i => { if(i == null || i < 0) i = T.length-1; const pc = S.c[i-1] ?? S.o[i], ch = (S.c[i]/pc - 1)*100;
     // v6.57：固定 5 行、不換行（高度不變，圖才不會跳），每個數字都標名稱
