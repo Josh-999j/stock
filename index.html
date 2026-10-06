@@ -760,7 +760,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 <div class="wrap">
   <header>
     <div>
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.42</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.43</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -856,7 +856,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.42（2026-10-07）<br>
+    <b>版本</b>　v6.43（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1207,7 +1207,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007000151', HAS_AV = true, JC = {};
+const BUILD = '20261007000648', HAS_AV = true, JC = {};
 function getJ(n){
   if(!JC[n]) JC[n] = fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); })
     .catch(e => { delete JC[n]; throw e; });
@@ -1253,7 +1253,13 @@ function mkDay(d){
   if(x){ x.className = 'mk-banner mk-' + d.mk.c; x.hidden = d.mk.c === 'green';
     x.innerHTML = '<b>' + d.mk.t + '</b>　' + md + ' 當天：' + (d.mk.m || ('加權離 60 日高點 ' + (d.mk.dd > 0 ? '+' : '') + d.mk.dd + '%')) + '<div class="mk-note">回到「最新」會恢復今天的大盤提醒。</div>'; }
 }
-async function openOwner(pw){ return openVault(pw, await getJ('ovault')); }   // v6.12：站主區改成多帳號格式
+async function openSub(pw, n, kb){   // v6.43：站主區／進階區
+  const V = await getJ(n);
+  if(kb){ const dk = await crypto.subtle.importKey('raw', b64(kb), 'AES-GCM', false, ['decrypt']);
+    return JSON.parse(await unz(await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(V.iv)}, dk, b64(V.ct)), V.z)); }
+  return openVault(pw, V);
+}
+async function openOwner(pw, kb){ return openSub(pw, 'ovault', kb); }   // v6.12：站主區改成多帳號格式
 /* v6.16：資產模擬的計算程式放在加密內容裡（#calc-js），解鎖後才載入 */
 function loadCalc(){
   const s = document.getElementById('calc-js'); if(!s) return;
@@ -1363,12 +1369,16 @@ async function openVault(pw, V){
     key0, {name:'AES-GCM', length:256}, false, ['decrypt']);
   const dec = (key, iv, ct) => crypto.subtle.decrypt({name:'AES-GCM', iv:b64(iv)}, key, b64(ct));
   if(V.v===2){   // v4.5：多使用者
-    // v6.33：每位使用者同時試（原本一個一個試，排在後面的帳號要等好幾次）
-    const w = await Promise.any(V.users.map(async u => JSON.parse(new TextDecoder().decode(await dec(await derive(u.salt), u.iv, u.ct))))).catch(() => null);
+    // v6.43：先試這台裝置上次成功的那一組（只算一次密碼）；不對再同時試其他組
+    const tryU = async u => JSON.parse(new TextDecoder().decode(await dec(await derive(u.salt), u.iv, u.ct)));
+    let hint = -1; try{ hint = +localStorage.getItem('hx_u_'+V.users.length) ; }catch(e){}
+    let w = null;
+    if(hint >= 0 && V.users[hint]) w = await tryU(V.users[hint]).catch(() => null);
+    if(!w) w = await Promise.any(V.users.map((u, k) => tryU(u).then(r => { try{ localStorage.setItem('hx_u_'+V.users.length, k); }catch(e){} return r; }))).catch(() => null);
     if(!w) throw new Error('密碼錯誤');
     const dk = await crypto.subtle.importKey('raw', b64(w.k), 'AES-GCM', false, ['decrypt']);
     const o = JSON.parse(await unz(await dec(dk, V.iv, V.ct), V.z));
-    o.role = w.role; o._dk = dk; return o;   // v6.30：留著金鑰，解開之後才下載的部分（data/v*.json）
+    o.role = w.role; o._dk = dk; o._w = w; return o;   // v6.30：留著金鑰，解開之後才下載的部分（data/v*.json）
   }
   const pt = await dec(await derive(V.salt), V.iv, V.ct);
   const o = JSON.parse(new TextDecoder().decode(pt)); o.role = 'owner'; return o;
@@ -1587,7 +1597,7 @@ $('gear').addEventListener('click', async () => {
     part('vdays').then(days => { if(on()){ apply(days); setMode(MODE); } }).catch(e => console.error('vdays', e));
     let pend = null;   // v6.36：站主／進階分頁下載完之前，齒輪一直轉
     if(v.role==='owner'){
-      pend = openOwner(pw).then(o => { if(!on()) return;
+      pend = openOwner(pw, v._w && v._w.ok).then(o => { if(!on()) return;
            $('fplan-body').innerHTML = o.fplan || '<p>尚無 Fyo方案資料</p>'; $('cfg-body').innerHTML = o.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            const wr = $('wh-rules'); if(wr && o.wrules) wr.textContent = o.wrules;   // v6.14：谷底飛龍規則只給站主
@@ -1596,7 +1606,7 @@ $('gear').addEventListener('click', async () => {
            document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner();
            const d3=DAYS.find(x=>x.date===cur); if(d3) renderDay(d3); setMode(MODE); }).catch(e => console.error('owner', e));
     } else if(v.role==='adv' && HAS_AV){   // v6.9：進階開資產模擬；v6.15 再加 Fyo方案
-      pend = getJ('avault').then(A => openVault(pw, A)).then(a => { if(!on()) return;
+      pend = openSub(pw, 'avault', v._w && v._w.ak).then(a => { if(!on()) return;
            $('cfg-body').innerHTML = a.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            if(a.fplan){ $('fplan-body').innerHTML = a.fplan; try{ initOwner(); }catch(e){} }
