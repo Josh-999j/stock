@@ -765,6 +765,21 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .sipop.kpop{width:min(380px,calc(100vw - 16px));z-index:70} .kpop .kp-h{display:flex;align-items:center;gap:8px;margin:-2px 0 4px;font-size:15px} .kpop .kp-h span{color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:13px}
 @media (min-width:900px) and (hover:hover){.sipop.kpop{width:640px;height:600px;min-width:380px;min-height:460px;max-width:96vw;max-height:94vh;resize:both;overflow:hidden;display:flex;flex-direction:column}
  .kpop .kp-h{cursor:move;user-select:none} .kpop .kbox{flex:1;display:flex;flex-direction:column;min-height:0} .kpop .kbox .kc{flex:1;height:auto;min-height:240px}}   /* v6.68 */
+.kpop .kp-w{margin-left:auto;border:1px solid #f5b301;background:transparent;color:#f5b301;border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer} .kpop .kp-w + .kp-g{margin-left:4px}   /* v6.73 */
+.wstar{border:0;background:none;padding:0 0 0 3px;margin:0;cursor:pointer;color:#f5b301;font-size:16px;line-height:1;vertical-align:middle;-webkit-tap-highlight-color:transparent}
+#view-wl .wl-s{margin:4px 0 12px} #wl-q{width:min(440px,100%);padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px}
+#wl-r{max-width:680px;margin-top:4px;border-radius:10px;overflow:hidden} .wl-hit{display:flex;gap:10px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--line-2);background:var(--surface)} .wl-hit .num{min-width:70px;text-align:right}
+.wl-hit .wl-add{margin-left:auto;border:1px solid #f5b301;background:transparent;color:#f5b301;border-radius:8px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer} .cd2{color:var(--muted);font-size:12px;margin-left:4px}
+.wl-gt{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px} .wl-gt button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:5px 14px;font:inherit;font-size:14px;cursor:pointer}
+.wl-gt button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700} .wl-gt .c{margin-left:6px;font-size:12px;opacity:.8} .wl-asof{margin-left:auto;color:var(--muted);font-size:12px}
+#view-wl .tb{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto} .wl-t{width:100%;border-collapse:collapse;font-size:14px} .wl-t th,.wl-t td{padding:8px 10px;border-bottom:1px solid var(--line-2);text-align:right;white-space:nowrap}
+.wl-t th{color:var(--muted);font-size:12px;font-weight:500;background:var(--surface-2)} .wl-t .l{text-align:left} .wl-t .up,.wl-hit .up{color:var(--up)} .wl-t .dn,.wl-hit .dn{color:var(--down)} .wl-t .empty{text-align:center;color:var(--muted);padding:18px}
+.wl-t .src{display:inline-block;padding:0 8px;border-radius:999px;font-size:12px;background:var(--accent-soft);color:var(--accent)} .wl-t .act button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer;margin-left:4px}
+.wl-note{border:0;background:none;color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;text-align:left;padding:0}
+#tabs .wlt{border-color:#f5b301}
+.kpop .kset[hidden]{display:none}   /* v6.73：均線面板收起時要真的藏起來 */
+@media (max-width:899px), (hover:none){.sipop.kpop{left:0!important;top:0!important;width:100vw!important;height:100vh;height:100dvh;max-height:none;border-radius:0;display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+ .kpop .kbox{flex:1;display:flex;flex-direction:column;min-height:0} .kpop .kbox .kc{flex:1;height:auto;min-height:300px}}   /* v6.73：手機 K 線視窗上下滿版 */
 .kpop .kp-g{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}   /* v6.72 */
 .kpop .kset{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin:0 0 6px;font-size:12px}
 .kpop .kset .km{display:flex;align-items:center;gap:4px} .kpop .kset input[type=number]{width:52px;padding:1px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
@@ -781,7 +796,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.72</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.73</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -803,6 +818,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
     <button type="button" class="own" data-v="fplan" aria-pressed="false" aria-haspopup="menu" hidden>Fyo方案 ▾</button>
     <button type="button" class="own" data-v="cfg" data-tip="輸入金額，試算各種配置的報酬" aria-pressed="false" hidden>正二模擬</button>
     <button type="button" class="own" data-v="asset" data-tip="我的目標和實際庫存差多少" aria-pressed="false" aria-haspopup="menu" hidden>稼栩資產 ▾</button>
+<button type="button" class="own wlt" data-v="wl" data-tip="自己的觀察名單；也能查任何股票的價格和 K 線" aria-pressed="false" hidden>觀察名單</button>
   </div>
 
   <div id="view-daily">
@@ -874,11 +890,12 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <div class="fpdd" id="fpdd" role="menu" hidden></div>
   <section id="view-fplan" hidden aria-label="Fyo方案"><div id="fplan-body"></div></section>
   <section id="view-asset" hidden aria-label="稼栩資產"><div id="asset-body"></div></section>
+<section id="view-wl" hidden aria-label="觀察名單"><div id="wl-body"></div></section>
   <section id="view-cfg" hidden aria-label="正二模擬"><div id="cfg-body"></div></section>
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.72（2026-10-07）<br>
+    <b>版本</b>　v6.73（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1229,7 +1246,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007024047', HAS_AV = true, JC = {};
+const BUILD = '20261007024708', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1313,7 +1330,7 @@ function gshow(el, code){
   GPOP.style.left = left + 'px'; GPOP.style.top = top + 'px';
 }
 document.addEventListener('click', e => {
-  if(!document.body.classList.contains('has-cards') || e.target.closest('.gpop') || e.target.closest('.kbtn')) return;
+  if(!document.body.classList.contains('has-cards') || e.target.closest('.gpop') || e.target.closest('.kbtn') || e.target.closest('.wstar')) return;
   const el = e.target.closest('#view-daily .nm, #view-watch tbody th, #view-rich tbody th');
   if(!el){ GPOP.hidden = true; return; }
   const box = el.closest('tr, .card'), t = box && box.querySelector('.cd, .n'), m = t && t.textContent.match(/\d{4}/);
@@ -1331,7 +1348,11 @@ let KBQ = false;
 function addKBtns(){ KBQ = false; if(!document.body.classList.contains('unlocked')) return;
   document.querySelectorAll(KSEL).forEach(el => { if(el.dataset.kb) return; const c = kcode(el); if(!c) return; el.dataset.kb = '1';
     const b = document.createElement('button'); b.type = 'button'; b.className = 'kbtn'; b.dataset.code = c; b.dataset.name = kname(el); b.title = '看 K 線'; b.setAttribute('aria-label', '看 '+c+' K 線'); b.innerHTML = KICON;
-    if(el.matches('th')){ const n = el.querySelector('.n'); n ? el.insertBefore(b, n) : el.appendChild(b); } else if(el.matches('.si')) el.after(b); else el.appendChild(b); }); }
+    if(el.matches('th')){ const n = el.querySelector('.n'); n ? el.insertBefore(b, n) : el.appendChild(b); } else if(el.matches('.si')) el.after(b); else el.appendChild(b); });
+  if(WL.tok) document.querySelectorAll(KSEL).forEach(el => { if(el.dataset.ws || !el.dataset.kb) return; const kb = el.matches('.si') ? el.nextElementSibling : el.querySelector('.kbtn'); if(!kb || !kb.classList.contains('kbtn')) return;   // v6.73 ☆ 加入觀察
+    el.dataset.ws = '1'; const s = document.createElement('button'); s.type = 'button'; s.className = 'wstar'; s.dataset.code = kb.dataset.code; s.dataset.name = kb.dataset.name;
+    s.dataset.src = el.closest('#view-daily') ? '每日選股' : el.closest('#view-watch') ? '谷底飛龍' : el.closest('#view-rich') ? '大富翁' : 'Fyo'; kb.after(s); });
+  if(WL.tok) wlStars(); }
 new MutationObserver(() => { if(!KBQ){ KBQ = true; setTimeout(addKBtns, 60); } }).observe(document.body, {childList:true, subtree:true});
 const KPOP = document.createElement('div'); KPOP.className = 'sipop gpop kpop'; KPOP.hidden = true; document.body.appendChild(KPOP);
 /* v6.70：電腦版 K 線視窗記住大小、位置、各區比例、縮放（記在這台裝置）；換下一檔不跳回中間 */
@@ -1342,7 +1363,7 @@ let KRO = null;
 function kshow(code, name){
   const was = !KPOP.hidden, desk = KDESK(), pf = desk ? kpGet() : {};
   KPOP.dataset.code = code; KPOP.dataset.name = name || '';
-  KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span><button type="button" class="kp-g" title="均線設定">⚙ 均線</button><button type="button" class="kp-x" aria-label="關閉">×</button></div><div class="kset" hidden></div>`;
+  KPOP.innerHTML = `<div class="kp-h"><b>${esc(name || '')}</b><span>${esc(code)}</span>${WL.tok ? `<button type="button" class="kp-w">${wlHas(code) ? '★ 已在觀察' : '＋觀察'}</button>` : ''}<button type="button" class="kp-g" title="均線設定">⚙ 均線</button><button type="button" class="kp-x" aria-label="關閉">×</button></div><div class="kset" hidden></div>`;
   addK(KPOP, code, desk ? {...pf, save:true} : null); GPOP.hidden = true;
   if(desk && pf.w && pf.h){ KPOP.style.width = Math.min(pf.w, innerWidth - 16) + 'px'; KPOP.style.height = Math.min(pf.h, innerHeight - 16) + 'px'; }
   KPOP.hidden = false;
@@ -1364,6 +1385,62 @@ document.addEventListener('click', e => {
   const rs = e.target.closest('.kset-rs'); if(rs){ kmaSet(KMA0.map(x => ({...x}))); ksetPaint(); kredraw(); }
 }, true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') KPOP.hidden = true; });
+/* v6.73：觀察名單（只給站主；存在 Cloudflare 雲端 /api/watch，用站主登入後拿到的金鑰）。3 組：觀察中／準備進場／已買進 */
+const WL = {tok:null, items:[], idx:null, map:new Map(), g:'watch', q:''};
+const WG = [['watch','👀 觀察中'],['ready','🎯 準備進場'],['bought','💰 已買進']];
+const wf = x => x == null ? '—' : (+x).toLocaleString('zh-TW', {maximumFractionDigits:2}), wdd = d => d ? d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6) : '—';
+const wlHas = c => WL.items.some(x => x.code === c);
+const WLNO = '<p class="note">觀察名單要在新網址才有：<a href="https://redshrimp.pages.dev">redshrimp.pages.dev</a></p>';
+async function wlInit(tok){
+  WL.tok = null; if(!tok){ $('wl-body').innerHTML = WLNO; return; }
+  try{ const r = await fetch('api/watch', {headers:{'x-hx-token':tok}, cache:'no-store'}); if(!r.ok) throw new Error(r.status); WL.items = (await r.json()).items || []; WL.tok = tok; }
+  catch(e){ $('wl-body').innerHTML = WLNO; return; }
+  try{ WL.idx = await getJ('k/_index'); WL.map = new Map(WL.idx.rows.map(r => [r[0], r])); }catch(e){ WL.idx = {asof:'', rows:[]}; }
+  wlPaint(); addKBtns();
+}
+function wlLock(){ WL.tok = null; WL.items = []; WL.q = ''; document.querySelectorAll('.wstar').forEach(x => x.remove()); document.querySelectorAll('[data-ws]').forEach(x => delete x.dataset.ws); const b = $('wl-body'); if(b) b.innerHTML = ''; }
+let WLT = null;
+function wlSave(){ clearTimeout(WLT); WLT = setTimeout(() => { if(!WL.tok) return;
+  fetch('api/watch', {method:'PUT', headers:{'x-hx-token':WL.tok, 'content-type':'application/json'}, body:JSON.stringify({items:WL.items})})
+    .then(r => { if(!r.ok) throw 0; }).catch(() => alert('觀察名單儲存失敗，請稍後再試')); }, 300); }
+function wlAdd(code, name, src){ if(!WL.tok || wlHas(code)) return; const r = WL.map.get(code);
+  WL.items.unshift({code, name:name || (r && r[1]) || '', g:'watch', src:src || '自己加', d:((WL.idx && WL.idx.asof) || '').replace(/-/g,''), p0:r ? r[2] : null, note:''}); wlSave(); wlRefresh(); }
+function wlDel(code){ WL.items = WL.items.filter(x => x.code !== code); wlSave(); wlRefresh(); }
+function wlStars(){ document.querySelectorAll('.wstar').forEach(b => { const on = wlHas(b.dataset.code); b.textContent = on ? '★' : '☆'; b.title = on ? '已在觀察名單（再按一下移除）' : '加入觀察名單'; }); }
+function wlRefresh(){ wlPaint(); wlStars(); const kw = KPOP.querySelector('.kp-w'); if(kw) kw.textContent = wlHas(KPOP.dataset.code) ? '★ 已在觀察' : '＋觀察'; }
+function wlPaint(){
+  const B = $('wl-body'); if(!B || !WL.tok) return; const asof = (WL.idx && WL.idx.asof) || '', now0 = asof ? new Date(asof) : new Date();
+  const rs = WL.items.filter(x => x.g === WL.g);
+  const rows = rs.length ? rs.map(x => { const r = WL.map.get(x.code), now = r ? r[2] : null, ch = (x.p0 && now) ? (now/x.p0 - 1)*100 : null, days = x.d ? Math.round((now0 - new Date(wdd(x.d)))/864e5) : '';
+    return `<tr><td class="l"><b>${esc(x.name)}</b><span class="cd2">${esc(x.code)}</span><button type="button" class="kbtn" data-code="${esc(x.code)}" data-name="${esc(x.name)}" title="看 K 線">${KICON}</button></td>`+
+      `<td><span class="src">${esc(x.src || '')}</span></td><td class="num">${wdd(x.d)}</td><td class="num">${wf(x.p0)}</td><td class="num">${wf(now)}</td>`+
+      `<td class="num ${ch == null ? '' : ch >= 0 ? 'up' : 'dn'}">${ch == null ? '—' : (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%'}</td><td class="num">${days === '' ? '—' : days + ' 天'}</td>`+
+      `<td class="l"><button type="button" class="wl-note" data-code="${esc(x.code)}">${x.note ? esc(x.note) : '＋備註'}</button></td>`+
+      `<td class="act">${WG.filter(([k]) => k !== x.g).map(([k, n]) => `<button type="button" data-wmv="${esc(x.code)}" data-to="${k}">移到${n.slice(3)}</button>`).join('')}<button type="button" data-wrm="${esc(x.code)}">移除</button></td></tr>`; }).join('')
+    : '<tr><td colspan="9" class="empty">這組還沒有股票。用上面的搜尋框，或全站股票名稱旁的 ☆ 加入。</td></tr>';
+  B.innerHTML = `<div class="wl-s"><input type="search" id="wl-q" placeholder="查價：打代號或名稱，例如 2330、台積" autocomplete="off" value="${esc(WL.q)}"><div id="wl-r"></div></div>`+
+    `<div class="wl-gt">${WG.map(([k, n]) => `<button type="button" data-wg="${k}" aria-pressed="${k === WL.g}">${n}<span class="c">${WL.items.filter(x => x.g === k).length}</span></button>`).join('')}<span class="wl-asof">價格資料到 ${asof}；漲跌＝加入後到現在</span></div>`+
+    `<div class="tb"><table class="wl-t"><thead><tr><th class="l">股票</th><th>來源</th><th>加入日期</th><th>加入價</th><th>現價</th><th>漲跌</th><th>天數</th><th class="l">備註</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  $('wl-q').addEventListener('input', e => { WL.q = e.target.value; wlSearch(); }); wlSearch();
+}
+function wlSearch(){
+  const R = $('wl-r'); if(!R) return; const q = WL.q.trim().toUpperCase(); if(!q || !WL.idx){ R.innerHTML = ''; return; }
+  const hit = WL.idx.rows.filter(r => r[0].startsWith(q) || r[1].toUpperCase().includes(q)).slice(0, 12);
+  R.innerHTML = hit.length ? hit.map(r => `<div class="wl-hit"><b>${esc(r[1])}</b><span class="cd2">${r[0]}</span><span class="num">${wf(r[2])}</span>`+
+    `<span class="num ${r[3] == null ? '' : r[3] >= 0 ? 'up' : 'dn'}">${r[3] == null ? '' : (r[3] >= 0 ? '+' : '') + r[3].toFixed(2) + '%'}</span>`+
+    `<button type="button" class="kbtn" data-code="${r[0]}" data-name="${esc(r[1])}" title="看 K 線">${KICON}</button>`+
+    `<button type="button" class="wl-add" data-code="${r[0]}" data-name="${esc(r[1])}">${wlHas(r[0]) ? '★ 已在觀察' : '☆ 加入觀察'}</button></div>`).join('') : '<div class="note" style="padding:6px 10px">找不到</div>';
+}
+document.addEventListener('click', e => {
+  const t = e.target; if(!WL.tok) return;
+  const g = t.closest('[data-wg]'); if(g){ WL.g = g.dataset.wg; wlPaint(); return; }
+  const mv = t.closest('[data-wmv]'); if(mv){ const x = WL.items.find(y => y.code === mv.dataset.wmv); if(x){ x.g = mv.dataset.to; wlSave(); wlRefresh(); } return; }
+  const rm = t.closest('[data-wrm]'); if(rm){ if(confirm('從觀察名單移除？')) wlDel(rm.dataset.wrm); return; }
+  const nt = t.closest('.wl-note'); if(nt){ const x = WL.items.find(y => y.code === nt.dataset.code); if(!x) return; const v = prompt('備註', x.note || ''); if(v !== null){ x.note = v.slice(0, 200); wlSave(); wlPaint(); } return; }
+  const ad = t.closest('.wl-add'); if(ad){ wlHas(ad.dataset.code) ? wlDel(ad.dataset.code) : wlAdd(ad.dataset.code, ad.dataset.name, '自己加'); return; }
+  const st = t.closest('.wstar'); if(st){ e.stopPropagation(); wlHas(st.dataset.code) ? wlDel(st.dataset.code) : wlAdd(st.dataset.code, st.dataset.name, st.dataset.src); return; }
+  const kw = t.closest('.kp-w'); if(kw){ const c = KPOP.dataset.code; wlHas(c) ? wlDel(c) : wlAdd(c, KPOP.dataset.name, 'K線'); return; }
+});
 /* v6.72：均線設定面板（天數、顏色、開關；記在這台裝置） */
 function ksetPaint(){ const a = kmaGet(), p = KPOP.querySelector('.kset'); if(!p) return;
   p.innerHTML = a.map((m, j) => `<label class="km"><input type="checkbox" data-j="${j}" data-k="on"${m.on ? ' checked' : ''}> MA <input type="number" data-j="${j}" data-k="n" min="2" max="600" value="${m.n}"> 日 <input type="color" data-j="${j}" data-k="c" value="${m.c}"></label>`).join('') +
@@ -1524,7 +1601,7 @@ async function openVault(pw, V){
 }
 function showView(v){
   $('view-daily').hidden = v!=='daily'; $('view-rec').hidden = v!=='rec'; $('view-watch').hidden = v!=='watch'; $('view-rich').hidden = v!=='rich';
-  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset';
+  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset'; $('view-wl').hidden = v!=='wl';
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'));
 }
 $('tabs').addEventListener('click', e => { const b=e.target.closest('button[data-v]'); if(b) showView(b.dataset.v); });
@@ -1705,7 +1782,7 @@ function lock(){
   $('fpdd').hidden = true; $('fpdd').innerHTML = '';
   SECRETS = null; fillRX(null); $('rec-body').innerHTML = ''; $('watch-body').innerHTML = ''; $('rich-body').innerHTML = '';
   CARDS = {}; document.body.classList.remove('has-cards'); GPOP.hidden = true;
-  $('fplan-body').innerHTML = ''; $('cfg-body').innerHTML = ''; $('asset-body').innerHTML = ''; document.querySelectorAll('#tabs .own').forEach(b => b.hidden = true);
+  $('fplan-body').innerHTML = ''; $('cfg-body').innerHTML = ''; $('asset-body').innerHTML = ''; wlLock(); document.querySelectorAll('#tabs .own').forEach(b => b.hidden = true);
   document.body.classList.remove('unlocked','owner'); $('gear').classList.remove('on');
   $('tabs').hidden = true; showView('daily');
   apply(PUB_ALL || PUB_DOCS); setMode(MODE);
@@ -1742,7 +1819,7 @@ $('gear').addEventListener('click', async () => {
            const wr = $('wh-rules'); if(wr && o.wrules) wr.textContent = o.wrules;   // v6.14：谷底飛龍規則只給站主
            $('asset-body').innerHTML = o.asset || '<p>尚無稼栩資產資料</p>';   // v6.19：只給站主
            SECRETS = o.secrets || {}; fillRX(o.rx);   // v6.16：成立條件／風報比、規則文字只給站主
-           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner();
+           document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner(); wlInit(v._w && v._w.wt);   // v6.73 觀察名單
            const d3=DAYS.find(x=>x.date===cur); if(d3) renderDay(d3); setMode(MODE); }).catch(e => console.error('owner', e));
     } else if(v.role==='adv' && HAS_AV){   // v6.9：進階開資產模擬；v6.15 再加 Fyo方案
       pend = openSub(pw, 'avault', v._w && v._w.ak).then(a => { if(!on()) return;
