@@ -778,13 +778,19 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .wl-note{border:0;background:none;color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;text-align:left;padding:0}
 #tabs .wlt{border-color:#f5b301}
 .kpop .kset[hidden]{display:none}   /* v6.73：均線面板收起時要真的藏起來 */
+.kpop .kmr{display:flex;align-items:center;gap:4px} .kpop .kcw{position:relative;display:inline-block}
+.kpop .kcl{width:30px;height:22px;border:1px solid var(--line);border-radius:4px;cursor:pointer;padding:0}
+.kpop .kpal{position:absolute;z-index:30;top:26px;right:0;display:grid;grid-template-columns:repeat(8,22px);gap:4px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.35)} .kpop .kpal[hidden]{display:none}
+.kpop .kpal i{width:22px;height:22px;border:1px solid rgba(128,128,128,.5);cursor:pointer;display:block} .kpop .kpal i.on{outline:2px solid #3b82f6;outline-offset:1px}
+.kpop .kpal .kpc{grid-column:1/-1;display:flex;align-items:center;gap:6px;color:var(--ink-2);margin-top:2px}   /* v6.78 色盤 */
+@media (max-width:899px), (hover:none){.kpop .kpal{position:fixed;top:30%;left:50%;right:auto;transform:translateX(-50%);grid-template-columns:repeat(8,30px)} .kpop .kpal i{width:30px;height:30px}}
 @media (max-width:899px), (hover:none){html:has(.kpop:not([hidden])), html:has(.kpop:not([hidden])) body{overflow:hidden;overscroll-behavior:none}
  .sipop.kpop{overscroll-behavior:contain} .kpop .kbox .kc{touch-action:none}}   /* v6.77：手機 K 線往下拉不會變成網頁重新整理 */
 @media (max-width:899px), (hover:none){.sipop.kpop{left:0!important;top:0!important;width:100vw!important;height:100vh;height:100dvh;max-height:none;border-radius:0;display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
  .kpop .kbox{flex:1;display:flex;flex-direction:column;min-height:0} .kpop .kbox .kc{flex:1;height:auto;min-height:300px}}   /* v6.73：手機 K 線視窗上下滿版 */
 .kpop .kp-g{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}   /* v6.72 */
 .kpop .kset{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 10px;background:var(--surface-2);border-radius:8px;padding:8px 10px;margin:0 0 6px;font-size:12px}
-.kpop .kset .km{display:flex;align-items:center;gap:4px} .kpop .kset-p{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink-2);padding-bottom:4px;border-bottom:1px solid var(--line-2);margin-bottom:2px} .kpop .kset-p label{display:inline-flex;gap:4px;align-items:center} .kpop .kset input[type=number]{width:52px;padding:1px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
+.kpop .kset .km{display:inline-flex;align-items:center;gap:4px} .kpop .kset>.km{margin-right:4px} .kpop .kset-p{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--ink-2);padding-bottom:4px;border-bottom:1px solid var(--line-2);margin-bottom:2px} .kpop .kset-p label{display:inline-flex;gap:4px;align-items:center} .kpop .kset input[type=number]{width:52px;padding:1px 4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
 .kpop .kset input[type=color]{width:28px;height:22px;padding:0;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer} .kpop .kset-b{grid-column:1/-1;display:flex;gap:8px;align-items:center;color:var(--muted)}
 .kpop .kset-b button{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:1px 8px;font:inherit;cursor:pointer}
 .kpop .kp-x{margin-left:4px;border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px} .kpop .kbox{border-top:0;margin-top:0;padding-top:0}
@@ -798,7 +804,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.77</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.78</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -897,7 +903,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.77（2026-10-07）<br>
+    <b>版本</b>　v6.78（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1248,7 +1254,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007082809', HAS_AV = true, JC = {};
+const BUILD = '20261007090525', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1266,9 +1272,10 @@ function kdata(code){
     .catch(e => { delete KC[code]; throw e; });
   return KC[code];
 }
-const KMA0 = [{n:5,c:'#f59e0b',on:1},{n:10,c:'#38bdf8',on:1},{n:20,c:'#22c55e',on:1},{n:60,c:'#eab308',on:1},{n:120,c:'#c08457',on:1},{n:240,c:'#e040fb',on:1}];   // v6.72 預設（接近 XQ）
-const kmaGet = () => { try{ const a = JSON.parse(localStorage.getItem('hx_kma')); if(Array.isArray(a) && a.length === 6) return a; }catch(e){} return KMA0.map(x => ({...x})); };
-const kmaSet = a => { try{ localStorage.setItem('hx_kma', JSON.stringify(a)); }catch(e){} };
+const KMA0 = [{n:5,c:'#f7931e',on:1},{n:10,c:'#6dcff6',on:1},{n:20,c:'#00cc33',on:1},{n:60,c:'#ffff00',on:1},{n:120,c:'#8b6508',on:1},{n:240,c:'#ff00ff',on:1}];   // v6.78 預設＝Josh 的 XQ 設定
+const KPAL = ['#000000','#404040','#606060','#a0a0a0','#c8c8c8','#e8e8e8','#f4f4f4','#ffffff','#ff0000','#ff9900','#ffff00','#00ff00','#00ffff','#0000ff','#9900ff','#ff00ff','#f4cccc','#fce5cd','#fff2cc','#d9ead3','#d0e0e3','#cfe2f3','#d9d2e9','#ead1dc','#ea9999','#f9cb9c','#ffe599','#b6d7a8','#a2c4c9','#9fc5e8','#b4a7d6','#d5a6bd','#e06666','#f6b26b','#ffd966','#93c47d','#76a5af','#6fa8dc','#8e7cc3','#c27ba0','#cc0000','#e69138','#f1c232','#6aa84f','#45818e','#3d85c6','#674ea7','#a64d79','#990000','#b45f06','#bf9000','#38761d','#134f5c','#0b5394','#351c75','#741b47','#660000','#783f04','#7f6000','#274e13','#0c343d','#073763','#20124d','#4c1130'];   // v6.78 色盤（同 XQ 選色）
+const kmaGet = () => { try{ const a = JSON.parse(localStorage.getItem('hx_kma2')); if(Array.isArray(a) && a.length === 6) return a; }catch(e){} return KMA0.map(x => ({...x})); };
+const kmaSet = a => { try{ localStorage.setItem('hx_kma2', JSON.stringify(a)); }catch(e){} };
 const kpvGet = () => { try{ const o = JSON.parse(localStorage.getItem('hx_kpane')); if(o && typeof o === 'object') return {vol:o.vol !== 0, macd:o.macd !== 0, kd:o.kd !== 0}; }catch(e){} return {vol:true, macd:true, kd:true}; };
 const kpvSet = o => { try{ localStorage.setItem('hx_kpane', JSON.stringify({vol:o.vol ? 1 : 0, macd:o.macd ? 1 : 0, kd:o.kd ? 1 : 0})); }catch(e){} };
 function drawK(el, info, S, P){   // v6.70：P＝這台裝置記住的偏好（電腦版 K 線視窗）
@@ -1388,6 +1395,10 @@ document.addEventListener('click', e => {
   if(b){ e.stopPropagation(); e.preventDefault(); kshow(b.dataset.code, b.dataset.name); return; }
   if(!KPOP.hidden && (e.target.closest('.kp-x') || !e.target.closest('.kpop'))) KPOP.hidden = true;
   const g = e.target.closest('.kp-g'); if(g){ const p = KPOP.querySelector('.kset'); p.hidden = !p.hidden; if(!p.hidden) ksetPaint(); }
+  if(!KPOP.hidden){ const cl = e.target.closest('.kcl'), pi = e.target.closest('.kpal i');   // v6.78 色盤
+    KPOP.querySelectorAll('.kpal').forEach(p => { if(!(cl && p.previousElementSibling === cl) && !p.contains(e.target)) p.hidden = true; });
+    if(cl){ const p = cl.nextElementSibling; p.hidden = !p.hidden; }
+    if(pi){ const a = kmaGet(); a[+pi.dataset.j].c = pi.dataset.c; kmaSet(a); ksetPaint(); kredraw(); } }
   const rs = e.target.closest('.kset-rs'); if(rs){ kmaSet(KMA0.map(x => ({...x}))); kpvSet({vol:1, macd:1, kd:1}); kpSet({sf:null}); ksetPaint(); kredraw(); }
 }, true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') KPOP.hidden = true; });
@@ -1450,7 +1461,7 @@ document.addEventListener('click', e => {
 /* v6.72：均線設定面板（天數、顏色、開關；記在這台裝置） */
 function ksetPaint(){ const a = kmaGet(), p = KPOP.querySelector('.kset'); if(!p) return;
   const pv = kpvGet();
-  p.innerHTML = '<div class="kset-p">顯示：<label><input type="checkbox" checked disabled> K線</label>' + [['vol','成交量'],['macd','MACD'],['kd','KD']].map(([k, n]) => `<label><input type="checkbox" data-pv="${k}"${pv[k] ? ' checked' : ''}> ${n}</label>`).join('') + '</div>' + a.map((m, j) => `<label class="km"><input type="checkbox" data-j="${j}" data-k="on"${m.on ? ' checked' : ''}> MA <input type="number" data-j="${j}" data-k="n" min="2" max="600" value="${m.n}"> 日 <input type="color" data-j="${j}" data-k="c" value="${m.c}"></label>`).join('') +
+  p.innerHTML = '<div class="kset-p">顯示：<label><input type="checkbox" checked disabled> K線</label>' + [['vol','成交量'],['macd','MACD'],['kd','KD']].map(([k, n]) => `<label><input type="checkbox" data-pv="${k}"${pv[k] ? ' checked' : ''}> ${n}</label>`).join('') + '</div>' + a.map((m, j) => `<div class="kmr"><label class="km"><input type="checkbox" data-j="${j}" data-k="on"${m.on ? ' checked' : ''}> MA <input type="number" data-j="${j}" data-k="n" min="2" max="600" value="${m.n}"> 日 </label><span class="kcw"><button type="button" class="kcl" data-j="${j}" style="background:${m.c}" aria-label="選顏色"></button><span class="kpal" hidden>${KPAL.map(c => `<i data-j="${j}" data-c="${c}" style="background:${c}"${c === m.c ? ' class="on"' : ''}></i>`).join('')}<label class="kpc">自訂 <input type="color" data-j="${j}" data-k="c" value="${m.c}"></label></span></span></div>`).join('') +
     '<div class="kset-b"><button type="button" class="kset-rs">恢復預設</button><span>改了馬上套用，記在這台裝置</span></div>'; }
 function kredraw(){ const b = KPOP.querySelector('.kbox'); if(b) b.remove(); addK(KPOP, KPOP.dataset.code, KDESK() ? {...kpGet(), save:true} : null); }
 KPOP.addEventListener('input', e => { const x = e.target.closest('.kset input[type=color]'); if(!x) return; clearTimeout(KPOP._ct); KPOP._ct = setTimeout(() => { const a = kmaGet(); a[+x.dataset.j].c = x.value; kmaSet(a); kredraw(); }, 250); });   // v6.76 手機選色即時套用
