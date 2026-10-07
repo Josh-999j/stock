@@ -353,6 +353,31 @@ footer b{color:var(--ink-2);font-weight:600}
 body:not(.unlocked) .vsub, body:not(.unlocked) .mode[data-m="ai"]{display:none}
 .lockhint{display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);margin:0 0 12px}
 rx-s{display:contents}   /* v6.16：只給站主的規則文字空位 */
+/* v6.80：勝率比較新版（進階／訪客） */
+#view-rec .rv2 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+#view-rec .rv2 .rfy{display:contents}
+#view-rec .rv2 .cd{font-family:"Noto Sans TC",system-ui,sans-serif;border-radius:14px;padding:12px 14px;color:#fff;box-shadow:0 6px 18px -8px rgba(0,0,0,.45)}
+#view-rec .rv2 .cd .ct{font-weight:800;font-size:16px}#view-rec .rv2 .cd .cs{font-size:12px;opacity:.88}
+#view-rec .rv2 .cd .cv{font-size:30px;font-weight:800;margin-top:6px;line-height:1.1}#view-rec .rv2 .cd .cv small{font-size:12px;font-weight:500;margin-left:4px;opacity:.85}
+#view-rec .rv2 .cd .cm{font-size:13px;margin-top:2px}#view-rec .rv2 .cd .cm2{font-size:15px;margin-top:8px;line-height:1.7}#view-rec .rv2 .cd .cn{font-size:11px;opacity:.78;margin-top:4px}
+#view-rec .rv2 .cd .up{color:#ffe1dc}#view-rec .rv2 .cd .dn{color:#c8ffd9}
+#view-rec .rv2 .c1{background:linear-gradient(135deg,#2563eb,#1e3a8a)}#view-rec .rv2 .c2{background:linear-gradient(135deg,#7c3aed,#4c1d95)}#view-rec .rv2 .c3{background:linear-gradient(135deg,#ea580c,#9a3412)}
+#view-rec .rv2 .c4{background:linear-gradient(135deg,#0d9488,#115e59)}#view-rec .rv2 .c5{background:linear-gradient(135deg,#db2777,#831843)}#view-rec .rv2 .c6{background:linear-gradient(135deg,#ca8a04,#713f12)}#view-rec .rv2 .c7{background:linear-gradient(135deg,#475569,#1e293b)}
+#view-rec .rv2 .rsc{overflow-x:auto}
+#view-rec .rv2 table.rt{border-collapse:separate;border-spacing:4px;font-size:14px;white-space:nowrap}
+#view-rec .rv2 .rt th,#view-rec .rv2 .rt td{border-bottom:none}
+#view-rec .rv2 .rt th i,#view-rec .rv2 .rt td i{display:block;font-style:normal;font-size:11px;color:var(--muted);font-weight:400}
+#view-rec .rv2 .rt td{border-radius:10px;padding:8px 10px;text-align:right}#view-rec .rv2 .rt td b{font-size:17px}#view-rec .rv2 .rt small{font-size:10.5px;color:var(--muted);margin-left:1px}
+#view-rec .rv2 .h5{background:rgba(220,38,38,.42)}#view-rec .rv2 .h4{background:rgba(220,38,38,.26)}#view-rec .rv2 .h3{background:rgba(220,38,38,.12)}#view-rec .rv2 .h2{background:rgba(22,163,74,.18)}#view-rec .rv2 .h1{background:rgba(22,163,74,.34)}
+#view-rec .rv2 .rt td.na{color:var(--muted);text-align:center}
+#view-rec .rv2 .rt tr.old{display:none}#view-rec .rv2 .rt.showold tr.old{display:table-row;opacity:.6}
+#view-rec .rv2 .nw,#view-rec .rv2 .od{font-style:normal;font-size:11px;border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:2px}#view-rec .rv2 .nw{background:#f59e0b;color:#111}#view-rec .rv2 .od{background:#64748b;color:#fff}
+#view-rec .rv2 .obs{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;margin-left:6px;background:#fde68a;color:#7c2d12;vertical-align:2px;white-space:nowrap}
+#view-rec .rv2 h3{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+#view-rec .rv2 .rv2-tg{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:2px 10px;cursor:pointer}
+#view-rec .rv2 .lg{font-size:12px;color:var(--muted);margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}#view-rec .rv2 .lg span{border-radius:6px;padding:1px 8px;color:var(--ink)}#view-rec .rv2 .lg .obs{color:#7c2d12;margin-left:0}
+@media (max-width:760px){#view-rec .rv2 table.rt{font-size:12.5px;border-spacing:2px}#view-rec .rv2 .rt td{padding:6px}#view-rec .rv2 .rt td b{font-size:15px}#view-rec .rv2 .cd .cv{font-size:26px}
+ #view-rec .rv2 .rt tbody tr{display:table-row}#view-rec .rv2 .rt tbody td,#view-rec .rv2 .rt tbody th{display:table-cell}}
 /* v4.9 右上角台灣時間 */
 .hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
 .twc{display:flex;align-items:baseline;gap:10px;padding-right:52px}
@@ -805,7 +830,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.79</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.80</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -904,7 +929,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.79（2026-10-07）<br>
+    <b>版本</b>　v6.80（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1255,7 +1280,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007093950', HAS_AV = true, JC = {};
+const BUILD = '20261007104116', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1404,6 +1429,8 @@ document.addEventListener('click', e => {
   const rs = e.target.closest('.kset-rs'); if(rs){ kmaSet(KMA0.map(x => ({...x}))); kpvSet({vol:1, macd:1, kd:1}); kpSet({sf:null}); ksetPaint(); kredraw(); }
 }, true);
 document.addEventListener('keydown', e => { if(e.key === 'Escape') KPOP.hidden = true; });
+document.addEventListener('click', e => { const b = e.target.closest('.rv2-tg'); if(!b) return; const t = $('rv2-st'); if(!t) return;   // v6.80 已停用策略收起／展開
+  t.classList.toggle('showold'); b.textContent = t.classList.contains('showold') ? '收起已停用策略' : '顯示已停用策略'; });
 /* v6.73：觀察名單（只給站主；存在 Cloudflare 雲端 /api/watch，用站主登入後拿到的金鑰）。3 組：觀察中／準備進場／已買進 */
 const WL = {tok:null, items:[], idx:null, map:new Map(), g:'watch', q:''};
 const WG = [['watch','👀 觀察中'],['ready','🎯 準備進場'],['bought','💰 已買進']];
@@ -1841,6 +1868,7 @@ $('gear').addEventListener('click', async () => {
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            const wr = $('wh-rules'); if(wr && o.wrules) wr.textContent = o.wrules;   // v6.14：谷底飛龍規則只給站主
            $('asset-body').innerHTML = o.asset || '<p>尚無稼栩資產資料</p>';   // v6.19：只給站主
+           if(o.rec) $('rec-body').innerHTML = o.rec;   // v6.80：站主看原本完整版勝率比較
            SECRETS = o.secrets || {}; fillRX(o.rx);   // v6.16：成立條件／風報比、規則文字只給站主
            document.querySelectorAll('#tabs .own').forEach(b => b.hidden = false); initOwner(); wlInit(v._w && v._w.wt);   // v6.73 觀察名單
            const d3=DAYS.find(x=>x.date===cur); if(d3) renderDay(d3); setMode(MODE); }).catch(e => console.error('owner', e));
@@ -1849,6 +1877,7 @@ $('gear').addEventListener('click', async () => {
            $('cfg-body').innerHTML = a.cfg || '<p>尚無正二模擬資料</p>';
            try{ loadCalc(); }catch(e){ console.error('loadCalc', e); }
            if(a.fplan){ $('fplan-body').innerHTML = a.fplan; try{ initOwner(); }catch(e){} }
+           const rf = $('rec-fyo'); if(rf && a.recfy) rf.innerHTML = a.recfy;   // v6.80：勝率比較的 Fyo A/B 只給進階
            document.querySelectorAll('#tabs .own').forEach(b => b.hidden = !(b.dataset.v==='cfg' || (b.dataset.v==='fplan' && a.fplan))); }).catch(e => console.error('adv', e));
     }
     if(pend) await pend.catch(() => {});
