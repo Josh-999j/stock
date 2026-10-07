@@ -830,7 +830,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.80</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.81</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -929,7 +929,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.80（2026-10-07）<br>
+    <b>版本</b>　v6.81（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1280,7 +1280,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007104116', HAS_AV = true, JC = {};
+const BUILD = '20261007114124', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1701,7 +1701,7 @@ function initWH(){
     $('wh-dt').textContent = fy(d);
     const rv = (D.reb||{})[d];
     warn.hidden = !(rv!=null && rv>=12); $('wh-ttl').classList.toggle('wgn', !warn.hidden);
-    if(!warn.hidden) warn.textContent = `⚠ 大盤已從近 20 日低點反彈 ${rv.toFixed(1)}%，歷史上這種時候確認買點勝率僅約 2 成、近半數進場即停損，留意回檔。`;
+    if(!warn.hidden){ warn.textContent = `⚠ 大盤已從近 20 日低點反彈 ${rv.toFixed(1)}%，非入場時間勝率僅約 2 成、近半數進場即停損，留意回檔。`; $('wh-ttl').textContent = '大盤狀況不宜進場'; }   // v6.81 Josh 指定文字
     nav.querySelector('[data-a=lt]').setAttribute('aria-pressed', latest?'true':'false');
     nav.querySelector('[data-a=pv]').disabled = i>=days.length-1; nav.querySelector('[data-a=nx]').disabled = i===0;
     const done = rs.filter(r=>r.st!=='new');
