@@ -1299,7 +1299,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007134933', HAS_AV = true, JC = {};
+const BUILD = '20261007135032', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1670,7 +1670,7 @@ async function openVault(pw, V){
 }
 function showView(v){
   $('view-daily').hidden = v!=='daily'; $('view-rec').hidden = v!=='rec'; $('view-watch').hidden = v!=='watch'; $('view-rich').hidden = v!=='rich';
-  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset'; $('view-wl').hidden = v!=='wl'; $('view-help').hidden = v!=='help';
+  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset'; $('view-wl').hidden = v!=='wl'; $('view-help').hidden = v!=='help'; const hb_ = $('helpb'); if(hb_){ hb_.textContent = v==='help' ? '關閉說明' : '說明'; hb_.classList.toggle('on', v==='help'); }
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'));
 }
 $('tabs').addEventListener('click', e => { const b=e.target.closest('button[data-v]'); if(b) showView(b.dataset.v); });
