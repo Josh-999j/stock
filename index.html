@@ -778,6 +778,8 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .wl-note{border:0;background:none;color:var(--ink-2);font:inherit;font-size:13px;cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;text-align:left;padding:0}
 #tabs .wlt{border-color:#f5b301}
 .kpop .kset[hidden]{display:none}   /* v6.73：均線面板收起時要真的藏起來 */
+@media (max-width:899px), (hover:none){html:has(.kpop:not([hidden])), html:has(.kpop:not([hidden])) body{overflow:hidden;overscroll-behavior:none}
+ .sipop.kpop{overscroll-behavior:contain} .kpop .kbox .kc{touch-action:none}}   /* v6.77：手機 K 線往下拉不會變成網頁重新整理 */
 @media (max-width:899px), (hover:none){.sipop.kpop{left:0!important;top:0!important;width:100vw!important;height:100vh;height:100dvh;max-height:none;border-radius:0;display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
  .kpop .kbox{flex:1;display:flex;flex-direction:column;min-height:0} .kpop .kbox .kc{flex:1;height:auto;min-height:300px}}   /* v6.73：手機 K 線視窗上下滿版 */
 .kpop .kp-g{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}   /* v6.72 */
@@ -796,7 +798,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.76</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.77</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -895,7 +897,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.76（2026-10-07）<br>
+    <b>版本</b>　v6.77（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1246,7 +1248,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007063001', HAS_AV = true, JC = {};
+const BUILD = '20261007082809', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
