@@ -353,7 +353,24 @@ footer b{color:var(--ink-2);font-weight:600}
 body:not(.unlocked) .vsub, body:not(.unlocked) .mode[data-m="ai"]{display:none}
 .lockhint{display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);margin:0 0 12px}
 rx-s{display:contents}   /* v6.16：只給站主的規則文字空位 */
+/* v6.83：說明頁（公開） */
+#view-help[hidden]{display:none} #view-help .hp{max-width:960px}
+#view-help .hp h2{font-family:"Noto Serif TC",serif;font-size:22px;margin:6px 0 10px}
+#view-help .hp h3{font-family:"Noto Serif TC",serif;font-size:18px;margin:30px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line);scroll-margin-top:12px}
+#view-help .hp p,#view-help .hp li{font-size:14.5px;line-height:1.8;color:var(--ink-2)} #view-help .hp b{color:var(--ink)}
+#view-help .hp ul,#view-help .hp ol{padding-left:22px;margin:6px 0 10px}
+#view-help .hp-toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+#view-help .hp-toc a{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:3px 12px;color:var(--ink-2);text-decoration:none;background:var(--surface)}
+#view-help .hp-tb{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:8px 0 12px}
+#view-help .hp-tb table{border-collapse:collapse;width:100%;font-size:14px} #view-help .hp-tb th,#view-help .hp-tb td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+#view-help .hp-tb th{font-size:12.5px;color:var(--muted);font-weight:500} #view-help .hp-tb tr:last-child td{border-bottom:none}
+#view-help .hp-tb tbody tr{display:table-row} #view-help .hp-tb td{display:table-cell}
+#view-help .hp figure{margin:10px 0 14px} #view-help .hp img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:10px;display:block}
+#view-help .hp figcaption{font-size:12px;color:var(--muted);margin-top:4px}
+#view-help .hp-tb figure{margin:0} #view-help .hp-tb img{max-height:520px;width:auto}
+.gear.hbtn{width:auto;padding:0 12px;font-size:13px;font-weight:600}
 /* v6.80：勝率比較新版（進階／訪客） */
+:is(#view-rec) h3 .wtip{font-family:"Noto Sans TC",system-ui,sans-serif;font-size:12px;font-weight:400;color:var(--muted);margin-left:8px}   /* v6.83 */
 #view-rec .rv2 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 #view-rec .rv2 .rfy{display:contents}
 #view-rec .rv2 .cd{font-family:"Noto Sans TC",system-ui,sans-serif;border-radius:14px;padding:12px 14px;color:#fff;box-shadow:0 6px 18px -8px rgba(0,0,0,.45)}
@@ -830,13 +847,14 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.82</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.83</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
     <div class="meta">
       <div><div class="k">資料日</div><div class="v num" id="m-date">—</div></div>
       <div><div class="k">加權指數</div><div class="v num" id="m-idx">—</div><div class="mk-wrap"><button type="button" class="mk-badge mk-green" id="mk-badge" aria-expanded="false" aria-controls="mk-box"><span class="dot"></span>大盤正常</button><div class="mk-am" title="大盤監控 06:00 收集">今晨　費半 <span class="up">+0.34%</span>　那斯達克 <span class="up">+0.45%</span>　台指期夜盤 <span class="dn">-0.06%</span>　VIX 15.0</div></div></div>
+      <button type="button" class="gear hbtn" id="helpb" title="使用說明" aria-label="使用說明">說明</button>   <!-- v6.83 -->
       <button type="button" class="gear" id="theme" title="切換深色／淺色" aria-label="切換深色／淺色">🌙</button>
       <button type="button" class="gear" id="gear" title="解鎖成立條件、風報比與紀錄" aria-label="解鎖成立條件、風報比與紀錄">⚙</button>
     </div>
@@ -920,6 +938,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <section id="view-watch" hidden aria-label="谷底飛龍"><div id="watch-body"></div></section>
   <section id="view-rich" hidden aria-label="大富翁"><div id="rich-body"></div></section>
+  <section id="view-help" hidden aria-label="使用說明"><div id="help-body"></div></section>
   <section id="view-rec" hidden aria-label="勝率比較"><div id="rec-body"></div></section>
   <div class="fpdd" id="fpdd" role="menu" hidden></div>
   <section id="view-fplan" hidden aria-label="Fyo方案"><div id="fplan-body"></div></section>
@@ -929,7 +948,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.82（2026-10-07）<br>
+    <b>版本</b>　v6.83（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1280,7 +1299,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007131324', HAS_AV = true, JC = {};
+const BUILD = '20261007134933', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1651,10 +1670,18 @@ async function openVault(pw, V){
 }
 function showView(v){
   $('view-daily').hidden = v!=='daily'; $('view-rec').hidden = v!=='rec'; $('view-watch').hidden = v!=='watch'; $('view-rich').hidden = v!=='rich';
-  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset'; $('view-wl').hidden = v!=='wl';
+  $('view-fplan').hidden = v!=='fplan'; $('view-cfg').hidden = v!=='cfg'; $('view-asset').hidden = v!=='asset'; $('view-wl').hidden = v!=='wl'; $('view-help').hidden = v!=='help';
   document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'));
 }
 $('tabs').addEventListener('click', e => { const b=e.target.closest('button[data-v]'); if(b) showView(b.dataset.v); });
+$('helpb').addEventListener('click', async () => {   // v6.83：說明頁（公開，不用登入；第一次打開才下載）
+  if(!$('view-help').hidden){ showView('daily'); return; }
+  showView('help'); window.scrollTo(0, 0); const hb = $('help-body');
+  if(!hb.dataset.ok){ hb.innerHTML = '<p class="note">說明載入中…</p>';
+    for(let i = 0; i < 3 && !hb.dataset.ok; i++){ try{ const r = await fetch('data/help.html?v=' + BUILD); if(!r.ok) throw 0; hb.innerHTML = await r.text(); hb.dataset.ok = 1; }catch(e){ await new Promise(r => setTimeout(r, 1500)); } }
+    if(!hb.dataset.ok) hb.innerHTML = '<p class="note">說明下載失敗，請重新整理再試</p>'; }
+});
+$('help-body').addEventListener('click', e => { const a = e.target.closest('.hp-toc a'); if(!a) return; e.preventDefault(); const t = document.querySelector(a.getAttribute('href')); if(t) t.scrollIntoView({behavior:'smooth'}); });
 $('savedef').addEventListener('click', async () => {
   const conf = {mode:MODE, hide:[...HIDE], sort:SORT, soff:[...SOFF], hide8:[...HIDE8], sort8:SORT8, saved:new Date().toISOString().slice(0,19)};
   const txt = JSON.stringify(conf, null, 2);
