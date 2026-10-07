@@ -780,10 +780,10 @@ table.dt{min-width:0;width:100%;font-size:13.5px}
 .kpop .kset[hidden]{display:none}   /* v6.73：均線面板收起時要真的藏起來 */
 .kpop .kmr{display:flex;align-items:center;gap:4px} .kpop .kcw{position:relative;display:inline-block}
 .kpop .kcl{width:30px;height:22px;border:1px solid var(--line);border-radius:4px;cursor:pointer;padding:0}
-.kpop .kpal{position:absolute;z-index:30;top:26px;right:0;display:grid;grid-template-columns:repeat(8,22px);gap:4px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.35)} .kpop .kpal[hidden]{display:none}
+.kpop .kpal{position:fixed;z-index:60;display:grid;grid-template-columns:repeat(8,22px);gap:4px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.35)} .kpop .kpal[hidden]{display:none}
 .kpop .kpal i{width:22px;height:22px;border:1px solid rgba(128,128,128,.5);cursor:pointer;display:block} .kpop .kpal i.on{outline:2px solid #3b82f6;outline-offset:1px}
 .kpop .kpal .kpc{grid-column:1/-1;display:flex;align-items:center;gap:6px;color:var(--ink-2);margin-top:2px}   /* v6.78 色盤 */
-@media (max-width:899px), (hover:none){.kpop .kpal{position:fixed;top:30%;left:50%;right:auto;transform:translateX(-50%);grid-template-columns:repeat(8,30px)} .kpop .kpal i{width:30px;height:30px}}
+@media (hover:none){.kpop .kpal{grid-template-columns:repeat(8,30px)} .kpop .kpal i{width:30px;height:30px}}
 @media (max-width:899px), (hover:none){html:has(.kpop:not([hidden])), html:has(.kpop:not([hidden])) body{overflow:hidden;overscroll-behavior:none}
  .sipop.kpop{overscroll-behavior:contain} .kpop .kbox .kc{touch-action:none}}   /* v6.77：手機 K 線往下拉不會變成網頁重新整理 */
 @media (max-width:899px), (hover:none){.sipop.kpop{left:0!important;top:0!important;width:100vw!important;height:100vh;height:100dvh;max-height:none;border-radius:0;display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
@@ -1254,7 +1254,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007090525', HAS_AV = true, JC = {};
+const BUILD = '20261007090629', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
@@ -1397,7 +1397,8 @@ document.addEventListener('click', e => {
   const g = e.target.closest('.kp-g'); if(g){ const p = KPOP.querySelector('.kset'); p.hidden = !p.hidden; if(!p.hidden) ksetPaint(); }
   if(!KPOP.hidden){ const cl = e.target.closest('.kcl'), pi = e.target.closest('.kpal i');   // v6.78 色盤
     KPOP.querySelectorAll('.kpal').forEach(p => { if(!(cl && p.previousElementSibling === cl) && !p.contains(e.target)) p.hidden = true; });
-    if(cl){ const p = cl.nextElementSibling; p.hidden = !p.hidden; }
+    if(cl){ const p = cl.nextElementSibling; p.hidden = !p.hidden; if(!p.hidden){ const r = cl.getBoundingClientRect(), w = p.offsetWidth, h = p.offsetHeight;   // 放在按鈕旁、不超出畫面
+      p.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px'; p.style.top = (r.bottom + 4 + h > innerHeight - 8 ? Math.max(8, r.top - h - 4) : r.bottom + 4) + 'px'; } }
     if(pi){ const a = kmaGet(); a[+pi.dataset.j].c = pi.dataset.c; kmaSet(a); ksetPaint(); kredraw(); } }
   const rs = e.target.closest('.kset-rs'); if(rs){ kmaSet(KMA0.map(x => ({...x}))); kpvSet({vol:1, macd:1, kd:1}); kpSet({sf:null}); ksetPaint(); kredraw(); }
 }, true);
