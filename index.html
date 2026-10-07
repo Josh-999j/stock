@@ -830,7 +830,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
   <header>
     <div class="brand">
       <img class="logo" src="data/icon-logo.jpg" alt="紅蝦" width="160" height="151">
-      <h1>紅蝦ㄟㄞ法<span class="ver">v6.81</span></h1>
+      <h1>紅蝦ㄟㄞ法<span class="ver">v6.82</span></h1>
     </div>
     <div class="hdr-r">
     <div class="twc" aria-label="台灣時間"><span class="z">台灣時間</span><span class="v num" id="twc-d">—</span><span class="v num" id="twc-t">—</span></div>
@@ -848,7 +848,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
     <button type="button" data-v="daily" data-tip="每天的選股結果" aria-pressed="true">每日選股</button>
     <button type="button" data-v="watch" data-tip="跌深股反彈的觀察名單與買點" aria-pressed="false">谷底飛龍</button>
     <button type="button" data-v="rich" data-tip="照規則自動買賣的模擬帳戶" aria-pressed="false">大富翁</button>
-    <button type="button" data-v="rec" data-tip="各策略、各名次的勝率統計" aria-pressed="false">勝率比較</button>
+    <button type="button" class="own" data-v="rec" data-tip="各策略、各名次的勝率統計" aria-pressed="false" hidden>勝率比較</button>   <!-- v6.82：只給站主 -->
     <button type="button" class="own" data-v="fplan" aria-pressed="false" aria-haspopup="menu" hidden>Fyo方案 ▾</button>
     <button type="button" class="own" data-v="cfg" data-tip="輸入金額，試算各種配置的報酬" aria-pressed="false" hidden>正二模擬</button>
     <button type="button" class="own" data-v="asset" data-tip="我的目標和實際庫存差多少" aria-pressed="false" aria-haspopup="menu" hidden>稼栩資產 ▾</button>
@@ -929,7 +929,7 @@ body.has-cards #view-daily .nm,body.has-cards #view-watch tbody th,body.has-card
 
   <footer id="foot">
     <b>作者</b>　稼栩<br>
-    <b>版本</b>　v6.81（2026-10-07）<br>
+    <b>版本</b>　v6.82（2026-10-07）<br>
     <b>免責</b>　本頁為個人研究紀錄，不是投資建議，也不保證獲利。
   </footer>
 </div>
@@ -1280,7 +1280,7 @@ document.addEventListener('keydown', e => {
   b.addEventListener('click', () => window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}));
 })();
 /* v6.30：加密資料、歷史資料拆成 data/*.json，需要時才下載（index.html 變小，打開快） */
-const BUILD = '20261007114124', HAS_AV = true, JC = {};
+const BUILD = '20261007131324', HAS_AV = true, JC = {};
 function getJ(n){
   const one = () => fetch('data/'+n+'.json?v='+BUILD, {cache:'force-cache'}).then(r => { if(!r.ok) throw new Error('下載失敗 '+n); return r.json(); });
   const retry = (k) => one().catch(e => k > 0 ? new Promise(ok => setTimeout(ok, 800)).then(() => retry(k-1)) : Promise.reject(e));   // v6.48：失敗自動重試 2 次
