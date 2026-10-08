@@ -4,7 +4,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" type="image/png" href="assets/web/icons/tool.png"><link rel="apple-touch-icon" href="assets/web/icons/tool.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/web/favicon_64.png"><link rel="apple-touch-icon" href="assets/web/favicon_256.png">
 <title>AI Project Control Center</title>
 <style>
   /* Phase 1：純方塊版面，美化（工廠素材）之後再換 */
@@ -421,10 +421,9 @@ function render() {
     ${kpi("Stale 停滯", k.stale, `>${S.config.stale_days} 天沒動`, "STALE", k.stale ? "warn" : "", "var(--STALE)", "❚❚", k.stale ? "STALE" : "RUNNING")}
     ${kpi("Success|7 日成功率", k.success_rate_7d == null ? "—" : k.success_rate_7d + "%", `${k.runs_7d} 次執行`, "", "", "#7a5cc2", "✓", k.runs_7d ? "RUNNING" : "IDLE")}
   </section>
-  ${remotePanel()}
 
   <section class="box factory ${hasArt ? "view-" + ui.view : ""}" ${A().bg ? `style="--bg:url('${aurl("bg_factory.jpg")}')"` : ""}>
-    <h2>Factory Tool 機台 <small>每頁 ${ps} 台</small>
+    <h2>Factory Tool <small>每頁 ${ps} 台</small>
       ${hasArt ? `<span class="viewsw"><button class="${ui.view==="compact"?"on":""}" onclick="setView('compact')">精簡（10 台）</button><button class="${ui.view==="factory"?"on":""}" onclick="setView('factory')">工廠大圖（5 台）</button></span>` : ""}</h2>
     <div class="toolbar">
       <select id="flt" onchange="ui.filter=this.value;ui.page=1;render()">
@@ -449,6 +448,7 @@ function render() {
     </div>
     <div class="machines">${slice.map(machineCard).join("")}${slots}</div>
   </section>
+  ${remotePanel()}
 
   <section class="panels">
     <div class="box"><h2>Schedule Monitor 排程 <small>${scheds.length} 個 · 只顯示不執行</small></h2>
@@ -539,6 +539,16 @@ function remotePanel() {
 // 背景執行面板（Josh 10/08：所有背景程式、排程都要看得到、知道怎麼關）。只顯示，不能在這裡停。
 const shortWhat = w => ((w || "").match(/[^\\\/"\s]+\.(?:py|pyw|ps1|js|vbs|cmd|bat|mjs)\b/gi) || []).pop() || (w || "").slice(0, 50);
 const TASK_ZH = {Running: "執行中", Ready: "待命", Disabled: "已停用", Queued: "排隊中"};
+// AI傳聲筒心跳（heartbeat.json，每 10 秒）：一行看懂傳聲筒有沒有在跑、各線輪到誰
+function relayLine() {
+  const R = S.relay; if (!R) return "";
+  const ps = Object.entries(R.projects || {}).map(([n, p]) =>
+    `<span class="tag" title="${esc(p.status || "")}">${esc(n)}：${p.turn === "josh" ? "⏳ 等你" : p.turn === "codex" ? "小C" : p.turn === "claude" ? "大C" : esc(p.turn || "—")}${p.dry ? "（只監看）" : ""}</span>`).join(" ");
+  return `<div style="padding:6px 10px;border-radius:6px;margin-bottom:6px;font-size:13px;background:color-mix(in srgb, var(--${R.alive ? "RUNNING" : "FAILED"}) 10%, #fff)">
+    ${R.alive ? `🔊 <b>AI傳聲筒運作中</b>（${R.age_sec ?? "?"} 秒前回報）` : `🔴 <b>AI傳聲筒停了</b>（${R.age_sec != null ? Math.round(R.age_sec / 60) + " 分鐘沒回報" : "沒有心跳檔"}）：大C／小C 不會自動接力`}
+    <div style="margin-top:4px">${ps}</div></div>`;
+}
+
 function bgPanel() {
   const B = S.background; if (!B) return "";
   const procs = B.procs || [], tasks = B.tasks || [];
@@ -558,6 +568,7 @@ function bgPanel() {
         <div class="x" title="${esc(t.what)}">${st} · 下次 ${t.next ? until(t.next) : "—"} · 上次 ${t.last ? ago(t.last) : "—"} ${r}</div></span></li>`;
   }).join("");
   return `<section class="box"><h2>Background 背景執行 <small>正在跑 ${procs.length} · 排程 ${tasks.length}${pop ? ` · ${pop} 個會跳視窗` : ""}${bad ? ` · ${bad} 個上次失敗` : ""} · 排程資料 ${esc(B.tasks_at || "")}</small></h2>
+    ${relayLine()}
     <div class="panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
       <div><div class="section-title">正在跑的程式（${procs.length}）</div><ul class="list">${procRows || '<li class="empty">沒有</li>'}</ul></div>
       <div><div class="section-title">排程（${tasks.length}）</div><ul class="list">${taskRows || '<li class="empty">沒有</li>'}</ul></div>
