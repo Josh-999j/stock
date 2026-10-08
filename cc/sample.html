@@ -526,7 +526,7 @@ function render() {
   </section>
   ${bgPanel()}`) +
   pg("remote", `${remotePanel()}`) +
-  pg("roster", `${rosterPanel()}${toolsPanel()}`) +
+  pg("roster", `${modelPanel()}${rosterPanel()}${toolsPanel()}`) +
   pg("tidy", `${distributionPanel()}
   <section class="panels">
     <div class="box"><h2>Activity Feed 動態 <small>最新 ${S.feed.length}</small></h2>
@@ -675,7 +675,7 @@ function rosterPanel() {
     const au = (p.autos || []).map(a => `<span class="chip codex${a.on ? "" : " off"}">🤖 ${esc(a.at)} ${esc(a.name)}</span>`).join("");
     const pr = (p.programs || []).map(x => `<span class="chip">${esc(x)}</span>`).join("");
     return `<li ${p.card ? `onclick="openDetail('${esc(p.card.id)}')"` : ""}>${st}
-      <span class="body"><span class="p">${esc(p.name)}</span> <span class="tag">${esc(p.owner || "—")}</span>${p.card ? "" : ' <span class="tag tag-warn">沒有卡片</span>'}
+      <span class="body"><span class="p">${esc(p.name)}</span> <span class="tag">${esc(p.owner || "—")}</span>${p.model && !p.model.startsWith("—") ? ` <span class="tag" title="建議大C模型">🧠 ${esc(p.model.split("（")[0])}</span>` : ""}${p.card ? "" : ' <span class="tag tag-warn">沒有卡片</span>'}
         <div class="x">📁 ${esc(p.folder || "—")} · 💬 ${esc(p.chat || "—")}</div>
         ${p.aliases && p.aliases !== "—" ? `<div class="x muted">別名：${esc(p.aliases)}</div>` : ""}
         ${sch || au || pr ? `<div class="chips">${sch}${au}${pr}</div>` : ""}</span></li>`;
@@ -684,6 +684,23 @@ function rosterPanel() {
     <ul class="list full">${P.map(row).join("")}</ul>
     ${O.length ? `<div class="section-title">沒有主人的排程（${O.length}）</div><ul class="list full">${O.map(t => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(TASK_ZH[t.state] || t.state || "")}</span><div class="x" title="${esc(t.what)}">${esc(shortWhat(t.what))}</div></span></li>`).join("")}</ul>` : ""}
   </section>`;
+}
+// 各專案建議的大C模型（Josh 10/09）：讀名稱對照表「建議大C模型」欄；依耗用由省到耗分組
+const MODEL_TIERS = [["Haiku", "最省：看狀態、轉話、固定檢查"], ["Sonnet", "中等：日常寫程式、改網頁、看資料"],
+                     ["Opus", "耗：跨專案判斷、審查會動正式資料、策略推理"], ["Fable", "最耗：難題、大改版、卡關很久才用"]];
+function modelPanel() {
+  const P = ((S.registry || {}).projects || []).filter(p => p.model);
+  const tier = m => (MODEL_TIERS.find(([k]) => m.startsWith(k)) || [""])[0];
+  const box = ([k, desc]) => {
+    const ps = P.filter(p => tier(p.model) === k);
+    return ps.length ? `<div><div class="section-title">${esc(k)} <span class="muted">· ${esc(desc)}</span></div>
+      <div class="chips">${ps.map(p => `<span class="chip" title="${esc(p.model)}">${esc(p.name)}${p.model.includes("（") ? " <span class=\"muted\">" + esc(p.model.slice(p.model.indexOf("（"))) + "</span>" : ""}</span>`).join("")}</div></div>` : "";
+  };
+  const codex = P.filter(p => !tier(p.model));
+  return `<section class="box"><h2>🧠 各專案建議的大C模型 <small>由省到耗：Haiku → Sonnet → Opus → Fable · 卡住可臨時切高一級 · 小C 額度另計</small></h2>
+    <div style="display:grid;gap:6px">${MODEL_TIERS.map(box).join("")}
+    ${codex.length ? `<div><div class="section-title">不用大C <span class="muted">· 小C 執行、暫停或休眠</span></div><div class="chips">${codex.map(p => `<span class="chip muted" title="${esc(p.model)}">${esc(p.name)}</span>`).join("")}</div></div>` : ""}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">換模型：在該專案對話左下角的模型選單選；要總機幫忙改就說「把〇〇改成 Sonnet」。建議值寫在名稱對照表，由總機維護。</div></section>`;
 }
 // 共用工具：從各專案 project.json 的 shared 欄位（補報到時填的）自動歸類
 const TOOLS = [
