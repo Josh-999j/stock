@@ -762,14 +762,22 @@ function remotePanel() {
   const ss = R.sessions || [], e = R.entry || {};
   const n = st => ss.filter(s => s.state === st).length;
   const chip = s => `<div class="rchip" style="--c:${RM[s.state][2]}" title="${esc(s.cwd)}">
-      <span class="ri">${RM[s.state][0]}</span><span class="rt"><b>${esc(s.title)}</b><small>${RM[s.state][1]}・最後動作 ${s.last ? ago(s.last) : "—"}</small></span></div>`;
+      <span class="ri">${RM[s.state][0]}</span><span class="rt"><b>${esc(s.title)}</b><small>${s.phone_mode ? "手機模式（黑色小視窗）" : RM[s.state][1]}・最後動作 ${s.last ? ago(s.last) : "—"}</small></span></div>`;
+  // 這台電腦跟 Claude 雲端的連線、App 自動更新、常駐元件（10/09 傳聲筒管理員提供規則；都不花 token）
+  const d = R.device || {}, T = ((S.background || {}).tasks || []);
+  const comp = (label, name) => { const t = T.find(x => x.name === name); const ok = t && t.state !== "Disabled";
+    return `<span class="tag" style="color:var(--${ok ? "RUNNING" : "FAILED"});border-color:currentColor" title="排程 ${esc(name)}${t ? "・" + esc(TASK_ZH[t.state] || t.state) : "・找不到"}">${ok ? "🟢" : "🔴"} ${esc(label)}</span>`; };
+  const devLine = `<div class="rsum">💻 電腦連線：${d.online == null ? "—（讀不到 App 紀錄）" : d.online ? `🟢 在線（${esc(d.since.slice(5))} 連上）` : `🔴 斷線（${esc(d.since.slice(5))}）`}
+      ・App 上次自動更新：${d.last_update ? esc(d.last_update.slice(5)) + "（會關掉所有 App 對話）" : "—"}</div>
+    <div class="chips" style="margin:2px 0 6px">${comp("總入口每小時重開", "AI-RemoteEntry-HourlyRestart")}${comp("Telegram 遙控", "AI-Telegram-Bot")}${comp("本機顧線", "AI-Relay-KeepManager")}${comp("AI傳聲筒", "AI-Relay-AutoStart")}</div>`;
   return `<section class="box remote"><h2>📱 手機遠端 <small>電腦上的 Claude 對話，哪些用手機看得到</small></h2>
+    ${devLine}
     <div class="rentry ${e.on ? "ok" : "bad"}">${e.on
       ? `🟢 <b>總入口開著</b>（從 ${esc(e.since.slice(5))}）：手機 Claude App → Code → 選「${esc(e.name || "AIStation 總入口")}」就能開新對話。`
       : `🔴 <b>總入口沒開</b>：手機沒辦法開新對話。跟總機說「開總入口」，或電腦上雙擊「開啟遠端控制_AIStation.cmd」。`}</div>
     <div class="rsum">🟢 看得到 <b>${n("connected")}</b>　😴 睡著了 <b>${n("sleeping")}</b>　⚫ 沒開遠端 <b>${n("off")}</b></div>
     <div class="rgrid">${ss.map(chip).join("") || '<div class="empty">沒有對話</div>'}</div>
-    <div class="muted" style="font-size:12px;margin-top:6px">😴 睡著了＝遠端有開，但對話閒置被 App 收起來；電腦上點開它傳一句話、或請總機叫醒，就會變 🟢。⚫ 沒開遠端＝要先打開遠端開關（跟總機說）。</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">🟢 看得到＝App 裡開著且遠端有開，或在「手機模式」（Telegram 叫醒／本機顧線開的黑色小視窗）。😴 睡著了＝遠端有開，但對話閒置被 App 收起來；用 Telegram 叫醒、或請總機叫醒，就會變 🟢。電腦每 30 分鐘左右會斷線 2～4 秒自動重連，屬正常。⚫ 沒開遠端＝要先打開遠端開關（跟總機說）。</div>
   </section>`;
 }
 
