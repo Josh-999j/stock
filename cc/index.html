@@ -707,7 +707,7 @@ const TOOLS = [
   ["Telegram", /telegram/i, "同一個 bot 多個專案在發，訊息太多；以後要分開"],
   ["XQ 畫面", /XQ\s*(畫面|GUI|操作|視窗)|操作\s*XQ|XQ排他鎖|xq_auto/i, "同時操作會互搶；紅蝦每日＋歷史匯出已共用一把鎖，其他還沒"],
   ["GitHub", /github/i, "紅蝦網舊家＋控制中心推同一個 repo；控制中心 18:50–19:30 讓路"],
-  ["Cloudflare", /cloudflare/i, "紅蝦網＋大盤網站都在同一個帳號、同一份 wrangler 登入；換帳號或登出會兩邊一起壞（大盤 10/09 搬來，月付 5 美元）"],
+  ["Cloudflare", /cloudflare/i, "紅蝦網＋大盤網站同一個帳號（月付 5 美元）；兩邊各用自己的上傳鑰匙（10/09 改好），不要執行 wrangler 登出／換帳號"],
   ["Python 環境（.venv）", /\.venv|venv/i, "被借用的那個升級套件，借用的專案可能一起壞（Josh 10/09：共用就好）"],
   ["量化資料", /量化|panel_v2|parquet/i, "多個專案讀；18:30 更新晚了，後面都拿到舊資料"],
   ["大盤資料接力", /hongxia-(market|quotes)|market-dashboard|大盤/i, "大盤 06:00／06:10 產出，紅蝦網 06:05／06:30 讀；前面晚了後面拿舊的"],
