@@ -4,6 +4,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<script>try{var th=localStorage.getItem("cc.theme");if(th==="light"||th==="dark")document.documentElement.setAttribute("data-theme",th);}catch(e){}</script>
 <link rel="icon" type="image/png" sizes="64x64" href="assets/web/favicon_64.png"><link rel="apple-touch-icon" href="assets/web/favicon_256.png">
 <title>AI Project Control Center</title>
 <style>
@@ -12,7 +14,13 @@
     --bg: #f3f5f8; --card: #fff; --line: #d9dee6; --text: #1f2933; --muted: #6b7785;
     --FAILED: #d03b3b; --BLOCKED: #e07b1a; --STALE: #c9a000; --RUNNING: #1f9d3a; --WAITING: #2f6fd6; --IDLE: #8a94a0;
     --red: #d03b3b; --orange: #e07b1a; --yellow: #c9a000; --blue: #2f6fd6;
+    --veil1: rgba(255,255,255,.72); --veil2: rgba(255,255,255,.82); --on: #fff;
   }
+  /* 深色主題（Josh 10/09：可切換 自動／亮／暗；自動＝跟手機或電腦的設定） */
+  :root[data-theme="dark"] { --bg: #14171c; --card: #1d2128; --line: #323a45; --text: #e6e9ee; --muted: #9aa4b1; --veil1: rgba(20,23,28,.80); --veil2: rgba(20,23,28,.88); --on: #14171c; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #14171c; --card: #1d2128; --line: #323a45; --text: #e6e9ee; --muted: #9aa4b1; --veil1: rgba(20,23,28,.80); --veil2: rgba(20,23,28,.88); --on: #14171c; color-scheme: dark; } }
+  :root[data-theme="light"] { color-scheme: light; }
+  #themebtn { font-size: 12px; padding: 2px 10px; border-radius: 12px; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif; }
   header { display: flex; align-items: center; gap: 12px; padding: 6px 16px; background: var(--card); border-bottom: 1px solid var(--line); }
@@ -28,12 +36,12 @@
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
   /* KPI 方塊：每塊一個代表色（--ac），左邊色條＋淡色底＋圓形小圖示 */
   .kpi { cursor: pointer; padding: 8px 12px 9px 14px; border-left: 4px solid var(--ac); border-radius: 8px;
-         background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 10%, #fff), #fff 65%);
+         background: linear-gradient(135deg, color-mix(in srgb, var(--ac) 10%, var(--card)), var(--card) 65%);
          transition: transform .15s, box-shadow .15s; min-width: 0; }
   .kpi:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.08); }
   .kpi .top { display: flex; align-items: center; gap: 7px; min-width: 0; }
   .kpi .ic { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
-             background: color-mix(in srgb, var(--ac) 18%, #fff); color: var(--ac); font-size: 12px; font-weight: bold; }
+             background: color-mix(in srgb, var(--ac) 18%, var(--card)); color: var(--ac); font-size: 12px; font-weight: bold; }
   .kpi .zh { font-size: 13px; font-weight: 600; white-space: nowrap; }
   .kpi .en { font-size: 10px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .kpi .val { font-size: 28px; font-weight: 700; line-height: 1.15; margin-top: 4px; white-space: nowrap; }
@@ -43,16 +51,16 @@
   .kpi { display: flex; align-items: center; gap: 8px; }
   .kpi .body { flex: 1; min-width: 0; }
   .kpi .worker { flex: none; width: 58px; height: 58px; border-radius: 50%; object-fit: cover;
-                 border: 2px solid color-mix(in srgb, var(--ac) 45%, #fff); background: #fff;
+                 border: 2px solid color-mix(in srgb, var(--ac) 45%, var(--card)); background: var(--card);
                  box-shadow: 0 2px 6px rgba(0,0,0,.08); }
   @media (max-width: 700px) { .kpi .worker { width: 44px; height: 44px; } .kpi .en { display: none; } }
 
   .toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
-  .toolbar input, .toolbar select, button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+  .toolbar input, .toolbar select, button { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--card); }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; opacity: .5; }
   .toolbar .pager { margin-left: auto; display: flex; gap: 4px; align-items: center; }
-  .pager button.on { background: var(--text); color: #fff; }
+  .pager button.on { background: var(--text); color: var(--on); }
 
   .machines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
   @media (max-width: 1100px) { .machines { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -64,7 +72,7 @@
     header .phase { display: none; }
     header .meta { margin-left: 0; width: 100%; text-align: left; display: flex; flex-wrap: wrap; column-gap: 10px; font-size: 12px; }
   }
-  .machine { border: 1px solid var(--line); border-top: 4px solid var(--st); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; background: #fff; }
+  .machine { border: 1px solid var(--line); border-top: 4px solid var(--st); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; background: var(--card); }
   .machine:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
   .machine .name { font-weight: bold; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .machine dl { display: grid; grid-template-columns: auto 1fr; gap: 0 8px; margin: 0; font-size: 11.5px; line-height: 1.4; }
@@ -73,13 +81,13 @@
   .machine .plain { font-size: 11px; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
   .view-factory .machine .plain { text-align: center; }
   .machine .reason { font-size: 11.5px; color: var(--st); min-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .machine.paused { opacity: .55; background: #f7f8fa; }
+  .machine.paused { opacity: .55; background: var(--bg); }
   .modebtns { display: inline-flex; gap: 6px; margin-left: 12px; }
   .modebtns button { font-size: 13px; }
   /* 手機遠端面板 */
   .remote .rentry { padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 13.5px; }
-  .remote .rentry.ok { background: color-mix(in srgb, var(--RUNNING) 10%, #fff); }
-  .remote .rentry.bad { background: color-mix(in srgb, var(--FAILED) 12%, #fff); }
+  .remote .rentry.ok { background: color-mix(in srgb, var(--RUNNING) 10%, var(--card)); }
+  .remote .rentry.bad { background: color-mix(in srgb, var(--FAILED) 12%, var(--card)); }
   .remote .rsum { font-size: 13px; margin: 4px 0 8px; color: var(--muted); }
   .remote .rsum b { color: var(--text); font-size: 15px; }
   .remote .rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
@@ -94,18 +102,18 @@
   #gate form { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px; width: 100%; max-width: 340px; display: grid; gap: 10px; }
   #gate h2 { margin: 0; font-size: 18px; }
   #gate input[type=password] { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; }
-  #gate button { font-size: 16px; padding: 8px; background: var(--text); color: #fff; border: 0; border-radius: 4px; }
+  #gate button { font-size: 16px; padding: 8px; background: var(--text); color: var(--on); border: 0; border-radius: 4px; }
   textarea.note { width: 100%; font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; resize: vertical; margin-bottom: 10px; }
   /* 美術素材（有圖才會出現） */
   .factory { position: relative; overflow: hidden; }
-  .factory[style*="--bg"]::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255,255,255,.72), rgba(255,255,255,.82)), var(--bg) center / cover no-repeat; z-index: 0; }
+  .factory[style*="--bg"]::before { content: ""; position: absolute; inset: 0; background: linear-gradient(var(--veil1), var(--veil2)), var(--bg) center / cover no-repeat; z-index: 0; }
   .factory > * { position: relative; z-index: 1; }
-  .factory .machine { background: rgba(255,255,255,.92); }
+  .factory .machine { background: color-mix(in srgb, var(--card) 92%, transparent); }
   .viewsw { margin-left: auto; display: inline-flex; gap: 0; }
   .viewsw button { font-size: 12px; padding: 1px 8px; border-radius: 0; white-space: nowrap; }
   .factory > h2 { flex-wrap: wrap; row-gap: 4px; }
   .viewsw button:first-child { border-radius: 4px 0 0 4px; } .viewsw button:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
-  .viewsw button.on { background: var(--text); color: #fff; }
+  .viewsw button.on { background: var(--text); color: var(--on); }
   .art { position: relative; aspect-ratio: 5 / 4; flex: none; }
   .art img.mc { width: 100%; height: 100%; object-fit: contain; display: block; }
   .art img.ic { position: absolute; transform: translate(-50%, -50%); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
@@ -139,8 +147,9 @@
   @media (max-width: 1100px) { .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 700px)  { .panels { grid-template-columns: minmax(0, 1fr); } }
   .list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow: auto; }
-  .list li { padding: 5px 0; border-bottom: 1px solid #eef0f3; display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+  .list li { padding: 5px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
   .list li:last-child { border-bottom: 0; }
+  .list.full { max-height: none; }
   .list .t { color: var(--muted); font-size: 12px; white-space: nowrap; min-width: 42px; }
   .list .body { flex: 1; min-width: 0; }
   .list .body .p { font-weight: bold; }
@@ -161,15 +170,40 @@
   .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   @media (max-width: 800px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #eef0f3; vertical-align: top; word-break: break-word; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; word-break: break-word; }
   th { color: var(--muted); font-weight: normal; white-space: nowrap; }
   .kv th { width: 90px; }
-  .log { border-bottom: 1px solid #eef0f3; padding: 6px 0; }
+  .log { border-bottom: 1px solid var(--line); padding: 6px 0; }
   .log .h { font-size: 12px; color: var(--muted); }
   .log div { white-space: pre-wrap; word-break: break-word; }
-  code { background: #eef0f3; padding: 0 4px; border-radius: 3px; font-size: 12px; word-break: break-all; }
+  code { background: var(--line); padding: 0 4px; border-radius: 3px; font-size: 12px; word-break: break-all; }
   a { color: var(--WAITING); }
   .nodata { max-width: 640px; margin: 60px auto; }
+  /* 6 頁選單（Josh 10/09）：電腦在標題下方一排；手機固定在畫面最下方，大拇指點 */
+  nav#tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; overflow-x: auto; }
+  nav#tabs button { border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; padding: 8px 14px 6px; font-size: 14px; white-space: nowrap; position: relative; color: var(--muted); cursor: pointer; }
+  nav#tabs button.on { color: var(--text); border-bottom-color: var(--WAITING); font-weight: bold; }
+  nav#tabs .ic { margin-right: 4px; }
+  nav#tabs .n { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--FAILED); color: #fff; font-size: 11px; line-height: 18px; margin-left: 4px; text-align: center; font-weight: bold; }
+  nav#tabs .n.warn { background: var(--BLOCKED); }
+  .pg { display: none; } .pg.on { display: grid; gap: 8px; }
+  .clash { border-left: 4px solid var(--BLOCKED); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+  .chip { font-size: 11.5px; padding: 0 6px; border: 1px solid var(--line); border-radius: 10px; white-space: nowrap; }
+  .chip.codex { border-color: #10a37f; color: #10a37f; }
+  .chip.off { opacity: .5; text-decoration: line-through; }
+  table.tools { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.tools th, table.tools td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
+  table.tools th { color: var(--muted); font-weight: normal; white-space: nowrap; }
+  @media (max-width: 700px) {
+    nav#tabs { position: fixed; top: auto; bottom: 0; left: 0; right: 0; padding: 0 0 env(safe-area-inset-bottom); border-top: 1px solid var(--line); border-bottom: 0; justify-content: space-around; box-shadow: 0 -2px 8px rgba(0,0,0,.08); }
+    nav#tabs button { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 5px 0 4px; font-size: 11px; border-bottom: 0; border-top: 3px solid transparent; }
+    nav#tabs button.on { border-top-color: var(--WAITING); }
+    nav#tabs .ic { font-size: 20px; line-height: 1.15; margin: 0; }
+    nav#tabs .n { position: absolute; top: 1px; left: calc(50% + 6px); margin: 0; }
+    body { padding-bottom: 66px; }
+    table.tools thead { display: none; } table.tools td { display: block; border: 0; padding: 1px 0; } table.tools tr { display: block; border-bottom: 1px solid var(--line); padding: 6px 0; }
+  }
   #onboard .obgrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px); gap: 16px; }
   @media (max-width:700px) { #onboard { margin: 12px 8px !important; } #onboard .obgrid { grid-template-columns: 1fr; } }
 </style>
@@ -180,8 +214,10 @@
   <h1>AI Project Control Center</h1>
   <span class="tag phase">Phase 1 · L1 + L2</span>
   <button id="obbtn" onclick="openOnboard()" title="跳到「新專案使用規定」：複製開場句" style="font-size:13px;padding:2px 10px;border-radius:12px">➕ 開新專案</button>
+  <button id="themebtn" onclick="cycleTheme()" title="切換顏色：自動（跟手機／電腦）→ 亮 → 暗">🌓 自動</button>
   <div class="meta"><div id="clock"></div><div id="gen"></div></div>
 </header>
+<nav id="tabs"></nav>
 <main id="app"></main>
 <section id="onboard" class="box" style="margin:12px 16px"></section>
 <div id="detail" onclick="if(event.target===this)closeDetail()"><div class="sheet" id="sheet"></div></div>
@@ -215,7 +251,7 @@ const SORTS = {
 const rate = m => m.runs_7d ? m.success_7d / m.runs_7d : 2;
 const store = { get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-const ui = { page: 1, q: "", filter: "ALL", sort: store.get("cc.sort", "severity"), view: store.get("cc.view", "compact") };
+const ui = { tab: store.get("cc.tab", "home"), page: 1, q: "", filter: "ALL", sort: store.get("cc.sort", "severity"), view: store.get("cc.view", "compact") };
 const MODEL_ZH = {"Claude+Codex": "Claude+Codex（大小C）", Code: "Code（Claude Code）", Codex: "Codex", Claude: "Claude（聊天）", ChatGPT: "ChatGPT"};
 const modelCls = x => ({"Claude+Codex": "duo", Code: "code", Codex: "codex", Claude: "claude", ChatGPT: "gpt"}[x] || "none");
 const modelChip = m => m.model ? `<span class="model m-${modelCls(m.model)}" title="型號：${esc(MODEL_ZH[m.model] || m.model)}">${esc(m.model)}</span>` : "";
@@ -418,16 +454,36 @@ function render() {
       <span class="dot" style="--c:var(--${r.level})"></span>
       <span class="body"><span class="p">${esc(r.project)}</span><div class="x">${esc(r.text)}</div></span></li>`).join("");
 
-  app.innerHTML = `
+  const pg = (id, html) => `<div class="pg${ui.tab === id ? " on" : ""}" data-pg="${id}">${html}</div>`;
+  app.innerHTML = 
+  pg("home", `
   <section class="kpis">
     ${kpi("Projects 專案", k.projects, `${cnt.IDLE} 休眠・${S.machines.filter(m => modeOf(m.id) === "maint").length} 保養・${S.machines.filter(m => isOff(m.id)).length} 關機`, "ALL", "", "#5b6b82", "▦", "BLOCKED")}
     ${kpi("Running 運行中", k.running, `${cnt.WAITING} 等待中`, "RUNNING", "", "var(--RUNNING)", "▶", "RUNNING")}
     ${kpi("Today's Tasks 今日", k.today_tasks, "排程＋今日下一步", "", "", "var(--WAITING)", "◷", "WAITING")}
-    ${kpi("Failed 失敗", k.failed, `${k.blocked} 卡住`, "FAILED", k.failed ? "bad" : "", "var(--FAILED)", "✕", k.failed ? "FAILED" : "RUNNING")}
+    ${kpi("Failed 失敗", k.failed, k.blocked ? "專案卡住" : "", "FAILED", k.failed ? "bad" : "", "var(--FAILED)", "✕", k.failed ? "FAILED" : "RUNNING")}
     ${kpi("Stale 停滯", k.stale, `>${S.config.stale_days} 天沒動`, "STALE", k.stale ? "warn" : "", "var(--STALE)", "❚❚", k.stale ? "STALE" : "RUNNING")}
     ${kpi("Success|7 日成功率", k.success_rate_7d == null ? "—" : k.success_rate_7d + "%", `${k.runs_7d} 次執行`, "", "", "#7a5cc2", "✓", k.runs_7d ? "RUNNING" : "IDLE")}
   </section>
 
+  ${todoPanel()}
+  ${relayLine()}
+  <section class="panels">
+    <div class="box"><h2>今日提醒 <small>${today.length} 任務 · ${rems.length} 提醒</small></h2>
+      <div class="section-title">今日任務</div>
+      <ul class="list">${todayRows || '<li class="empty">今天沒有排定任務</li>'}</ul>
+      <div class="section-title">需要注意</div>
+      <ul class="list">${remRows || '<li class="empty">一切正常</li>'}</ul></div>
+
+    <div class="box"><h2>Failed Jobs 失敗 <small>${fails.length}</small></h2>
+      <ul class="list">${fails.map(f => `<li onclick="openDetail('${esc(f.pid)}')">
+        <span class="dot" style="--c:var(--red)"></span>
+        <span class="body"><span class="p">${esc(f.project)}</span> ${esc(f.job)}
+          <div class="x bad">${esc(f.error)}${f.streak > 1 ? ` · 連續 ${f.streak} 次` : ""}</div>
+          <div class="x">${ago(f.time)}</div></span></li>`).join("") || '<li class="empty">沒有失敗的排程</li>'}</ul></div>
+
+  </section>`) +
+  pg("machines", `
   <section class="box factory ${hasArt ? "view-" + ui.view : ""}" ${A().bg ? `style="--bg:url('${aurl("bg_factory.jpg")}')"` : ""}>
     <h2>Factory Tool <small>每頁 ${ps} 台</small>
       ${hasArt ? `<span class="viewsw"><button class="${ui.view==="compact"?"on":""}" onclick="setView('compact')">精簡（10 台）</button><button class="${ui.view==="factory"?"on":""}" onclick="setView('factory')">工廠大圖（5 台）</button></span>` : ""}</h2>
@@ -454,8 +510,9 @@ function render() {
     </div>
     <div class="machines">${slice.map(machineCard).join("")}${slots}</div>
   </section>
-  ${remotePanel()}
-
+`) +
+  pg("sched", `
+  ${clashPanel()}
   <section class="panels">
     <div class="box"><h2>Schedule Monitor 排程 <small>${scheds.length} 個 · 只顯示不執行</small></h2>
       <ul class="list">${scheds.map(s => `<li onclick="openDetail('${esc(s.pid)}')">
@@ -464,41 +521,215 @@ function render() {
           <div class="x">下次 ${until(s.next_run)} · 上次 ${s.last_run ? ago(s.last_run) : "—"}</div></span>
         ${res(s.last_result)}</li>`).join("") || '<li class="empty">沒有排程</li>'}</ul></div>
 
-    <div class="box"><h2>今日提醒 <small>${today.length} 任務 · ${rems.length} 提醒</small></h2>
-      <div class="section-title">今日任務</div>
-      <ul class="list">${todayRows || '<li class="empty">今天沒有排定任務</li>'}</ul>
-      <div class="section-title">需要注意</div>
-      <ul class="list">${remRows || '<li class="empty">一切正常</li>'}</ul></div>
-
-    <div class="box"><h2>Failed Jobs 失敗 <small>${fails.length}</small></h2>
-      <ul class="list">${fails.map(f => `<li onclick="openDetail('${esc(f.pid)}')">
-        <span class="dot" style="--c:var(--red)"></span>
-        <span class="body"><span class="p">${esc(f.project)}</span> ${esc(f.job)}
-          <div class="x bad">${esc(f.error)}${f.streak > 1 ? ` · 連續 ${f.streak} 次` : ""}</div>
-          <div class="x">${ago(f.time)}</div></span>
-        <button disabled title="L3 才啟用">Retry</button></li>`).join("") || '<li class="empty">沒有失敗的排程</li>'}</ul></div>
-
+  ${codexPanel()}
+  ${healthPanel()}
+  </section>
+  ${bgPanel()}`) +
+  pg("remote", `${remotePanel()}`) +
+  pg("roster", `${modelPanel()}${rosterPanel()}${toolsPanel()}`) +
+  pg("tidy", `${distributionPanel()}
+  <section class="panels">
     <div class="box"><h2>Activity Feed 動態 <small>最新 ${S.feed.length}</small></h2>
       <ul class="list">${S.feed.filter(f => !isOff(f.pid)).map(f => `<li onclick="openDetail('${esc(f.pid)}')">
         <span class="dot" style="--c:var(--${f.kind==="run" ? (f.result==="failed"?"red":f.result==="running"?"blue":"RUNNING") : (f.blocked?"orange":"IDLE")})"></span>
         <span class="body"><span class="p">${esc(f.project)}</span> <span class="muted">${esc(f.source)}</span>
           <div class="x">${esc(f.text)}</div></span>
         <span class="t">${ago(f.t)}</span></li>`).join("") || '<li class="empty">沒有動態</li>'}</ul></div>
+  </section>`);
+  renderTabs();
+  const ob = document.getElementById("onboard"); if (ob) ob.style.display = ui.tab === "tidy" ? "" : "none";
+}
+
+// ===== 6 頁選單（Josh 10/09）=====
+const TABS = [["home", "🏠", "總覽"], ["machines", "🏭", "機台"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
+function setTab(t) { ui.tab = t; store.set("cc.tab", t); render(); window.scrollTo(0, 0); }
+function tabCounts() {
+  const c = {};
+  const rems = live(S.reminders || []);
+  c.home = [rems.filter(r => r.level === "red").length, ((S.todo || {}).josh || []).length];
+  const act = S.machines.filter(m => !isPaused(m.id));
+  c.machines = [act.filter(m => m.status === "FAILED").length, act.filter(m => m.status === "BLOCKED").length];
+  const tasks = ((S.background || {}).tasks || []).filter(t => t.state !== "Disabled");
+  const badTask = tasks.filter(t => t.result && !["0", "267009", "267011", "267008", "2147946720"].includes(t.result)).length;
+  c.sched = [badTask, clashes().length + tasks.concat(((S.background || {}).tasks || []).filter(t => t.state === "Disabled")).filter(t => taskIssues(t).length).length];
+  const R = S.remote || {}, ss = R.sessions || [];
+  c.remote = [R.entry && !R.entry.on ? 1 : 0, 0];
+  const G = S.registry || {};
+  c.roster = [(G.orphan_schedules || []).length, (G.projects || []).filter(p => !p.card).length];
+  c.tidy = [0, (S.inbox || []).length];
+  return c;
+}
+function renderTabs() {
+  const nav = document.getElementById("tabs"); if (!nav || !S) return;
+  const c = tabCounts();
+  nav.innerHTML = TABS.map(([id, ic, lb]) => {
+    const [r, o] = c[id] || [0, 0];
+    const n = r ? `<span class="n" title="要處理">${r}</span>` : o ? `<span class="n warn" title="要注意">${o}</span>` : "";
+    return `<button class="${ui.tab === id ? "on" : ""}" onclick="setTab('${id}')"><span class="ic">${ic}</span><span class="lb">${lb}</span>${n}</button>`;
+  }).join("");
+}
+
+// ===== 待辦（Josh 10/09：做一半的、等 Josh 回的，放總覽）=====
+function todoPanel() {
+  const T = S.todo || {josh: [], half: []};
+  const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
+  const row = x => `<li ${x.id && x.src === "日誌" ? `onclick="openDetail('${esc(x.id)}')"` : ""} title="${esc(x.detail || x.text)}">
+      <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
+      <span class="body"><span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
+  return `<section class="panels">
+    <div class="box clash"><h2>🙋 等你決定 <small>${T.josh.length} 件 · 你回一句就能往下走</small></h2>
+      <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有在等你的事</li>'}</ul></div>
+    <div class="box"><h2>🔧 做一半／等別人 <small>${T.half.length} 件</small></h2>
+      <ul class="list">${T.half.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
-  ${bgPanel()}
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦（總機交接.md 的 TBD）· 📝 專案工作日誌寫的「卡在哪」· 🔊 AI傳聲筒在等你。滑鼠停在項目上看細節。</div>`;
+}
 
-  ${distributionPanel()}
+// ===== 亮／暗切換 =====
+const THEMES = [["auto", "🌓 自動"], ["light", "☀️ 亮"], ["dark", "🌙 暗"]];
+const curTheme = () => store.get("cc.theme", "auto");
+function applyTheme() {
+  const t = curTheme();
+  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t);
+  const b = document.getElementById("themebtn"); if (b) b.textContent = (THEMES.find(x => x[0] === t) || THEMES[0])[1];
+}
+function cycleTheme() { const i = THEMES.findIndex(x => x[0] === curTheme()); store.set("cc.theme", THEMES[(i + 1) % 3][0]); applyTheme(); }
+applyTheme();
 
-  <section class="box l3" title="L3 功能，本期只保留版面位置">
-    <input disabled placeholder="AI Assistant 指令列（L3）：/status /retry /report /add /help">
-    <div style="display:flex;gap:6px">${["/status","/retry","/report","/add","/help"].map(c => `<button disabled>${c}</button>`).join("")}</div>
+// ===== 排程頁：誰的排程、小C定時任務、時間撞在一起 =====
+function ownerMap() {
+  const sch = {}, auto = {};
+  ((S.registry || {}).projects || []).forEach(p => {
+    (p.schedules || []).forEach(t => sch[t.name] = p.name);
+    (p.autos || []).forEach(a => auto[a.name] = p.name);
+  });
+  return {sch, auto};
+}
+// 每天固定時間跑的：Windows 排程（每 30 分鐘以內就重跑的常駐型不算）＋小C定時任務
+function timeSlots() {
+  const om = ownerMap(), out = [];
+  ((S.background || {}).tasks || []).forEach(t => {
+    if (t.state === "Disabled") return;
+    const rp = (t.rep || "").match(/PT(\d+)M/); if (rp && +rp[1] <= 30) return;
+    if ((t.rep || "").match(/PT\d+S/)) return;
+    (t.at || "").split(",").filter(Boolean).forEach(a => out.push({t: a, project: om.sch[t.name] || t.project || "（沒有主人）", name: t.name, kind: "排程"}));
+  });
+  (S.codex_autos || []).filter(a => a.on && a.at).forEach(a => out.push({t: a.at, project: om.auto[a.name] || "（沒有主人）", name: a.name, kind: "小C定時"}));
+  out.forEach(x => x.min = +x.t.slice(0, 2) * 60 + +x.t.slice(3, 5));
+  return out.sort((a, b) => a.min - b.min);
+}
+// 5 分鐘內有兩個以上「不同專案」在跑＝可能撞（搶 XQ、搶網路、搶 Telegram、前一個還沒做完）
+function clashes() {
+  const sl = timeSlots(), out = [];
+  let i = 0;
+  while (i < sl.length) {
+    let j = i; while (j + 1 < sl.length && sl[j + 1].min - sl[i].min <= 5) j++;
+    const grp = sl.slice(i, j + 1);
+    if (new Set(grp.map(x => x.project)).size > 1) out.push(grp);
+    i = j + 1;
+  }
+  return out;
+}
+function clashPanel() {
+  const cs = clashes();
+  const row = g => `<li class="clash"><span class="t">${esc(g[0].t)}${g.length > 1 && g[g.length - 1].t !== g[0].t ? "–" + esc(g[g.length - 1].t) : ""}</span>
+    <span class="body">${g.map(x => `<div><span class="p">${esc(x.project)}</span> <span class="${x.kind === "小C定時" ? "chip codex" : "muted"}">${esc(x.kind)}</span> ${esc(x.t)} ${esc(x.name)}</div>`).join("")}</span></li>`;
+  return `<section class="box"><h2>⚠️ 時間撞在一起 <small>${cs.length} 段 · 5 分鐘內有不同專案同時開始（含小C定時任務）</small></h2>
+    <ul class="list full">${cs.map(row).join("") || '<li class="empty">目前沒有撞在一起的時段</li>'}</ul>
+    <div class="muted" style="font-size:12px;margin-top:4px">撞在一起不一定會出事；要看它們有沒有搶同一樣東西（XQ 畫面、網路來源、Telegram、同一個資料檔）。詳見「📋 名冊」的共用工具表。</div></section>`;
+}
+// 排程健康（Josh 10/09：不要有無效或測試完沒刪的；每個都要確認有必要）
+const TEST_RE = /test|測試|pilot|probe|tmp|temp|demo/i;
+function taskIssues(t) {
+  const out = [], now = Date.now(), d = s => s ? (now - new Date(s.replace(" ", "T")).getTime()) / 864e5 : null;
+  if ((t.missing || []).length) out.push("指到的檔案不存在：" + t.missing.join("、"));
+  if (TEST_RE.test(t.name || "")) out.push("名稱像測試");
+  if (t.state === "Disabled" && (d(t.last) ?? 99) > 7) out.push(`停用超過 7 天（上次 ${t.last || "從沒跑過"}）`);
+  if (t.state !== "Disabled" && !t.last && t.at && !t.rep) out.push("還沒跑過（新排程請確認有跑）");
+  return out;
+}
+function healthPanel() {
+  const om = ownerMap();
+  const bad = ((S.background || {}).tasks || []).map(t => [t, taskIssues(t)]).filter(x => x[1].length);
+  const aut = ((S.codex_autos || []).filter(a => TEST_RE.test(a.name))).map(a => [{name: a.name}, ["小C定時任務名稱像測試"]]);
+  const rows = bad.concat(aut);
+  return `<div class="box ${rows.length ? "clash" : ""}"><h2>🩺 排程健康 <small>${rows.length} 個要確認還需不需要</small></h2>
+    <ul class="list full">${rows.map(([t, why]) => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(om.sch[t.name] || om.auto[t.name] || t.project || "")}</span>
+      <div class="x">${why.map(esc).join(" · ")}</div></span></li>`).join("") || '<li class="empty">都有在用</li>'}</ul>
+    <div class="muted" style="font-size:12px">要刪或停用：問該專案確認用途 → Josh 同意 → 才動。</div></div>`;
+}
+function codexPanel() {
+  const om = ownerMap(), A = S.codex_autos || [];
+  return `<div class="box"><h2>小C定時任務 <small>${A.length} 個 · Codex App 裡設定的</small></h2>
+    <ul class="list">${A.map(a => `<li class="${a.on ? "" : "muted"}"><span class="t">${esc(a.at || "—")}</span>
+      <span class="body"><span class="p">${esc(om.auto[a.name] || "（沒有主人）")}</span> ${esc(a.name)}
+      <div class="x">${a.on ? "開著" : "停用"} · 每天 ${esc(a.at || "?")} · 結果看該專案工作日誌（10/09 起跑完會寫）</div></span></li>`).join("") || '<li class="empty">沒有</li>'}</ul></div>`;
+}
+
+// ===== 名冊頁（讀 名稱對照表.md）=====
+function rosterPanel() {
+  const G = S.registry || {}, P = G.projects || [], O = G.orphan_schedules || [];
+  const row = p => {
+    const st = p.card ? `<span class="dot" style="--c:var(--${p.card.status})" title="${esc(ZH[p.card.status] || "")}"></span>` : '<span class="dot" style="--c:var(--IDLE)"></span>';
+    const sch = (p.schedules || []).map(t => `<span class="chip${t.state === "Disabled" ? " off" : ""}" title="下次 ${esc(t.next || "—")} · 上次 ${esc(t.last || "—")}">⏰ ${esc(t.name)}</span>`).join("");
+    const au = (p.autos || []).map(a => `<span class="chip codex${a.on ? "" : " off"}">🤖 ${esc(a.at)} ${esc(a.name)}</span>`).join("");
+    const pr = (p.programs || []).map(x => `<span class="chip">${esc(x)}</span>`).join("");
+    return `<li ${p.card ? `onclick="openDetail('${esc(p.card.id)}')"` : ""}>${st}
+      <span class="body"><span class="p">${esc(p.name)}</span> <span class="tag">${esc(p.owner || "—")}</span>${p.model && !p.model.startsWith("—") ? ` <span class="tag" title="建議大C模型">🧠 ${esc(p.model.split("（")[0])}</span>` : ""}${p.card ? "" : ' <span class="tag tag-warn">沒有卡片</span>'}
+        <div class="x">📁 ${esc(p.folder || "—")} · 💬 ${esc(p.chat || "—")}</div>
+        ${p.aliases && p.aliases !== "—" ? `<div class="x muted">別名：${esc(p.aliases)}</div>` : ""}
+        ${sch || au || pr ? `<div class="chips">${sch}${au}${pr}</div>` : ""}</span></li>`;
+  };
+  return `<section class="box"><h2>📋 名冊 <small>${P.length} 個專案 · ⏰ 排程 · 🤖 小C定時 · 以名稱對照表為準</small></h2>
+    <ul class="list full">${P.map(row).join("")}</ul>
+    ${O.length ? `<div class="section-title">沒有主人的排程（${O.length}）</div><ul class="list full">${O.map(t => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(TASK_ZH[t.state] || t.state || "")}</span><div class="x" title="${esc(t.what)}">${esc(shortWhat(t.what))}</div></span></li>`).join("")}</ul>` : ""}
   </section>`;
+}
+// 各專案建議的大C模型（Josh 10/09）：讀名稱對照表「建議大C模型」欄；依耗用由省到耗分組
+const MODEL_TIERS = [["Haiku", "最省：看狀態、轉話、固定檢查"], ["Sonnet", "中等：日常寫程式、改網頁、看資料"],
+                     ["Opus", "耗：跨專案判斷、審查會動正式資料、策略推理"], ["Fable", "最耗：難題、大改版、卡關很久才用"]];
+function modelPanel() {
+  const P = ((S.registry || {}).projects || []).filter(p => p.model);
+  const tier = m => (MODEL_TIERS.find(([k]) => m.startsWith(k)) || [""])[0];
+  const box = ([k, desc]) => {
+    const ps = P.filter(p => tier(p.model) === k);
+    return ps.length ? `<div><div class="section-title">${esc(k)} <span class="muted">· ${esc(desc)}</span></div>
+      <div class="chips">${ps.map(p => `<span class="chip" title="${esc(p.model)}">${esc(p.name)}${p.model.includes("（") ? " <span class=\"muted\">" + esc(p.model.slice(p.model.indexOf("（"))) + "</span>" : ""}</span>`).join("")}</div></div>` : "";
+  };
+  const codex = P.filter(p => !tier(p.model));
+  return `<section class="box"><h2>🧠 各專案建議的大C模型 <small>由省到耗：Haiku → Sonnet → Opus → Fable · 卡住可臨時切高一級 · 小C 額度另計</small></h2>
+    <div style="display:grid;gap:6px">${MODEL_TIERS.map(box).join("")}
+    ${codex.length ? `<div><div class="section-title">不用大C <span class="muted">· 小C 執行、暫停或休眠</span></div><div class="chips">${codex.map(p => `<span class="chip muted" title="${esc(p.model)}">${esc(p.name)}</span>`).join("")}</div></div>` : ""}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">換模型：在該專案對話左下角的模型選單選；要總機幫忙改就說「把〇〇改成 Sonnet」。建議值寫在名稱對照表，由總機維護。</div></section>`;
+}
+// 共用工具：從各專案 project.json 的 shared 欄位（補報到時填的）自動歸類
+const TOOLS = [
+  ["Telegram", /telegram/i, "同一個 bot 多個專案在發，訊息太多；以後要分開"],
+  ["XQ 畫面", /XQ\s*(畫面|GUI|操作|視窗)|操作\s*XQ|XQ排他鎖|xq_auto/i, "同時操作會互搶；紅蝦每日＋歷史匯出已共用一把鎖，其他還沒"],
+  ["GitHub", /github/i, "紅蝦網舊家＋控制中心推同一個 repo；控制中心 18:50–19:30 讓路"],
+  ["Cloudflare", /cloudflare/i, "紅蝦網新家（網站＋即時資料 KV）"],
+  ["Python 環境（.venv）", /\.venv|venv/i, "被借用的那個升級套件，借用的專案可能一起壞（Josh 10/09：共用就好）"],
+  ["量化資料", /量化|panel_v2|parquet/i, "多個專案讀；18:30 更新晚了，後面都拿到舊資料"],
+  ["大盤資料接力", /hongxia-(market|quotes)|market-dashboard|大盤/i, "大盤 06:00／06:10 產出，紅蝦網 06:05／06:30 讀；前面晚了後面拿舊的"],
+  ["AI傳聲筒", /傳聲筒/i, "同時叫醒多個大C／小C，共用額度"],
+  ["報價來源（證交所／永豐）", /TWSE|TPEX|證交所|永豐|MIS|shioaji/i, "證交所逾時會讓多個專案同一天一起失敗"],
+];
+function toolsPanel() {
+  const P = (S.registry || {}).projects || [];
+  const rows = TOOLS.map(([name, re, risk]) => {
+    const who = P.filter(p => (p.shared || []).some(x => re.test(x)));
+    return `<tr><td><b>${esc(name)}</b></td>
+      <td>${who.map(p => `<span class="chip" title="${esc((p.shared || []).filter(x => re.test(x)).join("\n"))}">${esc(p.name)}</span>`).join(" ") || '<span class="muted">（還沒有專案申報）</span>'}</td>
+      <td class="muted">${esc(risk)}</td></tr>`;
+  }).join("");
+  return `<section class="box"><h2>🔗 共用工具 <small>誰在用、哪裡會打架 · 來源：各專案登錄卡的 shared</small></h2>
+    <table class="tools"><thead><tr><th>共用的東西</th><th>誰在用</th><th>風險</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
 
 // label 是「English 中文」；ac＝代表色；hot＝數字要不要上色（有失敗／停滯才上色）
 // worker＝右邊小人的表情（assets/web/workers/<狀態>.png）
 function kpi(label, val, sub, filter, cls, ac, icon, worker) {
-  const click = filter ? `onclick="ui.filter='${filter}';ui.page=1;render()"` : "";
+  const click = filter ? `onclick="ui.filter='${filter}';ui.page=1;setTab('machines')"` : "";
   const i = label.includes("|") ? label.indexOf("|") + 1 : label.search(/[一-鿿]/), en = i > 0 ? label.slice(0, i).replace("|", "").trim() : "", zh = i >= 0 ? label.slice(i) : label;
   const w = worker ? `<img class="worker" src="${aurl("workers/" + worker + ".png")}" alt="" onerror="this.remove()">` : "";
   return `<div class="box kpi" style="--ac:${ac || "var(--WAITING)"}" ${click}><div class="body">
@@ -550,7 +781,7 @@ function relayLine() {
   const R = S.relay; if (!R) return "";
   const ps = Object.entries(R.projects || {}).map(([n, p]) =>
     `<span class="tag" title="${esc(p.status || "")}">${esc(n)}：${p.turn === "josh" ? "⏳ 等你" : p.turn === "codex" ? "小C" : p.turn === "claude" ? "大C" : esc(p.turn || "—")}${p.dry ? "（只監看）" : ""}</span>`).join(" ");
-  return `<div style="padding:6px 10px;border-radius:6px;margin-bottom:6px;font-size:13px;background:color-mix(in srgb, var(--${R.alive ? "RUNNING" : "FAILED"}) 10%, #fff)">
+  return `<div style="padding:6px 10px;border-radius:6px;margin-bottom:6px;font-size:13px;background:color-mix(in srgb, var(--${R.alive ? "RUNNING" : "FAILED"}) 10%, var(--card))">
     ${R.alive ? `🔊 <b>AI傳聲筒運作中</b>（${R.age_sec ?? "?"} 秒前回報）` : `🔴 <b>AI傳聲筒停了</b>（${R.age_sec != null ? Math.round(R.age_sec / 60) + " 分鐘沒回報" : "沒有心跳檔"}）：大C／小C 不會自動接力`}
     <div style="margin-top:4px">${ps}</div></div>`;
 }
@@ -559,14 +790,14 @@ function bgPanel() {
   const B = S.background; if (!B) return "";
   const procs = B.procs || [], tasks = B.tasks || [];
   const pop = tasks.filter(t => t.window === "會跳視窗" && t.state !== "Disabled").length;
-  const bad = tasks.filter(t => t.result && t.result !== "0" && t.result !== "267009" && t.result !== "267011").length;
+  const bad = tasks.filter(t => t.state !== "Disabled" && t.result && !["0", "267009", "267011", "267008", "2147946720"].includes(t.result)).length;
   const procRows = procs.map(p => `<li>
       <span class="dot" style="--c:var(--${p.window === "背景" ? "RUNNING" : "blue"})"></span>
       <span class="body"><span class="p">${esc(p.project || "（不屬於專案）")}</span> ${esc(shortWhat(p.what))}
         <div class="x" title="${esc(p.what)}">${esc(p.name)} · 開始 ${ago(p.start)} · PID ${esc(p.pid)}</div></span></li>`).join("");
   const taskRows = tasks.map(t => {
     const st = TASK_ZH[t.state] || t.state || "";
-    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
+    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : t.result === "2147946720" ? "（上一輪還在跑，這次略過）" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
     return `<li class="${t.state === "Disabled" ? "muted" : ""}">
       <span class="dot" style="--c:var(--${t.state === "Disabled" ? "IDLE" : t.state === "Running" ? "RUNNING" : "WAITING"})"></span>
       <span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(t.project || "")}</span>
@@ -574,7 +805,6 @@ function bgPanel() {
         <div class="x" title="${esc(t.what)}">${st} · 下次 ${t.next ? until(t.next) : "—"} · 上次 ${t.last ? ago(t.last) : "—"} ${r}</div></span></li>`;
   }).join("");
   return `<section class="box"><h2>Background 背景執行 <small>正在跑 ${procs.length} · 排程 ${tasks.length}${pop ? ` · ${pop} 個會跳視窗` : ""}${bad ? ` · ${bad} 個上次失敗` : ""} · 排程資料 ${esc(B.tasks_at || "")}</small></h2>
-    ${relayLine()}
     <div class="panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
       <div><div class="section-title">正在跑的程式（${procs.length}）</div><ul class="list">${procRows || '<li class="empty">沒有</li>'}</ul></div>
       <div><div class="section-title">排程（${tasks.length}）</div><ul class="list">${taskRows || '<li class="empty">沒有</li>'}</ul></div>
@@ -683,6 +913,7 @@ function onboardHtml() {
     </div>`;
 }
 function openOnboard() {
+  if (ui.tab !== "tidy") setTab("tidy");
   const el = document.getElementById("onboard");
   if (el) el.scrollIntoView({behavior: "smooth", block: "start"});
 }
