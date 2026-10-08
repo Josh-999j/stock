@@ -170,6 +170,8 @@
   code { background: #eef0f3; padding: 0 4px; border-radius: 3px; font-size: 12px; word-break: break-all; }
   a { color: var(--WAITING); }
   .nodata { max-width: 640px; margin: 60px auto; }
+  #onboard .obgrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px); gap: 16px; }
+  @media (max-width:700px) { #onboard { margin: 12px 8px !important; } #onboard .obgrid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -177,9 +179,11 @@
   <img id="logo" alt="" style="display:none;height:28px">
   <h1>AI Project Control Center</h1>
   <span class="tag phase">Phase 1 · L1 + L2</span>
+  <button id="obbtn" onclick="openOnboard()" title="跳到「新專案使用規定」：複製開場句" style="font-size:13px;padding:2px 10px;border-radius:12px">➕ 開新專案</button>
   <div class="meta"><div id="clock"></div><div id="gen"></div></div>
 </header>
 <main id="app"></main>
+<section id="onboard" class="box" style="margin:12px 16px"></section>
 <div id="detail" onclick="if(event.target===this)closeDetail()"><div class="sheet" id="sheet"></div></div>
 
 <script>window.CC_WEB = 1;</script>
@@ -634,6 +638,56 @@ function openDetail(id) {
     </div>`;
   document.getElementById("detail").classList.add("on");
 }
+// ➕ 開新專案（Josh 10/09）：開場句統一，細節都在 共用紀錄指令.txt；規則改了只改那份檔，開場句不用換
+const OB_FILE = "C:\\AIStation__\\WIN程式工具人\\ControlCenter\\共用紀錄指令.txt";
+function obText() {
+  const n = (document.getElementById("obname") || {}).value || "", k = (document.getElementById("obkind") || {}).value || "new";
+  const name = n.trim() || "名稱";
+  return k === "old"
+    ? `舊專案補報到：${name}。先讀 ${OB_FILE}，照「一、報到」補齊缺的（已有的不要覆蓋），回報後再繼續工作。`
+    : `新專案：${name}。先讀 ${OB_FILE}，照「一、報到」做完、回報我之後再開始工作。`;
+}
+function obUpdate() { document.getElementById("obout").value = obText(); }
+function obCopy(btn) {
+  const t = document.getElementById("obout");
+  const done = () => { btn.textContent = "✅ 已複製"; setTimeout(() => btn.textContent = "📋 複製", 2000); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t.value).then(done, () => { t.select(); document.execCommand("copy"); done(); });
+  else { t.select(); document.execCommand("copy"); done(); }
+}
+function onboardHtml() {
+  return `<h2>📘 新專案使用規定 <small>開新專案或舊專案補報到，都從這裡複製開場句</small></h2>
+    <div class="obgrid">
+      <div style="display:grid;gap:8px;align-content:start">
+        <div>在新對話（電腦 Claude、手機總入口、Codex）<b>第一句</b>貼這段：</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <select id="obkind" onchange="obUpdate()"><option value="new">新專案</option><option value="old">舊專案補報到</option></select>
+          <input id="obname" oninput="obUpdate()" placeholder="專案名稱（可不填）" style="flex:1;min-width:140px">
+        </div>
+        <textarea id="obout" readonly rows="4" style="width:100%;box-sizing:border-box;font-size:14px"></textarea>
+        <div><button onclick="obCopy(this)" style="font-size:15px;padding:4px 16px">📋 複製</button></div>
+        <div class="section-title">它會照做的「報到 7 步」</div>
+        <ol style="margin:0;padding-left:20px;line-height:1.7">
+          <li>讀全域共用規則＋名稱對照表</li>
+          <li>用正式名稱（沒有就等總機登記）</li>
+          <li>資料夾放對位置，不確定先問你</li>
+          <li>建登錄卡 project.json（含負責大C／小C、會用到的共用資源）</li>
+          <li>建規則檔 CLAUDE.md；有小C 再加 AGENTS.md</li>
+          <li>工作日誌寫第一筆「報到」</li>
+          <li>報到總機（大C 直接傳訊；小C 放 _inbox 報到單），請你改對話名稱</li>
+        </ol>
+        <div class="muted">報到後：建排程、Codex 定時任務、登記傳聲筒、用別人的金鑰／.venv／XQ 畫面，都要先報總機、你同意才做。<br>ChatGPT／網頁版讀不到電腦檔案：先請總機給全文再貼。</div>
+      </div>
+      <div><img src="${aurl("onboard_flow.svg")}" alt="新專案流程圖" style="width:100%;max-width:420px;display:block;margin:0 auto" onerror="this.parentNode.innerHTML='<div class=muted>流程圖製作中（小C）</div>'"></div>
+    </div>`;
+}
+function openOnboard() {
+  const el = document.getElementById("onboard");
+  if (el) el.scrollIntoView({behavior: "smooth", block: "start"});
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("onboard");
+  if (el) { el.innerHTML = onboardHtml(); obUpdate(); }
+});
 function closeDetail() { ui.detail = null; document.getElementById("detail").classList.remove("on"); }
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
 
