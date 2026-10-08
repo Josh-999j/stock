@@ -191,6 +191,8 @@
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
   .chip { font-size: 11.5px; padding: 0 6px; border: 1px solid var(--line); border-radius: 10px; white-space: nowrap; }
   .chip.codex { border-color: #10a37f; color: #10a37f; }
+  .who { display: inline-block; font-size: 11px; font-weight: bold; padding: 0 6px; border-radius: 9px; border: 1px solid currentColor; margin-right: 2px; white-space: nowrap; }
+  .who-claude { color: #d97757; } .who-codex { color: #10a37f; }
   .chip.off { opacity: .5; text-decoration: line-through; }
   table.tools { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.tools th, table.tools td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
@@ -570,12 +572,14 @@ function renderTabs() {
 }
 
 // ===== 待辦（Josh 10/09：做一半的、等 Josh 回的，放總覽）=====
+// 是誰提的（Josh 10/09：一眼看出是大C還是小C）：大C＝Claude（橘）、小C＝Codex（綠）
+const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${w === "小C" ? "🟩 小C" : "🟧 大C"}</span> ` : "";
 function todoPanel() {
   const T = S.todo || {josh: [], half: []};
   const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
   const row = x => `<li ${x.id && x.src === "日誌" ? `onclick="openDetail('${esc(x.id)}')"` : ""} title="${esc(x.detail || x.text)}">
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
-      <span class="body"><span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
+      <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
     <div class="box clash"><h2>🙋 等你決定 <small>${T.josh.length} 件 · 你回一句就能往下走</small></h2>
       <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有在等你的事</li>'}</ul></div>
