@@ -196,7 +196,7 @@ const TAGS = ["大C小C", "分散", "多平台"];
 const TAG_TIP = {"大C小C": "Claude 與 Codex 合作的專案", "分散": "同一個專案有不只一份資料夾", "多平台": "Codex 和 Claude 都有手動對話"};
 const tagHtml = m => (m.tags || []).map(t => `<span class="tag tag-${t === "分散" ? "warn" : "info"}" title="${esc(TAG_TIP[t] || "")}">${esc(t)}</span>`).join("");
 const ZH = {FAILED:"失敗",BLOCKED:"卡住",STALE:"停滯",RUNNING:"運行中",WAITING:"等待中",IDLE:"休眠"};
-const RES = {success:["成功","ok"],failed:["失敗","bad"],running:["執行中","ok"],pending:["待執行","muted"],missed:["未執行","warn"],todo:["今日","warn"],overdue:["逾期","bad"]};
+const RES = {success:["成功","ok"],failed:["失敗","bad"],running:["執行中","ok"],pending:["待執行","muted"],missed:["未執行","warn"],skipped:["已停用","muted"],todo:["今日","warn"],overdue:["逾期","bad"]};
 const SORTS = {
   severity: ["依嚴重度（失敗→休眠）", null],
   recent:   ["最近更新在前", (a, b) => (b.last_activity || "").localeCompare(a.last_activity || "")],
