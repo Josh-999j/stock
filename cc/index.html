@@ -173,6 +173,12 @@
 <script>
 const WEB = !!window.CC_WEB;  // 網路版：只看，不顯示停機／最愛／備註等按鈕
 if (WEB) document.body.classList.add("web");
+// 本機控制中心（local_server.py，127.0.0.1:8770）才顯示「控制頁」入口；手機網頁、直接開檔都不顯示
+const LOCAL_CTRL = !WEB && location.port === "8770";
+if (LOCAL_CTRL) document.addEventListener("DOMContentLoaded", () => {
+  const h = document.querySelector("header h1");
+  if (h) h.insertAdjacentHTML("afterend", '<a href="/control.html" style="margin-left:8px;font-size:13px;padding:2px 10px;border:1px solid var(--line);border-radius:12px;text-decoration:none">🔒 控制頁</a>');
+});
 const STATUS =["FAILED","BLOCKED","STALE","RUNNING","WAITING","IDLE"];
 const TAGS = ["大C小C", "分散", "多平台"];
 const TAG_TIP = {"大C小C": "Claude 與 Codex 合作的專案", "分散": "同一個專案有不只一份資料夾", "多平台": "Codex 和 Claude 都有手動對話"};
@@ -459,6 +465,7 @@ function render() {
           <div class="x">${esc(f.text)}</div></span>
         <span class="t">${ago(f.t)}</span></li>`).join("") || '<li class="empty">沒有動態</li>'}</ul></div>
   </section>
+  ${bgPanel()}
 
   ${distributionPanel()}
 
@@ -477,6 +484,36 @@ function kpi(label, val, sub, filter, cls, ac, icon, worker) {
   return `<div class="box kpi" style="--ac:${ac || "var(--WAITING)"}" ${click}><div class="body">
     <div class="top"><span class="ic">${icon || "•"}</span><span class="zh">${esc(zh)}</span><span class="en">${esc(en)}</span></div>
     <div class="val ${cls ? "hot" : ""}">${esc(val)}</div><div class="sub">${esc(sub)}</div></div>${w}</div>`;
+}
+
+// 背景執行面板（Josh 10/08：所有背景程式、排程都要看得到、知道怎麼關）。只顯示，不能在這裡停。
+const shortWhat = w => ((w || "").match(/[^\\\/"\s]+\.(?:py|pyw|ps1|js|vbs|cmd|bat|mjs)\b/gi) || []).pop() || (w || "").slice(0, 50);
+const TASK_ZH = {Running: "執行中", Ready: "待命", Disabled: "已停用", Queued: "排隊中"};
+function bgPanel() {
+  const B = S.background; if (!B) return "";
+  const procs = B.procs || [], tasks = B.tasks || [];
+  const pop = tasks.filter(t => t.window === "會跳視窗" && t.state !== "Disabled").length;
+  const bad = tasks.filter(t => t.result && t.result !== "0" && t.result !== "267009" && t.result !== "267011").length;
+  const procRows = procs.map(p => `<li>
+      <span class="dot" style="--c:var(--${p.window === "背景" ? "RUNNING" : "blue"})"></span>
+      <span class="body"><span class="p">${esc(p.project || "（不屬於專案）")}</span> ${esc(shortWhat(p.what))}
+        <div class="x" title="${esc(p.what)}">${esc(p.name)} · 開始 ${ago(p.start)} · PID ${esc(p.pid)}</div></span></li>`).join("");
+  const taskRows = tasks.map(t => {
+    const st = TASK_ZH[t.state] || t.state || "";
+    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
+    return `<li class="${t.state === "Disabled" ? "muted" : ""}">
+      <span class="dot" style="--c:var(--${t.state === "Disabled" ? "IDLE" : t.state === "Running" ? "RUNNING" : "WAITING"})"></span>
+      <span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(t.project || "")}</span>
+        ${t.window === "會跳視窗" && t.state !== "Disabled" ? '<span class="tag tag-warn">會跳視窗</span>' : ""}
+        <div class="x" title="${esc(t.what)}">${st} · 下次 ${t.next ? until(t.next) : "—"} · 上次 ${t.last ? ago(t.last) : "—"} ${r}</div></span></li>`;
+  }).join("");
+  return `<section class="box"><h2>Background 背景執行 <small>正在跑 ${procs.length} · 排程 ${tasks.length}${pop ? ` · ${pop} 個會跳視窗` : ""}${bad ? ` · ${bad} 個上次失敗` : ""} · 排程資料 ${esc(B.tasks_at || "")}</small></h2>
+    <div class="panels" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+      <div><div class="section-title">正在跑的程式（${procs.length}）</div><ul class="list">${procRows || '<li class="empty">沒有</li>'}</ul></div>
+      <div><div class="section-title">排程（${tasks.length}）</div><ul class="list">${taskRows || '<li class="empty">沒有</li>'}</ul></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">要停掉：跟總機說「停掉 PID 〇〇」或「停用排程 〇〇」，總機只停你點名的那一個。滑鼠停在灰字上可以看完整指令。</div>
+  </section>`;
 }
 
 function link(url, text) {
