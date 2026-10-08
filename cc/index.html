@@ -192,6 +192,8 @@ const WEB = !!window.CC_WEB;  // 網路版：只看，不顯示停機／最愛�
 if (WEB) document.body.classList.add("web");
 // 本機控制中心（local_server.py，127.0.0.1:8770）才顯示「控制頁」入口；手機網頁、直接開檔都不顯示
 const LOCAL_CTRL = !WEB && location.port === "8770";
+// 三種開法用不同分頁名稱，存「我的最愛」才分得出來（Josh 10/09：本機存最愛蓋掉網路版）
+document.title = WEB ? "控制中心（手機網頁）" : LOCAL_CTRL ? "控制中心（本機）" : "控制中心（檔案）";
 if (LOCAL_CTRL) document.addEventListener("DOMContentLoaded", () => {
   const h = document.querySelector("header h1");
   if (h) h.insertAdjacentHTML("afterend", '<a href="/control.html" style="margin-left:8px;font-size:13px;padding:2px 10px;border:1px solid var(--line);border-radius:12px;text-decoration:none">🔒 控制頁</a>');
