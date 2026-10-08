@@ -466,6 +466,7 @@ function render() {
     ${kpi("Success|7 日成功率", k.success_rate_7d == null ? "—" : k.success_rate_7d + "%", `${k.runs_7d} 次執行`, "", "", "#7a5cc2", "✓", k.runs_7d ? "RUNNING" : "IDLE")}
   </section>
 
+  ${todoPanel()}
   ${relayLine()}
   <section class="panels">
     <div class="box"><h2>今日提醒 <small>${today.length} 任務 · ${rems.length} 提醒</small></h2>
@@ -544,7 +545,7 @@ function setTab(t) { ui.tab = t; store.set("cc.tab", t); render(); window.scroll
 function tabCounts() {
   const c = {};
   const rems = live(S.reminders || []);
-  c.home = [rems.filter(r => r.level === "red").length, rems.filter(r => r.level === "orange").length];
+  c.home = [rems.filter(r => r.level === "red").length, ((S.todo || {}).josh || []).length];
   const act = S.machines.filter(m => !isPaused(m.id));
   c.machines = [act.filter(m => m.status === "FAILED").length, act.filter(m => m.status === "BLOCKED").length];
   const tasks = ((S.background || {}).tasks || []).filter(t => t.state !== "Disabled");
@@ -565,6 +566,22 @@ function renderTabs() {
     const n = r ? `<span class="n" title="要處理">${r}</span>` : o ? `<span class="n warn" title="要注意">${o}</span>` : "";
     return `<button class="${ui.tab === id ? "on" : ""}" onclick="setTab('${id}')"><span class="ic">${ic}</span><span class="lb">${lb}</span>${n}</button>`;
   }).join("");
+}
+
+// ===== 待辦（Josh 10/09：做一半的、等 Josh 回的，放總覽）=====
+function todoPanel() {
+  const T = S.todo || {josh: [], half: []};
+  const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
+  const row = x => `<li ${x.id && x.src === "日誌" ? `onclick="openDetail('${esc(x.id)}')"` : ""} title="${esc(x.detail || x.text)}">
+      <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
+      <span class="body"><span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
+  return `<section class="panels">
+    <div class="box clash"><h2>🙋 等你決定 <small>${T.josh.length} 件 · 你回一句就能往下走</small></h2>
+      <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有在等你的事</li>'}</ul></div>
+    <div class="box"><h2>🔧 做一半／等別人 <small>${T.half.length} 件</small></h2>
+      <ul class="list">${T.half.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
+  </section>
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦（總機交接.md 的 TBD）· 📝 專案工作日誌寫的「卡在哪」· 🔊 AI傳聲筒在等你。滑鼠停在項目上看細節。</div>`;
 }
 
 // ===== 亮／暗切換 =====
