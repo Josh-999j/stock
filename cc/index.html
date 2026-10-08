@@ -502,8 +502,8 @@ function kpi(label, val, sub, filter, cls, ac, icon, worker) {
 
 // 卡片上的手機狀態小標籤（Josh 10/09：看這個專案的主要對話手機能不能用；Codex 專案沒有這個資訊就不顯示）
 const PHONE_TAG = {connected: ["📱 手機可用", "var(--RUNNING)", "主要對話現在用手機看得到、可以下指令"],
-                   sleeping: ["😴 手機要叫醒", "var(--STALE)", "主要對話閒置被收起來了；電腦上傳一句話或請傳聲筒總機叫醒"],
-                   off: ["📵 手機看不到", "var(--IDLE)", "主要對話沒開遠端；請傳聲筒總機打開"]};
+                   sleeping: ["😴 手機要叫醒", "var(--STALE)", "主要對話閒置被收起來了；電腦上傳一句話或請傳聲筒管理員叫醒"],
+                   off: ["📵 手機看不到", "var(--IDLE)", "主要對話沒開遠端；請傳聲筒管理員打開"]};
 function phoneTag(m) {
   const ss = (S.remote && S.remote.sessions) || [];
   const mc = m.footprint && m.footprint.main_chat;
