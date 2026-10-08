@@ -522,6 +522,7 @@ function render() {
         ${res(s.last_result)}</li>`).join("") || '<li class="empty">沒有排程</li>'}</ul></div>
 
   ${codexPanel()}
+  ${healthPanel()}
   </section>
   ${bgPanel()}`) +
   pg("remote", `${remotePanel()}`) +
@@ -550,7 +551,7 @@ function tabCounts() {
   c.machines = [act.filter(m => m.status === "FAILED").length, act.filter(m => m.status === "BLOCKED").length];
   const tasks = ((S.background || {}).tasks || []).filter(t => t.state !== "Disabled");
   const badTask = tasks.filter(t => t.result && !["0", "267009", "267011", "267008", "2147946720"].includes(t.result)).length;
-  c.sched = [badTask, clashes().length];
+  c.sched = [badTask, clashes().length + tasks.concat(((S.background || {}).tasks || []).filter(t => t.state === "Disabled")).filter(t => taskIssues(t).length).length];
   const R = S.remote || {}, ss = R.sessions || [];
   c.remote = [R.entry && !R.entry.on ? 1 : 0, 0];
   const G = S.registry || {};
@@ -636,6 +637,26 @@ function clashPanel() {
   return `<section class="box"><h2>⚠️ 時間撞在一起 <small>${cs.length} 段 · 5 分鐘內有不同專案同時開始（含小C定時任務）</small></h2>
     <ul class="list full">${cs.map(row).join("") || '<li class="empty">目前沒有撞在一起的時段</li>'}</ul>
     <div class="muted" style="font-size:12px;margin-top:4px">撞在一起不一定會出事；要看它們有沒有搶同一樣東西（XQ 畫面、網路來源、Telegram、同一個資料檔）。詳見「📋 名冊」的共用工具表。</div></section>`;
+}
+// 排程健康（Josh 10/09：不要有無效或測試完沒刪的；每個都要確認有必要）
+const TEST_RE = /test|測試|pilot|probe|tmp|temp|demo/i;
+function taskIssues(t) {
+  const out = [], now = Date.now(), d = s => s ? (now - new Date(s.replace(" ", "T")).getTime()) / 864e5 : null;
+  if ((t.missing || []).length) out.push("指到的檔案不存在：" + t.missing.join("、"));
+  if (TEST_RE.test(t.name || "")) out.push("名稱像測試");
+  if (t.state === "Disabled" && (d(t.last) ?? 99) > 7) out.push(`停用超過 7 天（上次 ${t.last || "從沒跑過"}）`);
+  if (t.state !== "Disabled" && !t.last && t.at && !t.rep) out.push("還沒跑過（新排程請確認有跑）");
+  return out;
+}
+function healthPanel() {
+  const om = ownerMap();
+  const bad = ((S.background || {}).tasks || []).map(t => [t, taskIssues(t)]).filter(x => x[1].length);
+  const aut = ((S.codex_autos || []).filter(a => TEST_RE.test(a.name))).map(a => [{name: a.name}, ["小C定時任務名稱像測試"]]);
+  const rows = bad.concat(aut);
+  return `<div class="box ${rows.length ? "clash" : ""}"><h2>🩺 排程健康 <small>${rows.length} 個要確認還需不需要</small></h2>
+    <ul class="list full">${rows.map(([t, why]) => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(om.sch[t.name] || om.auto[t.name] || t.project || "")}</span>
+      <div class="x">${why.map(esc).join(" · ")}</div></span></li>`).join("") || '<li class="empty">都有在用</li>'}</ul>
+    <div class="muted" style="font-size:12px">要刪或停用：問該專案確認用途 → Josh 同意 → 才動。</div></div>`;
 }
 function codexPanel() {
   const om = ownerMap(), A = S.codex_autos || [];
