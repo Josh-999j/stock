@@ -461,7 +461,7 @@ function render() {
     ${kpi("Projects 專案", k.projects, `${cnt.IDLE} 休眠・${S.machines.filter(m => modeOf(m.id) === "maint").length} 保養・${S.machines.filter(m => isOff(m.id)).length} 關機`, "ALL", "", "#5b6b82", "▦", "BLOCKED")}
     ${kpi("Running 運行中", k.running, `${cnt.WAITING} 等待中`, "RUNNING", "", "var(--RUNNING)", "▶", "RUNNING")}
     ${kpi("Today's Tasks 今日", k.today_tasks, "排程＋今日下一步", "", "", "var(--WAITING)", "◷", "WAITING")}
-    ${kpi("Failed 失敗", k.failed, "排程或程式出錯", "FAILED", k.failed ? "bad" : "", "var(--FAILED)", "✕", k.failed ? "FAILED" : "RUNNING")}
+    ${kpi("Failed 失敗", k.failed, k.blocked ? "專案卡住" : "", "FAILED", k.failed ? "bad" : "", "var(--FAILED)", "✕", k.failed ? "FAILED" : "RUNNING")}
     ${kpi("Stale 停滯", k.stale, `>${S.config.stale_days} 天沒動`, "STALE", k.stale ? "warn" : "", "var(--STALE)", "❚❚", k.stale ? "STALE" : "RUNNING")}
     ${kpi("Success|7 日成功率", k.success_rate_7d == null ? "—" : k.success_rate_7d + "%", `${k.runs_7d} 次執行`, "", "", "#7a5cc2", "✓", k.runs_7d ? "RUNNING" : "IDLE")}
   </section>
