@@ -4,6 +4,7 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="assets/web/icons/tool.png"><link rel="apple-touch-icon" href="assets/web/icons/tool.png">
 <title>AI Project Control Center</title>
 <style>
   /* Phase 1：純方塊版面，美化（工廠素材）之後再換 */
@@ -364,7 +365,7 @@ function machineCard(m) {
   const sr = m.runs_7d ? Math.round(m.success_7d * 100 / m.runs_7d) + "%" : "—";
   const p = isPaused(m.id);
   return `<div class="machine${p ? " paused" : ""}" style="${stVar(p ? "IDLE" : m.status)}" onclick="openDetail('${esc(m.id)}')">
-    <div class="cardhead"><span>${p ? MODE_BADGE[modeOf(m.id)] : badge(m.status)}${modelChip(m)}${m.demo ? '<span class="tag">DEMO</span>' : ""}${tagHtml(m.tags ? Object.assign({}, m, {tags: m.tags.filter(t => t !== "大C小C")}) : m)}</span>${starBtn(m)}</div>
+    <div class="cardhead"><span>${p ? MODE_BADGE[modeOf(m.id)] : badge(m.status)}${modelChip(m)}${m.demo ? '<span class="tag">DEMO</span>' : ""}${tagHtml(m.tags ? Object.assign({}, m, {tags: m.tags.filter(t => t !== "大C小C")}) : m)}${phoneTag(m)}</span>${starBtn(m)}</div>
     ${(() => { const art = machineArt(m, p), nm = `<div class="name" title="${esc(m.name)}">${esc(m.name)}</div>
     ${m.plain ? `<div class="plain" title="${esc(m.plain)}">${esc(m.plain)}</div>` : ""}
     ${(p || m.status === "IDLE") && noteOf(m.id) ? `<div class="reason" title="${esc(noteOf(m.id))}">📝 ${esc(noteOf(m.id))}</div>`
@@ -497,6 +498,24 @@ function kpi(label, val, sub, filter, cls, ac, icon, worker) {
   return `<div class="box kpi" style="--ac:${ac || "var(--WAITING)"}" ${click}><div class="body">
     <div class="top"><span class="ic">${icon || "•"}</span><span class="zh">${esc(zh)}</span><span class="en">${esc(en)}</span></div>
     <div class="val ${cls ? "hot" : ""}">${esc(val)}</div><div class="sub">${esc(sub)}</div></div>${w}</div>`;
+}
+
+// 卡片上的手機狀態小標籤（Josh 10/09：看這個專案的主要對話手機能不能用；Codex 專案沒有這個資訊就不顯示）
+const PHONE_TAG = {connected: ["📱 手機可用", "var(--RUNNING)", "主要對話現在用手機看得到、可以下指令"],
+                   sleeping: ["😴 手機要叫醒", "var(--STALE)", "主要對話閒置被收起來了；電腦上傳一句話或請傳聲筒總機叫醒"],
+                   off: ["📵 手機看不到", "var(--IDLE)", "主要對話沒開遠端；請傳聲筒總機打開"]};
+function phoneTag(m) {
+  const ss = (S.remote && S.remote.sessions) || [];
+  const mc = m.footprint && m.footprint.main_chat;
+  const names = [m.name, m.window && m.window.title, mc && /claude/i.test(mc.platform || "") && mc.title].filter(Boolean);
+  const s = names.map(n => ss.find(x => x.title === n)).find(Boolean);
+  if (!s) {
+    // 小C（Codex）負責的專案：Claude 手機 App 看不到，提示改用 ChatGPT App
+    const codex = m.model === "Codex" || (mc && /codex/i.test(mc.platform || ""));
+    return codex ? '<span class="tag" style="color:#10a37f;border-color:#10a37f" title="這個專案主要由小C（Codex）負責，手機請用 ChatGPT App 找小C">💬 用 ChatGPT App</span>' : "";
+  }
+  const t = PHONE_TAG[s.state];
+  return `<span class="tag" style="color:${t[1]};border-color:${t[1]}" title="${esc(t[2])}">${t[0]}</span>`;
 }
 
 // 手機遠端面板（Josh 10/08：一眼看懂哪些對話手機看得到）
