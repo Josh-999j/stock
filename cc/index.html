@@ -577,7 +577,8 @@ const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "clau
 function todoPanel() {
   const T = S.todo || {josh: [], half: []};
   const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
-  const row = x => `<li ${x.id && x.src === "日誌" ? `onclick="openDetail('${esc(x.id)}')"` : ""} title="${esc(x.detail || x.text)}">
+  TODO_LIST = T.josh.concat(T.half);
+  const row = x => `<li onclick="openTodo(${TODO_LIST.indexOf(x)})" title="點開看細節">
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
       <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
@@ -586,7 +587,29 @@ function todoPanel() {
     <div class="box"><h2>🔧 做一半／等別人 <small>${T.half.length} 件</small></h2>
       <ul class="list">${T.half.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
-  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦（總機交接.md 的 TBD）· 📝 專案工作日誌寫的「卡在哪」· 🔊 AI傳聲筒在等你。滑鼠停在項目上看細節。</div>`;
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦（總機交接.md 的 TBD）· 📝 專案工作日誌寫的「卡在哪」· 🔊 AI傳聲筒在等你。每一項都可以點開看細節。</div>`;
+}
+// 待辦每一項都能點（Josh 10/09：有的點了有小卡、有的沒有）：一律開小卡，看完整內容＋打開該專案卡片
+let TODO_LIST = [];
+function cardIdOf(x) {
+  if (x.src === "日誌" && x.id) return x.id;
+  const p = ((S.registry || {}).projects || []).find(r => r.name === x.project || (r.card && r.card.name === x.project));
+  return p && p.card ? p.card.id : (x.src === "總機" ? "control-center" : "");
+}
+function openTodo(i) {
+  const x = TODO_LIST[i]; if (!x) return;
+  ui.detail = null;
+  const cid = cardIdOf(x), SRCZ = {"總機": "📌 總機待辦（總機交接.md）", "日誌": "📝 專案工作日誌「卡在哪」", "傳聲筒": "🔊 AI傳聲筒在等你"};
+  document.getElementById("sheet").innerHTML = `
+    <div class="head"><h2>${whoBadge(x.who)}${esc(x.project)}</h2><span class="muted">${esc(x.src === "總機" ? x.id : "")}</span><button class="close" onclick="closeDetail()">關閉 (Esc)</button></div>
+    <div class="box" style="display:grid;gap:8px">
+      <div class="muted">${esc(SRCZ[x.src] || x.src)}${x.tag ? "・" + esc(x.tag) : ""}${x.t ? "・" + esc(x.t) : ""}</div>
+      <div style="font-size:16px;font-weight:bold">${esc(x.text)}</div>
+      ${x.detail ? `<div style="white-space:pre-wrap;line-height:1.6">${esc(x.detail)}</div>` : ""}
+      <div class="muted" style="font-size:12px">要處理：到「${esc(x.project)}」的對話回一句；總機待辦直接跟總機說「TBD 編號＋你的決定」。</div>
+      ${cid ? `<div><button onclick="openDetail('${esc(cid)}')">打開專案卡片 →</button></div>` : ""}
+    </div>`;
+  document.getElementById("detail").classList.add("on");
 }
 
 // ===== 亮／暗切換 =====
