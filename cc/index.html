@@ -582,9 +582,9 @@ function todoPanel() {
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
       <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
-    <div class="box clash"><h2>🙋 Josh 要處理 <small>${T.josh.length} 件 · 只列真的要你決定、同意或在場的</small></h2>
+    <div class="box clash"><h2>🙋 等Josh決定 <small>${T.josh.length} 件 · 只列真的要你決定、同意或在場的</small></h2>
       <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有要你處理的事 🎉</li>'}</ul></div>
-    <div class="box"><h2>🤖 大小C／總機處理中 <small>${T.ai.length} 件 · 只是紀錄，不用你動</small></h2>
+    <div class="box"><h2>🔧 做一半／等大小C <small>${T.ai.length} 件 · 總機每天 09:30、21:30 檢查推動，不用你動</small></h2>
       <ul class="list">${T.ai.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
   <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦 · 📝 專案日誌寫的「卡在哪」· 🔊 AI傳聲筒。只寫「等某個 AI」的歸右邊，由總機／傳聲筒推動。每一項都可以點開看細節。</div>`;
