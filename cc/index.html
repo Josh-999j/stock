@@ -575,19 +575,19 @@ function renderTabs() {
 // 是誰提的（Josh 10/09：一眼看出是大C還是小C）：大C＝Claude（橘）、小C＝Codex（綠）
 const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${w === "小C" ? "🟩 小C" : "🟧 大C"}</span> ` : "";
 function todoPanel() {
-  const T = S.todo || {josh: [], half: []};
+  const T = S.todo || {josh: [], half: []}; T.ai = T.ai || T.half || [];
   const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
-  TODO_LIST = T.josh.concat(T.half);
+  TODO_LIST = T.josh.concat(T.ai);
   const row = x => `<li onclick="openTodo(${TODO_LIST.indexOf(x)})" title="點開看細節">
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
       <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
-    <div class="box clash"><h2>🙋 等你決定 <small>${T.josh.length} 件 · 你回一句就能往下走</small></h2>
-      <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有在等你的事</li>'}</ul></div>
-    <div class="box"><h2>🔧 做一半／等別人 <small>${T.half.length} 件</small></h2>
-      <ul class="list">${T.half.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
+    <div class="box clash"><h2>🙋 Josh 要處理 <small>${T.josh.length} 件 · 只列真的要你決定、同意或在場的</small></h2>
+      <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有要你處理的事 🎉</li>'}</ul></div>
+    <div class="box"><h2>🤖 大小C／總機處理中 <small>${T.ai.length} 件 · 只是紀錄，不用你動</small></h2>
+      <ul class="list">${T.ai.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
-  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦（總機交接.md 的 TBD）· 📝 專案工作日誌寫的「卡在哪」· 🔊 AI傳聲筒在等你。每一項都可以點開看細節。</div>`;
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦 · 📝 專案日誌寫的「卡在哪」· 🔊 AI傳聲筒。只寫「等某個 AI」的歸右邊，由總機／傳聲筒推動。每一項都可以點開看細節。</div>`;
 }
 // 待辦每一項都能點（Josh 10/09：有的點了有小卡、有的沒有）：一律開小卡，看完整內容＋打開該專案卡片
 let TODO_LIST = [];
