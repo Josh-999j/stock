@@ -470,6 +470,7 @@ function render() {
 
   ${todoPanel()}
   ${relayLine()}
+  ${usagePanel()}
   <section class="panels">
     <div class="box"><h2>今日提醒 <small>${today.length} 任務 · ${rems.length} 提醒</small></h2>
       <div class="section-title">今日任務</div>
@@ -574,6 +575,29 @@ function renderTabs() {
 // ===== 待辦（Josh 10/09：做一半的、等 Josh 回的，放總覽）=====
 // 是誰提的（Josh 10/09：一眼看出是大C還是小C）：大C＝Claude（橘）、小C＝Codex（綠）
 const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${w === "小C" ? "🟩 小C" : "🟧 大C"}</span> ` : "";
+// ===== 大C／小C 用量（Josh 10/10：跟小C 討論做用量紀錄、整合到中心）=====
+// 大C＝Claude 每則回覆的「新增」token（輸入＋寫快取＋輸出；讀快取很便宜另列）；小C＝Codex threads 累計 token 的增量
+const kfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n || 0);
+function usagePanel() {
+  const U = S.usage; if (!U) return "";
+  const today = (U.days || {})[U.today] || {}, L = U.codex_limit || {};
+  const rows = Object.entries(today).map(([p, v]) => [p, v.claude_new || 0, v.codex || 0])
+    .filter(r => r[1] + r[2] > 0).sort((a, b) => (b[1] + b[2]) - (a[1] + a[2]));
+  const maxv = Math.max(1, ...rows.map(r => Math.max(r[1], r[2])));
+  const bar = (v, c) => `<span style="display:inline-block;height:8px;border-radius:4px;background:${c};width:${Math.max(2, Math.round(v / maxv * 120))}px;vertical-align:middle"></span>`;
+  const daysK = Object.keys(U.days || {}).sort().slice(-7);
+  const dsum = (d, k) => Object.values(U.days[d] || {}).reduce((s, v) => s + (v[k] || 0), 0);
+  const pct = L.used_percent, reset = L.resets_at ? new Date(L.resets_at * 1000).toLocaleString("zh-TW", {hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"}) : "";
+  const lim = pct == null ? '<span class="muted">（還沒讀到小C 額度）</span>'
+    : `🟩 小C 本週額度已用 <b>${esc(pct)}%</b> <span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, pct)}%;background:${pct > 85 ? "var(--FAILED)" : pct > 60 ? "var(--BLOCKED)" : "#10a37f"}"></span></span> ${reset ? "・" + esc(reset) + " 重置" : ""}`;
+  return `<section class="box"><h2>🔋 大C／小C 用量 <small>今天 ${esc(U.today)}・每 10 分鐘更新・小C 從 ${esc(U.codex_since || "")} 起算</small></h2>
+    <div style="margin-bottom:6px">${lim}</div>
+    <table class="tools"><thead><tr><th>專案</th><th>🟧 大C 新增</th><th>🟩 小C</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${bar(r[1], "#d97757")} ${kfmt(r[1])}</td><td>${bar(r[2], "#10a37f")} ${kfmt(r[2])}</td></tr>`).join("") || '<tr><td colspan="3" class="muted">今天還沒有用量</td></tr>'}
+    </tbody></table>
+    <div class="muted" style="font-size:12px;margin-top:6px">近 7 天大C 新增：${daysK.map(d => `${esc(d.slice(5))} ${kfmt(dsum(d, "claude_new"))}`).join("・")}<br>
+    大C「新增」＝真正花錢的部分（讀快取很便宜，不列）；小C 只看得到額度百分比，沒有絕對上限。</div></section>`;
+}
 function todoPanel() {
   const T = S.todo || {josh: [], half: []}; T.ai = T.ai || T.half || [];
   const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
