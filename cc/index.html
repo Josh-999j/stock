@@ -584,7 +584,7 @@ function renderTabs() {
 // 是誰提的（Josh 10/09：一眼看出是大C還是小C）：大C＝Claude（橘）、小C＝Codex（綠）
 // 大C／小C 圖示（Josh 10/10：用 Claude／Codex App 那種圖示與配色；手畫簡化版）
 const ICON_C = `<svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-3px;border-radius:4px;background:#D97757"><g stroke="#fff" stroke-width="1.7" stroke-linecap="round">${[0,30,60,90,120,150].map(a => `<line x1="10" y1="3.2" x2="10" y2="16.8" transform="rotate(${a} 10 10)"/>`).join("")}</g></svg>`;
-const ICON_X = `<img src="assets/web/icons/codex_tile.png" alt="小C" width="16" height="16" style="vertical-align:-3px;border-radius:4px">`;   // Josh 10/10 提供的 Codex 圖（黑底白花結）
+const ICON_X = `<img src="assets/web/icons/codex_tile.png" alt="小C" width="16" height="16" style="vertical-align:-3px;border-radius:4px;box-shadow:0 0 0 1px #8888">`;   // Josh 10/10 提供的 Codex 圖（黑底白花結）
 const icoBig = (big) => big ? ICON_C : ICON_X;
 const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${icoBig(w !== "小C")} ${w}</span> ` : "";
 // ===== 大C／小C 用量（Josh 10/10：跟小C 討論做用量紀錄、整合到中心）=====
