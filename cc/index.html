@@ -214,9 +214,9 @@
 <header>
   <img id="logo" alt="" style="display:none;height:28px">
   <h1>AI Project Control Center</h1>
-  <span class="tag phase">Phase 1 · L1 + L2</span>
   <button id="obbtn" onclick="openOnboard()" title="跳到「新專案使用規定」：複製開場句" style="font-size:13px;padding:2px 10px;border-radius:12px">➕ 開新專案</button>
   <button id="themebtn" onclick="cycleTheme()" title="切換顏色：自動（跟手機／電腦）→ 亮 → 暗">🌓 自動</button>
+  <span id="hdrusage" style="display:flex;gap:14px;align-items:center;font-size:13px"></span>
   <div class="meta"><div id="clock"></div><div id="gen"></div></div>
 </header>
 <nav id="tabs"></nav>
@@ -377,12 +377,12 @@ function footprintBox(m) {
   const chats = (f.chats || []).map(c => `<tr><td>${esc(c.platform)}</td><td>${esc(c.title)}</td><td>${esc((c.last||"").slice(5))}</td></tr>`).join("");
   const others = (f.others || []).map(o => `<li><code>${esc(o.path)}</code> <span class="muted">${esc(o.why)}${o.sessions ? `・${o.sessions} 個對話・最後 ${esc(o.last)}` : ""}${o.exists === false ? "・已不存在" : ""}${o.old_cloud ? "・早期雲端" : ""}</span></li>`).join("");
   const cb = f.collab ? `<p>協作狀態：輪到 <b>${esc(f.collab["輪到"] || "—")}</b>｜目前任務 ${esc(f.collab["目前任務"] || "—")}｜大C上次檢查 ${esc(f.collab["大C上次檢查"] || "—")}｜小C上次檢查 ${esc(f.collab["小C上次檢查"] || "—")}</p>` : "";
-  return `<div class="box"><h2>在哪裡做過 <small>電腦上的 Codex／Claude Code 紀錄・只讀</small> ${tagHtml(m)}</h2>
+  return `<div class="box"><h2>在哪裡做過 <small>電腦上的對話紀錄</small> ${tagHtml(m)}</h2>
     ${cb}
-    <ul>${plats || '<li class="muted">電腦上找不到這個資料夾的 Codex／Claude Code 對話（可能是網頁版或雲端做的）</li>'}</ul>
+    <ul>${plats || '<li class="muted">電腦上沒有這個資料夾的對話（可能在網頁版）</li>'}</ul>
     ${chats ? `<table><tr><th>平台</th><th>對話名稱（新→舊，不含自動執行）</th><th>最後</th></tr>${chats}</table>` : ""}
     ${others ? `<h2 style="margin-top:10px">其他位置</h2><ul>${others}</ul>` : ""}
-    ${(f.advice || []).length ? `<h2 style="margin-top:10px">整理建議 <small>只建議，不會自動執行</small></h2><ul>${f.advice.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
+    ${(f.advice || []).length ? `<h2 style="margin-top:10px">整理建議 <small>只是建議</small></h2><ul>${f.advice.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
   </div>`;
 }
 
@@ -393,7 +393,7 @@ function distributionPanel() {
   const unRow = u => `<li><span class="body"><span class="p">${esc(u.path)}</span>
       <div class="x">${esc(u.platforms.join("、"))} ${u.manual} 個對話${u.sessions > u.manual ? `＋${u.sessions - u.manual} 次自動` : ""}・最後 ${esc(u.last)}${u.collab ? "・大C小C" : ""}</div>
       <div class="x">${esc(u.titles.join("／"))}</div></span></li>`;
-  return `<section class="box"><h2>專案分布整理 <small>只讀分析，不會改動任何專案；要轉移或封存請先跟 Claude 說</small></h2>
+  return `<section class="box"><h2>專案分布整理 <small>只看不改</small></h2>
     <div class="panels" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
       <div><div class="section-title">需要整理的專案（${spread.length}）</div>
         <ul class="list">${spread.map(m => `<li onclick="openDetail('${esc(m.id)}')"><span class="body"><span class="p">${esc(m.name)}</span> ${tagHtml(m)}
@@ -517,7 +517,7 @@ function render() {
   pg("sched", `
   ${clashPanel()}
   <section class="panels">
-    <div class="box"><h2>Schedule Monitor 排程 <small>${scheds.length} 個 · 只顯示不執行</small></h2>
+    <div class="box"><h2>Schedule Monitor 排程 <small>${scheds.length} 個</small></h2>
       <ul class="list">${scheds.map(s => `<li onclick="openDetail('${esc(s.pid)}')">
         <span class="t">${esc(s.time)}</span>
         <span class="body"><span class="p">${esc(s.project)}</span> ${esc(s.job)}
@@ -562,7 +562,15 @@ function tabCounts() {
   c.tidy = [0, (S.inbox || []).length];
   return c;
 }
+// 頁首用量（Josh 10/10：放頁首空白處，字要簡潔）
+function hdrUsage() {
+  const el = document.getElementById("hdrusage"); if (!el || !S || !S.usage) return;
+  const U = S.usage, c = (U.claude_limit || {}).week, x = (U.codex_limit || {}).used_percent;
+  const b = v => `<span style="display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--line);vertical-align:middle"><span style="display:block;height:6px;border-radius:3px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : "var(--RUNNING)"}"></span></span>`;
+  el.innerHTML = (c != null ? `<span title="大C 本週額度">${ICON_C} ${c}% ${b(c)}</span>` : "") + (x != null ? `<span title="小C 本週額度">${ICON_X} ${Math.round(x)}% ${b(x)}</span>` : "");
+}
 function renderTabs() {
+  hdrUsage();
   const nav = document.getElementById("tabs"); if (!nav || !S) return;
   const c = tabCounts();
   nav.innerHTML = TABS.map(([id, ic, lb]) => {
@@ -602,12 +610,12 @@ function usagePanel() {
   const dsum = (d, k) => Object.values(U.days[d] || {}).reduce((s, v) => s + (v[k] || 0), 0);
   const pct = L.used_percent, reset = L.resets_at ? new Date(L.resets_at * 1000).toLocaleString("zh-TW", {hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"}) : "";
   const lim = pct == null ? '<span class="muted">（還沒讀到小C 額度）</span>'
-    : `${ICON_X} 小C 本週額度已用 <b>${esc(pct)}%</b> <span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, pct)}%;background:${pct > 85 ? "var(--FAILED)" : pct > 60 ? "var(--BLOCKED)" : "var(--text)"}"></span></span> ${reset ? "・" + esc(reset) + " 重置" : ""}`;
+    : `${ICON_X} 小C 本週 <b>${esc(pct)}%</b> <span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, pct)}%;background:${pct > 85 ? "var(--FAILED)" : pct > 60 ? "var(--BLOCKED)" : "var(--text)"}"></span></span> ${reset ? "・" + esc(reset) + " 重置" : ""}`;
   // 大C 額度（claude_quota.json，總機定時寫）：5 小時＋本週
   const CL = Object.fromEntries(Object.entries(U.claude_limit || {}).map(([k, v]) => [k, typeof v === "string" ? v.replace("（台北時間）", "") : v])), pbar = (v, c) => `<span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : c}"></span></span>`;
   const climx = CL.week == null ? '<span class="muted">（還沒讀到大C 額度）</span>'
-    : `${ICON_C} 大C 本週額度已用 <b>${esc(CL.week)}%</b> ${pbar(CL.week, "#d97757")}${CL.week_reset ? "・" + esc(CL.week_reset.slice(5)) + " 重置" : ""}　5 小時額度 <b>${esc(CL.five_hour)}%</b>${CL.five_hour_reset ? "（" + esc(CL.five_hour_reset.slice(11)) + " 重置）" : ""} <span class="muted" style="font-size:12px">${esc(CL.updated || "")} 讀取</span>`;
-  return `<section class="box"><h2>🔋 大C／小C 用量 <small>本週（${esc(wkStart.slice(5))}～${esc((U.today || "").slice(5))}）排名・每 10 分鐘更新・小C 從 ${esc(U.codex_since || "")} 起算</small></h2>
+    : `${ICON_C} 大C 本週 <b>${esc(CL.week)}%</b> ${pbar(CL.week, "#d97757")}${CL.week_reset ? "・" + esc(CL.week_reset.slice(5)) + " 重置" : ""}　5 小時 <b>${esc(CL.five_hour)}%</b>${CL.five_hour_reset ? "（" + esc(CL.five_hour_reset.slice(11)) + " 重置）" : ""}`;
+  return `<section class="box"><h2>🔋 大C／小C 用量 <small>本週（${esc(wkStart.slice(5))}～${esc((U.today || "").slice(5))}）排名</small></h2>
     <div style="margin-bottom:4px">${climx}</div>
     <div style="margin-bottom:6px">${lim}</div>
     ${(() => {  // 只顯示前 3 名，其他收起來（Josh 10/10）
@@ -620,7 +628,7 @@ function usagePanel() {
         ? `<button style="margin-top:4px;font-size:13px" onclick="ui.usageOpen=!ui.usageOpen;render()">${ui.usageOpen ? "▲ 收起，只看前 3 名" : `▼ 其他 ${n} 個專案`}</button>` : "");
     })()}
     <div class="muted" style="font-size:12px;margin-top:6px">近 7 天大C 新增：${daysK.map(d => `${esc(d.slice(5))} ${kfmt(dsum(d, "claude_new"))}`).join("・")}<br>
-    大C「新增」＝真正花錢的部分（讀快取很便宜，不列）；小C 只看得到額度百分比，沒有絕對上限。</div></section>`;
+    大C 只算新增（真正花錢的）；小C 只有百分比。</div></section>`;
 }
 function todoPanel() {
   const T = S.todo || {josh: [], half: []}; T.ai = T.ai || T.half || [];
@@ -630,12 +638,12 @@ function todoPanel() {
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
       <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
-    <div class="box clash"><h2>🙋 等Josh決定 <small>${T.josh.length} 件 · 只列真的要你決定、同意或在場的</small></h2>
+    <div class="box clash"><h2>🙋 等Josh決定 <small>${T.josh.length} 件</small></h2>
       <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有要你處理的事 🎉</li>'}</ul></div>
-    <div class="box"><h2>🔧 做一半／等大小C <small>${T.ai.length} 件 · 總機每天 09:30、21:30 檢查推動，不用你動</small></h2>
+    <div class="box"><h2>🔧 做一半／等大小C <small>${T.ai.length} 件・總機每天 09:30／21:30 推動</small></h2>
       <ul class="list">${T.ai.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
-  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機待辦 · 📝 專案日誌寫的「卡在哪」· 🔊 AI傳聲筒。只寫「等某個 AI」的歸右邊，由總機／傳聲筒推動。每一項都可以點開看細節。</div>`;
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機　📝 專案日誌　🔊 傳聲筒　・點一下看細節</div>`;
 }
 // 待辦每一項都能點（Josh 10/09：有的點了有小卡、有的沒有）：一律開小卡，看完整內容＋打開該專案卡片
 let TODO_LIST = [];
@@ -654,7 +662,7 @@ function openTodo(i) {
       <div class="muted">${esc(SRCZ[x.src] || x.src)}${x.tag ? "・" + esc(x.tag) : ""}${x.t ? "・" + esc(x.t) : ""}</div>
       <div style="font-size:16px;font-weight:bold">${esc(x.text)}</div>
       ${x.detail ? `<div style="white-space:pre-wrap;line-height:1.6">${esc(x.detail)}</div>` : ""}
-      <div class="muted" style="font-size:12px">要處理：到「${esc(x.project)}」的對話回一句；總機待辦直接跟總機說「TBD 編號＋你的決定」。</div>
+      <div class="muted" style="font-size:12px">處理：到「${esc(x.project)}」對話回一句；TBD 跟總機說。</div>
       ${cid ? `<div><button onclick="openDetail('${esc(cid)}')">打開專案卡片 →</button></div>` : ""}
     </div>`;
   document.getElementById("detail").classList.add("on");
@@ -709,9 +717,9 @@ function clashPanel() {
   const cs = clashes();
   const row = g => `<li class="clash"><span class="t">${esc(g[0].t)}${g.length > 1 && g[g.length - 1].t !== g[0].t ? "–" + esc(g[g.length - 1].t) : ""}</span>
     <span class="body">${g.map(x => `<div><span class="p">${esc(x.project)}</span> <span class="${x.kind === "小C定時" ? "chip codex" : "muted"}">${esc(x.kind)}</span> ${esc(x.t)} ${esc(x.name)}</div>`).join("")}</span></li>`;
-  return `<section class="box"><h2>⚠️ 時間撞在一起 <small>${cs.length} 段 · 5 分鐘內有不同專案同時開始（含小C定時任務）</small></h2>
+  return `<section class="box"><h2>⚠️ 時間撞在一起 <small>${cs.length} 段・5 分鐘內不同專案同時開始</small></h2>
     <ul class="list full">${cs.map(row).join("") || '<li class="empty">目前沒有撞在一起的時段</li>'}</ul>
-    <div class="muted" style="font-size:12px;margin-top:4px">撞在一起不一定會出事；要看它們有沒有搶同一樣東西（XQ 畫面、網路來源、Telegram、同一個資料檔）。詳見「📋 名冊」的共用工具表。</div></section>`;
+    <div class="muted" style="font-size:12px;margin-top:4px">同時開始不一定出事，要看有沒有搶同一樣東西（見名冊的共用工具）。</div></section>`;
 }
 // 排程健康（Josh 10/09：不要有無效或測試完沒刪的；每個都要確認有必要）
 const TEST_RE = /test|測試|pilot|probe|tmp|temp|demo/i;
@@ -728,14 +736,14 @@ function healthPanel() {
   const bad = ((S.background || {}).tasks || []).map(t => [t, taskIssues(t)]).filter(x => x[1].length);
   const aut = ((S.codex_autos || []).filter(a => TEST_RE.test(a.name))).map(a => [{name: a.name}, ["小C定時任務名稱像測試"]]);
   const rows = bad.concat(aut);
-  return `<div class="box ${rows.length ? "clash" : ""}"><h2>🩺 排程健康 <small>${rows.length} 個要確認還需不需要</small></h2>
+  return `<div class="box ${rows.length ? "clash" : ""}"><h2>🩺 排程健康 <small>${rows.length} 個要確認</small></h2>
     <ul class="list full">${rows.map(([t, why]) => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(om.sch[t.name] || om.auto[t.name] || t.project || "")}</span>
       <div class="x">${why.map(esc).join(" · ")}</div></span></li>`).join("") || '<li class="empty">都有在用</li>'}</ul>
-    <div class="muted" style="font-size:12px">要刪或停用：問該專案確認用途 → Josh 同意 → 才動。</div></div>`;
+    <div class="muted" style="font-size:12px">刪或停用：先問主人 → Josh 同意。</div></div>`;
 }
 function codexPanel() {
   const om = ownerMap(), A = S.codex_autos || [];
-  return `<div class="box"><h2>小C定時任務 <small>${A.length} 個 · Codex App 裡設定的</small></h2>
+  return `<div class="box"><h2>小C定時任務 <small>${A.length} 個</small></h2>
     <ul class="list">${A.map(a => `<li class="${a.on ? "" : "muted"}"><span class="t">${esc(a.at || "—")}</span>
       <span class="body"><span class="p">${esc(om.auto[a.name] || "（沒有主人）")}</span> ${esc(a.name)}
       <div class="x">${a.on ? "開著" : "停用"} · 每天 ${esc(a.at || "?")} · 結果看該專案工作日誌（10/09 起跑完會寫）</div></span></li>`).join("") || '<li class="empty">沒有</li>'}</ul></div>`;
@@ -755,7 +763,7 @@ function rosterPanel() {
         ${p.aliases && p.aliases !== "—" ? `<div class="x muted">別名：${esc(p.aliases)}</div>` : ""}
         ${sch || au || pr ? `<div class="chips">${sch}${au}${pr}</div>` : ""}</span></li>`;
   };
-  return `<section class="box"><h2>📋 名冊 <small>${P.length} 個專案 · ⏰ 排程 · 🤖 小C定時 · 以名稱對照表為準</small></h2>
+  return `<section class="box"><h2>📋 名冊 <small>${P.length} 個專案</small></h2>
     <ul class="list full">${P.map(row).join("")}</ul>
     ${O.length ? `<div class="section-title">沒有主人的排程（${O.length}）</div><ul class="list full">${O.map(t => `<li><span class="dot" style="--c:var(--BLOCKED)"></span><span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(TASK_ZH[t.state] || t.state || "")}</span><div class="x" title="${esc(t.what)}">${esc(shortWhat(t.what))}</div></span></li>`).join("")}</ul>` : ""}
   </section>`;
@@ -772,10 +780,10 @@ function modelPanel() {
       <div class="chips">${ps.map(p => `<span class="chip" title="${esc(p.model)}">${esc(p.name)}${p.model.includes("（") ? " <span class=\"muted\">" + esc(p.model.slice(p.model.indexOf("（"))) + "</span>" : ""}</span>`).join("")}</div></div>` : "";
   };
   const codex = P.filter(p => !tier(p.model));
-  return `<section class="box"><h2>🧠 各專案建議的大C模型 <small>由省到耗：Haiku → Sonnet → Opus → Fable · 卡住可臨時切高一級 · 小C 額度另計</small></h2>
+  return `<section class="box"><h2>🧠 各專案建議的大C模型 <small>省 → 耗：Haiku → Sonnet → Opus → Fable</small></h2>
     <div style="display:grid;gap:6px">${MODEL_TIERS.map(box).join("")}
     ${codex.length ? `<div><div class="section-title">不用大C <span class="muted">· 小C 執行、暫停或休眠</span></div><div class="chips">${codex.map(p => `<span class="chip muted" title="${esc(p.model)}">${esc(p.name)}</span>`).join("")}</div></div>` : ""}</div>
-    <div class="muted" style="font-size:12px;margin-top:6px">換模型：在該專案對話左下角的模型選單選；要總機幫忙改就說「把〇〇改成 Sonnet」。建議值寫在名稱對照表，由總機維護。</div></section>`;
+    <div class="muted" style="font-size:12px;margin-top:6px">換模型：對話左下角選，或跟總機說。</div></section>`;
 }
 // 共用工具：從各專案 project.json 的 shared 欄位（補報到時填的）自動歸類
 const TOOLS = [
@@ -797,7 +805,7 @@ function toolsPanel() {
       <td>${who.map(p => `<span class="chip" title="${esc((p.shared || []).filter(x => re.test(x)).join("\n"))}">${esc(p.name)}</span>`).join(" ") || '<span class="muted">（還沒有專案申報）</span>'}</td>
       <td class="muted">${esc(risk)}</td></tr>`;
   }).join("");
-  return `<section class="box"><h2>🔗 共用工具 <small>誰在用、哪裡會打架 · 來源：各專案登錄卡的 shared</small></h2>
+  return `<section class="box"><h2>🔗 共用工具 <small>誰在用、哪裡會撞</small></h2>
     <table class="tools"><thead><tr><th>共用的東西</th><th>誰在用</th><th>風險</th></tr></thead><tbody>${rows}</tbody></table></section>`;
 }
 
@@ -845,14 +853,14 @@ function remotePanel() {
   const devLine = `<div class="rsum">💻 電腦連線：${d.online == null ? "—（讀不到 App 紀錄）" : d.online ? `🟢 在線（${esc(d.since.slice(5))} 連上）` : `🔴 斷線（${esc(d.since.slice(5))}）`}
       ・App 上次自動更新：${d.last_update ? esc(d.last_update.slice(5)) + "（會關掉所有 App 對話）" : "—"}</div>
     <div class="chips" style="margin:2px 0 6px">${comp("總入口每小時重開", "AI-RemoteEntry-HourlyRestart")}${comp("Telegram 遙控", "AI-Telegram-Bot")}${comp("本機顧線", "AI-Relay-KeepManager")}${comp("AI傳聲筒", "AI-Relay-AutoStart")}</div>`;
-  return `<section class="box remote"><h2>📱 手機遠端 <small>電腦上的 Claude 對話，哪些用手機看得到</small></h2>
+  return `<section class="box remote"><h2>📱 手機遠端 <small>手機看得到哪些對話</small></h2>
     ${devLine}
     <div class="rentry ${e.on ? "ok" : "bad"}">${e.on
       ? `🟢 <b>總入口開著</b>（從 ${esc(e.since.slice(5))}）：手機 Claude App → Code → 選「${esc(e.name || "AIStation 總入口")}」就能開新對話。`
       : `🔴 <b>總入口沒開</b>：手機沒辦法開新對話。跟總機說「開總入口」，或電腦上雙擊「開啟遠端控制_AIStation.cmd」。`}</div>
     <div class="rsum">🟢 看得到 <b>${n("connected")}</b>　😴 睡著了 <b>${n("sleeping")}</b>　⚫ 沒開遠端 <b>${n("off")}</b></div>
     <div class="rgrid">${ss.map(chip).join("") || '<div class="empty">沒有對話</div>'}</div>
-    <div class="muted" style="font-size:12px;margin-top:6px">🟢 看得到＝App 裡開著且遠端有開，或在「手機模式」（Telegram 叫醒／本機顧線開的黑色小視窗）。😴 睡著了＝遠端有開，但對話閒置被 App 收起來；用 Telegram 叫醒、或請總機叫醒，就會變 🟢。電腦每 30 分鐘左右會斷線 2～4 秒自動重連，屬正常。⚫ 沒開遠端＝要先打開遠端開關（跟總機說）。</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">🟢 看得到　😴 閒置被收起來（叫醒就好）　⚫ 沒開遠端</div>
   </section>`;
 }
 
@@ -892,7 +900,7 @@ function bgPanel() {
       <div><div class="section-title">正在跑的程式（${procs.length}）</div><ul class="list">${procRows || '<li class="empty">沒有</li>'}</ul></div>
       <div><div class="section-title">排程（${tasks.length}）</div><ul class="list">${taskRows || '<li class="empty">沒有</li>'}</ul></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:6px">要停掉：跟總機說「停掉 PID 〇〇」或「停用排程 〇〇」，總機只停你點名的那一個。滑鼠停在灰字上可以看完整指令。</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">要停：跟總機說 PID 或排程名稱。</div>
   </section>`;
 }
 
@@ -911,7 +919,7 @@ function openDetail(id) {
       <span class="muted">${esc(m.id)}</span><button class="close" onclick="closeDetail()">關閉 (Esc)</button></div>
     <div class="grid2">
       <div class="box"><h2>專案登錄卡</h2><table class="kv">
-        ${m.window ? `<tr><th>主視窗</th><td>${esc(m.window.platform)}「${esc(m.window.title)}」<span class="muted">（卡片名稱跟著這個視窗；專案原名：${esc(m.orig_name || "—")}）</span></td></tr>` : ""}
+        ${m.window ? `<tr><th>主視窗</th><td>${esc(m.window.platform)}「${esc(m.window.title)}」<span class="muted">（原名：${esc(m.orig_name || "—")}）</span></td></tr>` : ""}
         <tr><th>這是做什麼的</th><td><b>${esc(m.plain || "（還沒有白話說明）")}</b></td></tr>
         <tr><th>目的（原文）</th><td class="muted">${esc(m.purpose || "—")}</td></tr>
         <tr><th>狀態原因</th><td>${esc((m.status_reasons||[]).join("；"))}</td></tr>
@@ -937,7 +945,7 @@ function openDetail(id) {
     </div>
     <div class="box"><h2>型號與自動化 ${modelChip(m)}</h2>
       <p>主型號：<b>${esc(MODEL_ZH[m.model] || "—")}</b>　也用過：${esc((m.models || []).map(x => MODEL_ZH[x] || x).join("、") || "—")}　執行者：${opText(m) || "—"}</p>
-      ${(m.automations || []).length ? `<table><tr><th>種類</th><th>名稱</th><th>狀態</th></tr>${m.automations.map(a => `<tr><td>${esc(a.kind)}</td><td>${esc(a.name)}</td><td>${a.on ? '<span class="ok">開著</span>' : '<span class="muted">停用</span>'}</td></tr>`).join("")}</table>` : '<p class="muted">沒有找到掛在這個資料夾的 Windows 排程或 Codex 定時任務。</p>'}
+      ${(m.automations || []).length ? `<table><tr><th>種類</th><th>名稱</th><th>狀態</th></tr>${m.automations.map(a => `<tr><td>${esc(a.kind)}</td><td>${esc(a.name)}</td><td>${a.on ? '<span class="ok">開著</span>' : '<span class="muted">停用</span>'}</td></tr>`).join("")}</table>` : '<p class="muted">沒有排程。</p>'}
     </div>
     ${footprintBox(m)}
     <div class="grid2">
@@ -970,7 +978,7 @@ function obCopy(btn) {
   else { t.select(); document.execCommand("copy"); done(); }
 }
 function onboardHtml() {
-  return `<h2>📘 新專案使用規定 <small>開新專案或舊專案補報到，都從這裡複製開場句</small></h2>
+  return `<h2>📘 新專案使用規定 <small>複製開場句</small></h2>
     <div class="obgrid">
       <div style="display:grid;gap:8px;align-content:start">
         <div>在新對話（電腦 Claude、手機總入口、Codex）<b>第一句</b>貼這段：</div>
@@ -990,7 +998,7 @@ function onboardHtml() {
           <li>工作日誌寫第一筆「報到」</li>
           <li>報到總機（大C 直接傳訊；小C 放 _inbox 報到單），請你改對話名稱</li>
         </ol>
-        <div class="muted">報到後：建排程、Codex 定時任務、登記傳聲筒、用別人的金鑰／.venv／XQ 畫面，都要先報總機、你同意才做。<br>ChatGPT／網頁版讀不到電腦檔案：先請總機給全文再貼。</div>
+        <div class="muted">建排程、登記傳聲筒、新金鑰要先報總機。</div>
       </div>
       <div><img src="${aurl("onboard_flow.svg")}" alt="新專案流程圖" style="width:100%;max-width:420px;display:block;margin:0 auto" onerror="this.parentNode.innerHTML='<div class=muted>流程圖製作中（小C）</div>'"></div>
     </div>`;
