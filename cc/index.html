@@ -270,8 +270,8 @@ function machineArt(m, paused) {
   const pick = [st, "IDLE", "WAITING", "RUNNING", ms[0]].find(x => ms.includes(x));
   const L = Object.assign({cx: 0.52, cy: 0.43, size: 0.2}, (A().layout || {}).screen || {});
   const kind = (A().icons || []).includes(m.kind) ? m.kind : ((A().icons || []).includes("general") ? "general" : "");
-  const icon = kind ? `<img class="ic" src="${aurl("icons/" + kind + ".png")}" alt="" style="left:${L.cx*100}%;top:${L.cy*100}%;width:${L.size*100}%">` : "";
-  return `<div class="art${paused ? " gray" : ""}" title="${esc(ZH[m.status] || "")}・${esc(KIND_ZH[m.kind] || "")}"><img class="mc" src="${aurl("machines/" + pick + ".png")}" alt="${esc(m.status)}">${icon}</div>`;
+  const icon = kind ? `<img class="ic" loading="lazy" src="${aurl("icons/" + kind + ".png")}" alt="" style="left:${L.cx*100}%;top:${L.cy*100}%;width:${L.size*100}%">` : "";
+  return `<div class="art${paused ? " gray" : ""}" title="${esc(ZH[m.status] || "")}・${esc(KIND_ZH[m.kind] || "")}"><img class="mc" loading="lazy" src="${aurl("machines/" + pick + ".png")}" alt="${esc(m.status)}">${icon}</div>`;
 }
 function setView(v) { ui.view = v; ui.page = 1; store.set("cc.view", v); render(); }
 if (!SORTS[ui.sort]) ui.sort = "severity";
@@ -814,7 +814,7 @@ function toolsPanel() {
 function kpi(label, val, sub, filter, cls, ac, icon, worker) {
   const click = filter ? `onclick="ui.filter='${filter}';ui.page=1;setTab('machines')"` : "";
   const i = label.includes("|") ? label.indexOf("|") + 1 : label.search(/[一-鿿]/), en = i > 0 ? label.slice(0, i).replace("|", "").trim() : "", zh = i >= 0 ? label.slice(i) : label;
-  const w = worker ? `<img class="worker" src="${aurl("workers/" + worker + ".png")}" alt="" onerror="this.remove()">` : "";
+  const w = worker ? `<img class="worker" loading="lazy" src="${aurl("workers/" + worker + ".png")}" alt="" onerror="this.remove()">` : "";
   return `<div class="box kpi" style="--ac:${ac || "var(--WAITING)"}" ${click}><div class="body">
     <div class="top"><span class="ic">${icon || "•"}</span><span class="zh">${esc(zh)}</span><span class="en">${esc(en)}</span></div>
     <div class="val ${cls ? "hot" : ""}">${esc(val)}</div><div class="sub">${esc(sub)}</div></div>${w}</div>`;
@@ -1018,14 +1018,45 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(
 // 網路版（手機看）：publish_web.py 會在頁面加 window.CC_WEB=1。
 // 資料是 state.enc（AES-256-GCM，PBKDF2-SHA256 60 萬次），在瀏覽器裡用密碼解開；密碼只記在這支手機。
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+// 10/10 加速：①state.enc 用 no-cache（沒變就回 304，不重下載）②資料沒變（iv 一樣）就不解密、不重畫
+// ③金鑰（PBKDF2 60 萬次，手機要 1～3 秒）算一次就存起來：記憶體＋IndexedDB；salt 固定，換密碼或換 salt 才重算
+let KEYC = null, LASTIV = "";
+function idb(mode, fn) {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open("cc-web", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("k");
+      r.onsuccess = () => { try { const t = r.result.transaction("k", mode); const q = fn(t.objectStore("k")); t.oncomplete = () => res(q && q.result); t.onerror = () => res(null); } catch (e) { res(null); } };
+      r.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+async function getKey(pw, salt, iter) {
+  const tag = salt + "|" + iter + "|" + pw.length + "|" + Array.from(new TextEncoder().encode(pw)).reduce((h, c) => (h * 31 + c) >>> 0, 7);
+  if (KEYC && KEYC.tag === tag) return KEYC.key;
+  const saved = await idb("readonly", st => st.get(tag));
+  if (saved) { KEYC = {tag, key: saved}; return saved; }
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name: "PBKDF2", salt: b64(salt), iterations: iter, hash: "SHA-256"},
+    base, {name: "AES-GCM", length: 256}, false, ["decrypt"]);
+  KEYC = {tag, key};
+  idb("readwrite", st => { st.clear(); return st.put(key, tag); });
+  return key;
+}
 async function decryptState(pw) {
-  const r = await fetch("state.enc?t=" + Date.now(), {cache: "no-store"});
+  const r = await fetch("state.enc", {cache: "no-cache"});
   if (!r.ok) throw new Error("讀不到資料（" + r.status + "）");
   const v = await r.json();
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({name: "PBKDF2", salt: b64(v.salt), iterations: v.iter, hash: "SHA-256"},
-    base, {name: "AES-GCM", length: 256}, false, ["decrypt"]);
-  const pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(v.iv)}, key, b64(v.ct));
+  if (S && v.iv === LASTIV) return null;   // 資料沒變
+  const key = await getKey(pw, v.salt, v.iter);
+  let pt;
+  try { pt = await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(v.iv)}, key, b64(v.ct)); }
+  catch (e) { KEYC = null; idb("readwrite", st => st.clear()); throw e; }   // 密碼錯：清掉存的金鑰
+  LASTIV = v.iv;
+  if (v.z) {   // gzip 壓縮過（publish_web.py 10/10）
+    const ds = new Blob([pt]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(ds).text());
+  }
   return JSON.parse(new TextDecoder().decode(pt));
 }
 function askPassword(msg) {
@@ -1052,7 +1083,7 @@ async function loadWeb() {
   let pw = ""; try { pw = sessionStorage.getItem("cc.pw") || store.get("cc.pw", ""); } catch (e) {}
   if (!pw) { askPassword(); return; }
   webBusy = true;
-  try { S = await decryptState(pw); afterLoad(); }
+  try { const d = await decryptState(pw); if (d) { S = d; afterLoad(); } }
   catch (e) {
     const bad = e && e.name === "OperationError";
     if (bad) { try { localStorage.removeItem("cc.pw"); sessionStorage.removeItem("cc.pw"); } catch (x) {} }
