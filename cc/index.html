@@ -139,7 +139,7 @@
   .model { display: inline-block; padding: 0 5px; margin-left: 4px; border-radius: 3px; font-size: 10.5px; font-weight: bold; color: #fff; }
   .m-duo { background: linear-gradient(90deg, #d97757 50%, #222 50%); }
   .m-code { background: #d97757; } .m-claude { background: #c9a27e; } .m-codex { background: #222; }
-  .m-gpt { background: #10a37f; } .m-none { background: #aaa; }
+  .m-gpt { background: var(--text); } .m-none { background: #aaa; }
   .tag-warn { color: var(--BLOCKED); border-color: var(--BLOCKED); }
   .ok { color: var(--RUNNING); } .bad { color: var(--FAILED); } .warn { color: var(--BLOCKED); }
 
@@ -190,9 +190,9 @@
   .clash { border-left: 4px solid var(--BLOCKED); }
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
   .chip { font-size: 11.5px; padding: 0 6px; border: 1px solid var(--line); border-radius: 10px; white-space: nowrap; }
-  .chip.codex { border-color: #10a37f; color: #10a37f; }
+  .chip.codex { border-color: var(--text); color: var(--text); }
   .who { display: inline-block; font-size: 11px; font-weight: bold; padding: 0 6px; border-radius: 9px; border: 1px solid currentColor; margin-right: 2px; white-space: nowrap; }
-  .who-claude { color: #d97757; } .who-codex { color: #10a37f; }
+  .who-claude { color: #D97757; } .who-codex { color: var(--text); }
   .chip.off { opacity: .5; text-decoration: line-through; }
   table.tools { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.tools th, table.tools td { border-bottom: 1px solid var(--line); padding: 5px 6px; text-align: left; vertical-align: top; }
@@ -574,7 +574,11 @@ function renderTabs() {
 
 // ===== 待辦（Josh 10/09：做一半的、等 Josh 回的，放總覽）=====
 // 是誰提的（Josh 10/09：一眼看出是大C還是小C）：大C＝Claude（橘）、小C＝Codex（綠）
-const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${w === "小C" ? "🟩 小C" : "🟧 大C"}</span> ` : "";
+// 大C／小C 圖示（Josh 10/10：用 Claude／Codex App 那種圖示與配色；手畫簡化版）
+const ICON_C = `<svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-3px;border-radius:4px;background:#D97757"><g stroke="#fff" stroke-width="1.7" stroke-linecap="round">${[0,30,60,90,120,150].map(a => `<line x1="10" y1="3.2" x2="10" y2="16.8" transform="rotate(${a} 10 10)"/>`).join("")}</g></svg>`;
+const ICON_X = `<svg viewBox="0 0 20 20" width="16" height="16" style="vertical-align:-3px;border-radius:4px;background:#1F1F1F"><g fill="none" stroke="#fff" stroke-width="1.3">${[0,60,120].map(a => `<ellipse cx="10" cy="10" rx="6.4" ry="2.9" transform="rotate(${a} 10 10)"/>`).join("")}</g></svg>`;
+const icoBig = (big) => big ? ICON_C : ICON_X;
+const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${icoBig(w !== "小C")} ${w}</span> ` : "";
 // ===== 大C／小C 用量（Josh 10/10：跟小C 討論做用量紀錄、整合到中心）=====
 // 大C＝Claude 每則回覆的「新增」token（輸入＋寫快取＋輸出；讀快取很便宜另列）；小C＝Codex threads 累計 token 的增量
 const kfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(n / 1e3) + "K" : String(n || 0);
@@ -598,18 +602,18 @@ function usagePanel() {
   const dsum = (d, k) => Object.values(U.days[d] || {}).reduce((s, v) => s + (v[k] || 0), 0);
   const pct = L.used_percent, reset = L.resets_at ? new Date(L.resets_at * 1000).toLocaleString("zh-TW", {hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"}) : "";
   const lim = pct == null ? '<span class="muted">（還沒讀到小C 額度）</span>'
-    : `🟩 小C 本週額度已用 <b>${esc(pct)}%</b> <span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, pct)}%;background:${pct > 85 ? "var(--FAILED)" : pct > 60 ? "var(--BLOCKED)" : "#10a37f"}"></span></span> ${reset ? "・" + esc(reset) + " 重置" : ""}`;
+    : `${ICON_X} 小C 本週額度已用 <b>${esc(pct)}%</b> <span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, pct)}%;background:${pct > 85 ? "var(--FAILED)" : pct > 60 ? "var(--BLOCKED)" : "var(--text)"}"></span></span> ${reset ? "・" + esc(reset) + " 重置" : ""}`;
   // 大C 額度（claude_quota.json，總機定時寫）：5 小時＋本週
-  const CL = U.claude_limit || {}, pbar = (v, c) => `<span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : c}"></span></span>`;
+  const CL = Object.fromEntries(Object.entries(U.claude_limit || {}).map(([k, v]) => [k, typeof v === "string" ? v.replace("（台北時間）", "") : v])), pbar = (v, c) => `<span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : c}"></span></span>`;
   const climx = CL.week == null ? '<span class="muted">（還沒讀到大C 額度）</span>'
-    : `🟧 大C 本週額度已用 <b>${esc(CL.week)}%</b> ${pbar(CL.week, "#d97757")}${CL.week_reset ? "・" + esc(CL.week_reset.slice(5)) + " 重置" : ""}　5 小時額度 <b>${esc(CL.five_hour)}%</b>${CL.five_hour_reset ? "（" + esc(CL.five_hour_reset.slice(11)) + " 重置）" : ""} <span class="muted" style="font-size:12px">${esc(CL.updated || "")} 讀取</span>`;
+    : `${ICON_C} 大C 本週額度已用 <b>${esc(CL.week)}%</b> ${pbar(CL.week, "#d97757")}${CL.week_reset ? "・" + esc(CL.week_reset.slice(5)) + " 重置" : ""}　5 小時額度 <b>${esc(CL.five_hour)}%</b>${CL.five_hour_reset ? "（" + esc(CL.five_hour_reset.slice(11)) + " 重置）" : ""} <span class="muted" style="font-size:12px">${esc(CL.updated || "")} 讀取</span>`;
   return `<section class="box"><h2>🔋 大C／小C 用量 <small>本週（${esc(wkStart.slice(5))}～${esc((U.today || "").slice(5))}）排名・每 10 分鐘更新・小C 從 ${esc(U.codex_since || "")} 起算</small></h2>
     <div style="margin-bottom:4px">${climx}</div>
     <div style="margin-bottom:6px">${lim}</div>
     ${(() => {  // 只顯示前 3 名，其他收起來（Josh 10/10）
       // 同一張表（欄位才對齊）；依「大C＋小C 合計用量」由大到小，前 3 名一直顯示，其他按一下展開
-      const tr = (r, i) => `<tr${i >= 3 && !ui.usageOpen ? ' hidden' : ''}><td>${i + 1}. ${esc(r[0])}</td><td>${bar(r[1], "#d97757")} ${kfmt(r[1])}</td><td>${bar(r[2], "#10a37f")} ${kfmt(r[2])}</td><td>${kfmt(r[1] + r[2])}</td></tr>`;
-      const head = '<table class="tools"><thead><tr><th>專案（本週用量排名）</th><th>🟧 大C 新增</th><th>🟩 小C</th><th>合計</th></tr></thead><tbody>';
+      const tr = (r, i) => `<tr${i >= 3 && !ui.usageOpen ? ' hidden' : ''}><td>${i + 1}. ${esc(r[0])}</td><td>${bar(r[1], "#d97757")} ${kfmt(r[1])}</td><td>${bar(r[2], "var(--text)")} ${kfmt(r[2])}</td><td>${kfmt(r[1] + r[2])}</td></tr>`;
+      const head = `<table class="tools"><thead><tr><th>專案（本週用量排名）</th><th>${ICON_C} 大C 新增</th><th>${ICON_X} 小C</th><th>合計</th></tr></thead><tbody>`;
       if (!rows.length) return head + '<tr><td colspan="4" class="muted">本週還沒有用量</td></tr></tbody></table>';
       const n = rows.length - 3;
       return head + rows.map(tr).join("") + '</tbody></table>' + (n > 0
@@ -820,7 +824,7 @@ function phoneTag(m) {
   if (!s) {
     // 小C（Codex）負責的專案：Claude 手機 App 看不到，提示改用 ChatGPT App
     const codex = m.model === "Codex" || (mc && /codex/i.test(mc.platform || ""));
-    return codex ? '<span class="tag" style="color:#10a37f;border-color:#10a37f" title="這個專案主要由小C（Codex）負責，手機請用 ChatGPT App 找小C">💬 用 ChatGPT App</span>' : "";
+    return codex ? '<span class="tag" style="color:var(--text);border-color:var(--text)" title="這個專案主要由小C（Codex）負責，手機請用 ChatGPT App 找小C">💬 用 ChatGPT App</span>' : "";
   }
   const t = PHONE_TAG[s.state];
   return `<span class="tag" style="color:${t[1]};border-color:${t[1]}" title="${esc(t[2])}">${t[0]}</span>`;
