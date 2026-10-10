@@ -581,8 +581,17 @@ const kfmt = n => n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e3 ? Math.round(
 function usagePanel() {
   const U = S.usage; if (!U) return "";
   const today = (U.days || {})[U.today] || {}, L = U.codex_limit || {};
-  const rows = Object.entries(today).map(([p, v]) => [p, v.claude_new || 0, v.codex || 0])
+  // Josh 10/10：用「當週」（週一到今天）合計排名
+  const t0 = new Date((U.today || "") + "T00:00:00"), wd = (t0.getDay() + 6) % 7;
+  const w0 = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate() - wd);   // 本地時間的週一（不用 toISOString，免得時區差一天）
+  const wkStart = `${w0.getFullYear()}-${String(w0.getMonth() + 1).padStart(2, "0")}-${String(w0.getDate()).padStart(2, "0")}`;
+  const weekDays = Object.keys(U.days || {}).filter(d => d >= wkStart && d <= U.today);
+  const agg = {};
+  weekDays.forEach(d => Object.entries(U.days[d] || {}).forEach(([p, v]) => {
+    const a = agg[p] || (agg[p] = [0, 0]); a[0] += v.claude_new || 0; a[1] += v.codex || 0; }));
+  const rows = Object.entries(agg).map(([p, v]) => [p, v[0], v[1]])
     .filter(r => r[1] + r[2] > 0).sort((a, b) => (b[1] + b[2]) - (a[1] + a[2]));
+  void today;
   const maxv = Math.max(1, ...rows.map(r => Math.max(r[1], r[2])));
   const bar = (v, c) => `<span style="display:inline-block;height:8px;border-radius:4px;background:${c};width:${Math.max(2, Math.round(v / maxv * 120))}px;vertical-align:middle"></span>`;
   const daysK = Object.keys(U.days || {}).sort().slice(-7);
@@ -594,16 +603,17 @@ function usagePanel() {
   const CL = U.claude_limit || {}, pbar = (v, c) => `<span style="display:inline-block;width:140px;height:8px;border-radius:4px;background:var(--line);vertical-align:middle"><span style="display:block;height:8px;border-radius:4px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : c}"></span></span>`;
   const climx = CL.week == null ? '<span class="muted">（還沒讀到大C 額度）</span>'
     : `🟧 大C 本週額度已用 <b>${esc(CL.week)}%</b> ${pbar(CL.week, "#d97757")}${CL.week_reset ? "・" + esc(CL.week_reset.slice(5)) + " 重置" : ""}　5 小時額度 <b>${esc(CL.five_hour)}%</b>${CL.five_hour_reset ? "（" + esc(CL.five_hour_reset.slice(11)) + " 重置）" : ""} <span class="muted" style="font-size:12px">${esc(CL.updated || "")} 讀取</span>`;
-  return `<section class="box"><h2>🔋 大C／小C 用量 <small>今天 ${esc(U.today)}・每 10 分鐘更新・小C 從 ${esc(U.codex_since || "")} 起算</small></h2>
+  return `<section class="box"><h2>🔋 大C／小C 用量 <small>本週（${esc(wkStart.slice(5))}～${esc((U.today || "").slice(5))}）排名・每 10 分鐘更新・小C 從 ${esc(U.codex_since || "")} 起算</small></h2>
     <div style="margin-bottom:4px">${climx}</div>
     <div style="margin-bottom:6px">${lim}</div>
     ${(() => {  // 只顯示前 3 名，其他收起來（Josh 10/10）
-      const tr = r => `<tr><td>${esc(r[0])}</td><td>${bar(r[1], "#d97757")} ${kfmt(r[1])}</td><td>${bar(r[2], "#10a37f")} ${kfmt(r[2])}</td></tr>`;
-      const head = '<table class="tools"><thead><tr><th>專案</th><th>🟧 大C 新增</th><th>🟩 小C</th></tr></thead><tbody>';
-      if (!rows.length) return head + '<tr><td colspan="3" class="muted">今天還沒有用量</td></tr></tbody></table>';
-      const rest = rows.slice(3);
-      return head + rows.slice(0, 3).map(tr).join("") + '</tbody></table>' + (rest.length
-        ? `<details id="usage-more" ${ui.usageOpen ? "open" : ""} ontoggle="ui.usageOpen=this.open"><summary class="muted" style="cursor:pointer;font-size:13px;margin-top:4px">其他 ${rest.length} 個專案（點開）</summary><table class="tools"><tbody>${rest.map(tr).join("")}</tbody></table></details>` : "");
+      // 同一張表（欄位才對齊）；依「大C＋小C 合計用量」由大到小，前 3 名一直顯示，其他按一下展開
+      const tr = (r, i) => `<tr${i >= 3 && !ui.usageOpen ? ' hidden' : ''}><td>${i + 1}. ${esc(r[0])}</td><td>${bar(r[1], "#d97757")} ${kfmt(r[1])}</td><td>${bar(r[2], "#10a37f")} ${kfmt(r[2])}</td><td>${kfmt(r[1] + r[2])}</td></tr>`;
+      const head = '<table class="tools"><thead><tr><th>專案（本週用量排名）</th><th>🟧 大C 新增</th><th>🟩 小C</th><th>合計</th></tr></thead><tbody>';
+      if (!rows.length) return head + '<tr><td colspan="4" class="muted">本週還沒有用量</td></tr></tbody></table>';
+      const n = rows.length - 3;
+      return head + rows.map(tr).join("") + '</tbody></table>' + (n > 0
+        ? `<button style="margin-top:4px;font-size:13px" onclick="ui.usageOpen=!ui.usageOpen;render()">${ui.usageOpen ? "▲ 收起，只看前 3 名" : `▼ 其他 ${n} 個專案`}</button>` : "");
     })()}
     <div class="muted" style="font-size:12px;margin-top:6px">近 7 天大C 新增：${daysK.map(d => `${esc(d.slice(5))} ${kfmt(dsum(d, "claude_new"))}`).join("・")}<br>
     大C「新增」＝真正花錢的部分（讀快取很便宜，不列）；小C 只看得到額度百分比，沒有絕對上限。</div></section>`;
