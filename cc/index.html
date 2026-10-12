@@ -560,7 +560,7 @@ function render() {
 }
 
 // ===== 6 頁選單（Josh 10/09）=====
-const TABS = [["home", "🏠", "總覽"], ["machines", "🏭", "機台"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "💬", "頻道表"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
+const TABS = [["home", "🏠", "總覽"], ["machines", "🏭", "機台"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "📺", "頻道表"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
 function setTab(t) { ui.tab = t; store.set("cc.tab", t); render(); window.scrollTo(0, 0); }
 function tabCounts() {
   const c = {};
@@ -605,7 +605,7 @@ const icoBig = (big) => big ? ICON_C : ICON_X;
 const whoBadge = w => w ? `<span class="who who-${w === "小C" ? "codex" : "claude"}" title="${w === "小C" ? "小C（Codex）" : "大C（Claude）"}">${icoBig(w !== "小C")} ${w}</span> ` : "";
 // ===== 頻道表（Josh 10/13）：每個專案在哪幾個大C／小C 對話工作；一張清單、專案當小標題 =====
 function channelsPanel() {
-  const H = S.channels; if (!H) return '<section class="box"><h2>💬 頻道表</h2><div class="muted">還沒有資料</div></section>';
+  const H = S.channels; if (!H) return '<section class="box"><h2>📺 頻道表</h2><div class="muted">還沒有資料</div></section>';
   const all = H.items || [], isSol = c => /sol/.test(c.model || "");
   const F = [["all", "全部", () => true], ["C", "大C", c => c.who === "C"], ["X", "小C", c => c.who === "X"],
              ["timer", "⏰ 定時", c => c.timer], ["remote", "📱 遠端", c => c.remote], ["sol", "⚠️ Sol", isSol]];
@@ -625,7 +625,7 @@ function channelsPanel() {
     const other = g.p === "其他", open = !other || ui.chanOther;
     return `<div class="cgrp">${esc(g.p)}${other ? ` <button class="clink" onclick="ui.chanOther=!ui.chanOther;render()">${open ? "收起" : `展開 ${g.r.length} 條`}</button>` : ""}</div>${open ? g.r.map(row).join("") : ""}`;
   };
-  return `<section class="box chan"><h2>💬 頻道表 <small>大C 每分鐘更新・簡介 ${esc((H.desc_updated || "").slice(5))}</small></h2>
+  return `<section class="box chan"><h2>📺 頻道表 <small>大C 每分鐘更新・簡介 ${esc((H.desc_updated || "").slice(5))}</small></h2>
     <div class="cchips">${F.map(([k, n, fn]) => `<button class="${f[0] === k ? "on" : ""}" onclick="ui.chanF='${k}';render()">${n}<i>${all.filter(fn).length}</i></button>`).join("")}</div>
     <div class="clist">${groups.map(grp).join("") || '<div class="muted">沒有符合的對話</div>'}</div>
     <div class="muted" style="font-size:12px;margin-top:8px">大C＝Claude、小C＝Codex。小C 簡介由「小C中控室」口令「頻道表」整理；綠點＝10 分鐘內有動。</div></section>`;
