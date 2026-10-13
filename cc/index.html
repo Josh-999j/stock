@@ -680,7 +680,7 @@ function usagePanel() {
 }
 function todoPanel() {
   const T = S.todo || {josh: [], half: []}; T.ai = T.ai || T.half || [];
-  const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊"};
+  const SRC = {"總機": "📌", "日誌": "📝", "傳聲筒": "🔊", "進度": "📈"};
   TODO_LIST = T.josh.concat(T.ai);
   const row = x => `<li onclick="openTodo(${TODO_LIST.indexOf(x)})" title="點開看細節">
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
@@ -691,19 +691,19 @@ function todoPanel() {
     <div class="box"><h2>🔧 做一半／等大小C <small>${T.ai.length} 件・總機每天 09:30／21:30 推動</small></h2>
       <ul class="list">${T.ai.map(row).join("") || '<li class="empty">沒有</li>'}</ul></div>
   </section>
-  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機　📝 專案日誌　🔊 傳聲筒　・點一下看細節</div>`;
+  <div class="muted" style="font-size:12px;margin:-4px 2px 0">📌 總機　📈 進行中　📝 專案日誌　🔊 傳聲筒　・點一下看細節</div>`;
 }
 // 待辦每一項都能點（Josh 10/09：有的點了有小卡、有的沒有）：一律開小卡，看完整內容＋打開該專案卡片
 let TODO_LIST = [];
 function cardIdOf(x) {
-  if (x.src === "日誌" && x.id) return x.id;
+  if ((x.src === "日誌" || x.src === "進度") && x.id) return x.id;
   const p = ((S.registry || {}).projects || []).find(r => r.name === x.project || (r.card && r.card.name === x.project));
   return p && p.card ? p.card.id : (x.src === "總機" ? "control-center" : "");
 }
 function openTodo(i) {
   const x = TODO_LIST[i]; if (!x) return;
   ui.detail = null;
-  const cid = cardIdOf(x), SRCZ = {"總機": "📌 總機待辦（總機交接.md）", "日誌": "📝 專案工作日誌「卡在哪」", "傳聲筒": "🔊 AI傳聲筒在等你"};
+  const cid = cardIdOf(x), SRCZ = {"總機": "📌 總機待辦（總機交接.md）", "日誌": "📝 專案工作日誌「卡在哪」", "傳聲筒": "🔊 AI傳聲筒在等你", "進度": "📈 專案進行中的大工程（project.json 的 progress）"};
   document.getElementById("sheet").innerHTML = `
     <div class="head"><h2>${whoBadge(x.who)}${esc(x.project)}</h2><span class="muted">${esc(x.src === "總機" ? x.id : "")}</span><button class="close" onclick="closeDetail()">關閉 (Esc)</button></div>
     <div class="box" style="display:grid;gap:8px">
