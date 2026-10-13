@@ -268,7 +268,8 @@ const SORTS = {
 const rate = m => m.runs_7d ? m.success_7d / m.runs_7d : 2;
 const store = { get(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
-const ui = { tab: store.get("cc.tab", "home"), page: 1, q: "", filter: "ALL", sort: store.get("cc.sort", "severity"), view: store.get("cc.view", "compact") };
+const ui = { tab: "home",   // Josh 10/14：一打開都先到總覽（不記上次的分頁）
+ page: 1, q: "", filter: "ALL", sort: store.get("cc.sort", "severity"), view: store.get("cc.view", "compact") };
 const MODEL_ZH = {"Claude+Codex": "Claude+Codex（大小C）", Code: "Code（Claude Code）", Codex: "Codex", Claude: "Claude（聊天）", ChatGPT: "ChatGPT"};
 const modelCls = x => ({"Claude+Codex": "duo", Code: "code", Codex: "codex", Claude: "claude", ChatGPT: "gpt"}[x] || "none");
 const modelChip = m => m.model ? `<span class="model m-${modelCls(m.model)}" title="型號：${esc(MODEL_ZH[m.model] || m.model)}">${esc(m.model)}</span>` : "";
