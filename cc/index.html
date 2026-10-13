@@ -684,7 +684,7 @@ function todoPanel() {
   TODO_LIST = T.josh.concat(T.ai);
   const row = x => `<li onclick="openTodo(${TODO_LIST.indexOf(x)})" title="點開看細節">
       <span class="t">${SRC[x.src] || "•"} ${esc(x.src === "總機" ? x.id : x.src)}</span>
-      <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
+      <span class="body">${whoBadge(x.who)}<span class="p">${esc(x.project)}</span>${x.tag && x.tag !== "等Josh" ? ` <span class="tag">${esc(x.tag)}</span>` : ""}${x.pct != null ? ` <b style="color:var(--blue);font-size:13px">${x.pct}%</b>` : ""}<div class="x">${esc(x.text)}</div></span></li>`;
   return `<section class="panels">
     <div class="box clash"><h2>🙋 等Josh決定 <small>${T.josh.length} 件</small></h2>
       <ul class="list full">${T.josh.map(row).join("") || '<li class="empty">沒有要你處理的事 🎉</li>'}</ul></div>
