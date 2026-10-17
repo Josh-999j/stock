@@ -584,7 +584,8 @@ function hdrUsage() {
   const el = document.getElementById("hdrusage"); if (!el || !S || !S.usage) return;
   const U = S.usage, c = (U.claude_limit || {}).week, x = (U.codex_limit || {}).used_percent;
   const b = v => `<span style="display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--line);vertical-align:middle"><span style="display:block;height:6px;border-radius:3px;width:${Math.min(100, v)}%;background:${v > 85 ? "var(--FAILED)" : v > 60 ? "var(--BLOCKED)" : "var(--RUNNING)"}"></span></span>`;
-  el.innerHTML = (c != null ? `<span title="大C 本週額度">${ICON_C} ${c}% ${b(c)}</span>` : "") + (x != null ? `<span title="小C 本週額度">${ICON_X} ${Math.round(x)}% ${b(x)}</span>` : "");
+  const G = U.sunny || {}, g = G.X額度_上限 ? Math.round(G.X額度_今日已用 * 100 / G.X額度_上限) : null;
+  el.innerHTML = (g != null ? `<span title="Sunny 今天 X 額度">${ICON_G} ${g}%</span>` : "") + (c != null ? `<span title="大C 本週額度">${ICON_C} ${c}% ${b(c)}</span>` : "") + (x != null ? `<span title="小C 本週額度">${ICON_X} ${Math.round(x)}% ${b(x)}</span>` : "");
 }
 function renderTabs() {
   hdrUsage();
@@ -668,6 +669,8 @@ function usagePanel() {
   return `<section class="box"><h2>🔋 大C／小C 用量 <small>本週排名</small></h2>
     <div style="margin-bottom:4px">${climx}</div>
     <div style="margin-bottom:6px">${lim}</div>
+    ${(() => { const G = U.sunny || {}; if (!G.更新 && G.X額度_今日已用 == null) return ""; const xp = G.X額度_上限 ? Math.round(G.X額度_今日已用 * 100 / G.X額度_上限) : null;
+      return `<div style="margin-bottom:6px">${ICON_G} Sunny　X 額度今天 <b>${xp == null ? "—" : xp + "%"}</b>（${esc(G.X額度_今日已用 ?? "—")}／${esc(G.X額度_上限 ?? "—")}）${G.Grok用量 ? "　Grok " + esc(G.Grok用量) : ""}・${esc(String(G.更新 || "").slice(5, 16).replace("T", " "))} 更新</div>`; })()}
     ${(() => {
       const tr = (r, i) => `<tr${i >= 6 && !ui.usageOpen ? ' hidden' : ''}><td>${i + 1}. ${r[1] === "C" ? ICON_C : ICON_X} ${esc(r[0])}</td><td>${bar(r[3] || 0, r[1] === "C" ? "#d97757" : "var(--text)")} <b>${pfmt(r[3])}</b></td><td class="muted">${kfmt(r[2])}</td></tr>`;
       const head = `<table class="tools"><thead><tr><th>專案（誰最吃自己的額度）</th><th>佔自己本週額度（估）</th><th>新增字數</th></tr></thead><tbody>`;
