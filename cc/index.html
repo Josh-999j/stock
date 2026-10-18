@@ -634,7 +634,7 @@ function channelsPanel() {
       <div class="clist" style="margin-bottom:10px">${H.runs.slice(0, ui.runsOpen ? 30 : 8).map(r => `<div class="crow" title="${esc(r.summary || "")}">
         <span style="flex:none">${r.status === "完成" ? "✅" : r.status === "進行中" ? "⏳" : "⚠️"}</span>
         <span class="ct">${esc(r.project)}｜${esc(r.task)}</span>
-        <span class="cm">${r.status === "完成" ? esc(r.summary || "完成") : r.status === "進行中" ? "做事中…" : "沒交完成訊息（可能被中斷）"}</span>
+        <span class="cm">${r.status === "完成" ? esc(r.summary || "完成") : r.status === "進行中" ? "做事中…" : "超過 15 分鐘沒動靜、也沒收到完成（可能卡住或被中斷）"}</span>
         <span class="cr">${esc(r.start)}${r.end ? "→" + esc(r.end) : ""}</span></div>`).join("")}</div>
       ${H.runs.length > 8 ? `<button class="clink" onclick="ui.runsOpen=!ui.runsOpen;render()">${ui.runsOpen ? "收起" : "看更多（" + H.runs.length + "）"}</button>` : ""}` : ""}
     <div class="clist">${groups.map(grp).join("") || '<div class="muted">沒有符合的對話</div>'}</div>
