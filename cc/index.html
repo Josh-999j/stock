@@ -633,10 +633,11 @@ function channelsPanel() {
     ${(H.runs || []).length ? `<div class="cgrp" style="padding-top:2px">🤖 小C 最近工作（傳聲筒、排程叫的，Codex App 裡看不到的都在這）</div>
       <div class="clist" style="margin-bottom:10px">${H.runs.slice(0, ui.runsOpen ? 30 : 8).map((r, i) => `<div class="crow" style="cursor:pointer" title="點一下看派工與完整結果" onclick="ui.runOpen=ui.runOpen===${i}?-1:${i};render()">
         <span style="flex:none">${r.status === "完成" ? "✅" : r.status === "進行中" ? "⏳" : "⚠️"}</span>
-        <span class="ct">${esc(r.project)}｜${esc(r.task)}</span>
+        <span class="ct">${esc(r.project)}｜${esc(r.task)}${r.src && r.src !== "來源未標" ? `<small class="muted">（${esc(r.src)}派）</small>` : ""}</span>
         <span class="cm">${r.status === "完成" ? esc(r.summary || "完成") : r.status === "進行中" ? "做事中…" : "超過 15 分鐘沒動靜、也沒收到完成（可能卡住或被中斷）"}</span>
         <span class="cr">${esc(r.start)}${r.end ? "→" + esc(r.end) : ""}</span></div>
-        ${ui.runOpen === i ? `<div class="muted" style="white-space:pre-wrap;word-break:break-word;padding:6px 10px 10px;font-size:12px;border-left:3px solid #8884;margin:0 0 6px 8px"><b>【被派】</b>${esc(r.ask || "（沒有派工內容）")}
+        ${ui.runOpen === i ? `<div class="muted" style="white-space:pre-wrap;word-break:break-word;padding:6px 10px 10px;font-size:12px;border-left:3px solid #8884;margin:0 0 6px 8px"><b>【派工來源】</b>${esc(r.src || "來源未標")}
+<b>【被派】</b>${esc(r.ask || "（沒有派工內容）")}
 
 <b>【結果】</b>${esc(r.full || (r.status === "進行中" ? "做事中…" : "沒收到完成訊息"))}</div>` : ""}`).join("")}</div>
       ${H.runs.length > 8 ? `<button class="clink" onclick="ui.runsOpen=!ui.runsOpen;render()">${ui.runsOpen ? "收起" : "看更多（" + H.runs.length + "）"}</button>` : ""}` : ""}
