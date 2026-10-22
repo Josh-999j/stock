@@ -636,7 +636,8 @@ function channelsPanel() {
         <span class="ct">${esc(r.project)}｜${esc(r.task)}${r.src && r.src !== "來源未標" ? `<small class="muted">（${esc(r.src)}派）</small>` : ""}</span>
         <span class="cm">${r.status === "完成" ? esc(r.summary || "完成") : r.status === "進行中" ? "做事中…" : "超過 15 分鐘沒動靜、也沒收到完成（可能卡住或被中斷）"}</span>
         <span class="cr">${esc(r.start)}${r.end ? "→" + esc(r.end) : ""}</span></div>
-        ${ui.runOpen === i ? `<div class="muted" style="white-space:pre-wrap;word-break:break-word;padding:6px 10px 10px;font-size:12px;border-left:3px solid #8884;margin:0 0 6px 8px"><b>【派工來源】</b>${esc(r.src || "來源未標")}
+        ${ui.runOpen === i ? `<div class="muted" style="white-space:pre-wrap;word-break:break-word;padding:6px 10px 10px;font-size:12px;border-left:3px solid #8884;margin:0 0 6px 8px"><b>【負責小C視窗】</b>${esc(r.cwin || "")}
+<b>【派工來源】</b>${esc(r.src || "來源未標")}
 <b>【被派】</b>${esc(r.ask || "（沒有派工內容）")}
 
 <b>【結果】</b>${esc(r.full || (r.status === "進行中" ? "做事中…" : "沒收到完成訊息"))}</div>` : ""}`).join("")}</div>
