@@ -1027,13 +1027,12 @@ function openDetail(id) {
 }
 // ➕ 開新專案（Josh 10/09）：開場句統一，細節都在 共用紀錄指令.txt；規則改了只改那份檔，開場句不用換
 const OB_FILE = "C:\\AIStation__\\WIN程式工具人\\ControlCenter\\共用紀錄指令.txt";
-function obText() {
+function obText() {   // 10/23 Josh：一句通用，大C／小C／Grok 讀完各自看自己那段
   const n = (document.getElementById("obname") || {}).value || "", k = (document.getElementById("obkind") || {}).value || "new";
   const name = n.trim() || "名稱";
-  if (k === "grok") return `Grok Bot 報到：${name}。先讀 C:\\Users\\AIstation\\AI報到\\00_先讀我.md，照「二、報到 4 步」做完、跟我說之後再開始工作。`;   // 10/22：Grok 只讀得到家目錄
   return k === "old"
-    ? `舊專案補報到：${name}。先讀 ${OB_FILE}，照「一、報到」補齊缺的（已有的不要覆蓋），回報後再繼續工作。`
-    : `新專案：${name}。先讀 ${OB_FILE}，照「一、報到」做完、回報我之後再開始工作。`;
+    ? `舊專案補報到：${name}。先讀 C:\\Users\\AIstation\\AI報到\\00_先讀我.md，照你自己那段補齊缺的（已有的不要覆蓋），回報我之後再繼續工作。`
+    : `新專案：${name}。先讀 C:\\Users\\AIstation\\AI報到\\00_先讀我.md，照你自己那段報到，做完回報我之後再開始工作。`;
 }
 function obUpdate() { document.getElementById("obout").value = obText(); }
 function obCopy(btn) {
@@ -1046,14 +1045,14 @@ function onboardHtml() {
   return `<h2>📘 新專案使用規定 <small>複製開場句</small></h2>
     <div class="obgrid">
       <div style="display:grid;gap:8px;align-content:start">
-        <div>在新對話（電腦 Claude、手機總入口、Codex）<b>第一句</b>貼這段：</div>
+        <div>在新對話（大C、小C、Grok Bot 都一樣）<b>第一句</b>貼這段：</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <select id="obkind" onchange="obUpdate()"><option value="new">新專案</option><option value="old">舊專案補報到</option><option value="grok">Grok Bot 報到</option></select>
+          <select id="obkind" onchange="obUpdate()"><option value="new">新專案</option><option value="old">舊專案補報到</option></select>
           <input id="obname" oninput="obUpdate()" placeholder="專案名稱（可不填）" style="flex:1;min-width:140px">
         </div>
         <textarea id="obout" readonly rows="4" style="width:100%;box-sizing:border-box;font-size:14px"></textarea>
         <div><button onclick="obCopy(this)" style="font-size:15px;padding:4px 16px">📋 複製</button></div>
-        <div class="section-title">它會照做的「報到 7 步」</div>
+        <div class="section-title">它讀完會自己分流：大C／小C 照「報到 7 步」</div>
         <ol style="margin:0;padding-left:20px;line-height:1.7">
           <li>讀全域共用規則＋名稱對照表</li>
           <li>用正式名稱（沒有就等總機登記）</li>
@@ -1063,7 +1062,8 @@ function onboardHtml() {
           <li>工作日誌寫第一筆「報到」</li>
           <li>報到總機（大C 直接傳訊；小C 放 _inbox 報到單），請你改對話名稱</li>
         </ol>
-        <div class="muted">建排程、登記傳聲筒、新金鑰要先報總機。Grok Bot（例：Sunny）讀不到專案資料夾，選「Grok Bot 報到」，它改讀家目錄的 AI報到\\00_先讀我.md。</div>
+        <div class="muted">建排程、登記傳聲筒、新金鑰要先報總機。</div>
+        <div class="muted">🤖 Grok Bot（例：Sunny）讀不到專案資料夾，它會照同一份檔裡自己的「報到 4 步」：建 <code>C:\\Users\\AIstation\\&lt;名字&gt;交流</code> 信箱、在 AI報到\\報到 放報到單，控制中心每分鐘收給總機。不要給它金鑰、庫存。</div>
       </div>
       <div><img src="${aurl("onboard_flow.svg")}" alt="新專案流程圖" style="width:100%;max-width:420px;display:block;margin:0 auto" onerror="this.parentNode.innerHTML='<div class=muted>流程圖製作中（小C）</div>'"></div>
     </div>`;
