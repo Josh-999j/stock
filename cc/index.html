@@ -938,7 +938,8 @@ function relayLine() {
     `<span class="tag" title="${esc(p.status || "")}">${esc(n)}：${p.turn === "josh" ? "⏳ 等你" : p.turn === "codex" ? "小C" : p.turn === "claude" ? "大C" : esc(p.turn || "—")}${p.dry ? "（只監看）" : ""}</span>`).join(" ");
   return `<div style="padding:6px 10px;border-radius:6px;margin-bottom:6px;font-size:13px;background:color-mix(in srgb, var(--${R.alive ? "RUNNING" : "FAILED"}) 10%, var(--card))">
     ${R.alive ? `🔊 <b>AI傳聲筒運作中</b>（${R.age_sec ?? "?"} 秒前回報）` : `🔴 <b>AI傳聲筒停了</b>（${R.age_sec != null ? Math.round(R.age_sec / 60) + " 分鐘沒回報" : "沒有心跳檔"}）：大C／小C 不會自動接力`}
-    <div style="margin-top:4px">${ps}</div></div>`;
+    <div style="margin-top:4px">${ps}</div>
+    ${(R.watchdog || []).length ? `<div class="muted" style="margin-top:4px;font-size:12px">🐕 看門狗（每 2 分鐘查 Claude／Codex／Grok，沒開就自動開）最近：${R.watchdog.slice(0, 3).map(w => `${esc(w.t.slice(5))} ${esc(w.text)}`).join("；")}</div>` : ""}</div>`;
 }
 
 function bgPanel() {
