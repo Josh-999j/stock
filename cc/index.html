@@ -1242,23 +1242,46 @@ function ofActive(m) {
   const f = (S.feed || []).find(x => x.pid === m.id);
   return !!(f && (Date.now() - new Date(f.t.replace(" ", "T")).getTime()) < 36 * 3600e3);
 }
+// 辦公室顯示設定（Josh 11/01：「讓我設定要不要顯示的專案，也可以有一個勾選，幫我亂搭名稱…分享錄影」）；只存在這台瀏覽器
+const OF_SET = (() => { try { return JSON.parse(localStorage.getItem("cc.office") || "{}"); } catch (e) { return {}; } })();
+OF_SET.hide = OF_SET.hide || []; OF_SET.fake = !!OF_SET.fake;
+function ofSave() { try { localStorage.setItem("cc.office", JSON.stringify(OF_SET)); } catch (e) {} }
+const OF_FAKE_A = ["星光", "藍海", "晨曦", "飛鷹", "青松", "極光", "火箭", "海豚", "北辰", "雲端", "橘子", "閃電", "銀河", "麥田", "燈塔", "彩虹"];
+const OF_FAKE_B = ["工作室", "研究所", "小組", "實驗室", "工坊", "企劃部", "分析室", "設計組"];
+function ofHash(t) { let h = 7; for (const ch of t) h = (h * 131 + ch.charCodeAt(0)) >>> 0; return h; }
+function ofName(m) { const real = m.name.replace(/（.*）/, ""); if (!OF_SET.fake) return real; const h = ofHash(m.id); return OF_FAKE_A[h % OF_FAKE_A.length] + OF_FAKE_B[(h >> 5) % OF_FAKE_B.length]; }
 function ofSay(m) {
+  if (OF_SET.fake) return pick(["處理資料中", "寫程式中", "整理報告", "跑測試中", "開會回來"]);   // 錄影模式不露真實工作內容
   const f = (S.feed || []).find(x => x.pid === m.id);
   return f ? f.text.replace(/\s+/g, " ").slice(0, 12) + "…" : "";
+}
+function ofSettingsUI() {
+  const box = OF.setBox; if (!box) return;
+  const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny");
+  box.innerHTML = `<label style="margin-right:14px"><input type="checkbox" id="ofFake" ${OF_SET.fake ? "checked" : ""}> 隱藏真名（錄影／分享用，名稱亂搭、不顯示工作內容）</label>
+    <button id="ofSetBtn">⚙️ 選要顯示的專案（${ms.length - OF_SET.hide.length}/${ms.length}）</button>
+    <div id="ofList" style="display:${OF.setOpen ? "flex" : "none"};flex-wrap:wrap;gap:6px 14px;margin-top:8px">${ms.map(m => `<label><input type="checkbox" data-id="${esc(m.id)}" ${OF_SET.hide.includes(m.id) ? "" : "checked"}> ${esc(m.name.replace(/（.*）/, ""))}</label>`).join("")}</div>`;
+  box.querySelector("#ofFake").onchange = e => { OF_SET.fake = e.target.checked; ofSave(); OF.ppl = []; ofSync(); OF.info.innerHTML = ""; };
+  box.querySelector("#ofSetBtn").onclick = () => { OF.setOpen = !OF.setOpen; ofSettingsUI(); };
+  box.querySelectorAll("#ofList input").forEach(i => i.onchange = () => {
+    const id = i.dataset.id; OF_SET.hide = OF_SET.hide.filter(x => x !== id); if (!i.checked) OF_SET.hide.push(id);
+    ofSave(); OF.ppl = []; officeAttach(); ofSettingsUI();
+  });
 }
 function ofLayout() {
   const w = OF.wrap.clientWidth || 360;
   OF.cols = w < 560 ? 3 : w < 820 ? 4 : 6;
   OF.W = 40 + OF.cols * 150;
   const rw = (OF.W - 50) / 4, R = OF.rooms;
-  ["主管室", "會議室", "茶水間", "大廳"].forEach((n, i) => R[n] = {x: 10 + i * (rw + 10), y: 10, w: rw, h: 150, door: 10 + i * (rw + 10) + rw / 2});
+  ["主管室", "會議室", "茶水間", "摸魚區"].forEach((n, i) => R[n] = {x: 10 + i * (rw + 10), y: 10, w: rw, h: 150, door: 10 + i * (rw + 10) + rw / 2});
   // 房內固定站位（不亂站）
   const S2 = OF.spots = {};
   S2.主管室 = [{x: R.主管室.x + 40, y: 128}, {x: R.主管室.x + R.主管室.w / 2, y: 140}];
   S2.會議室 = [-1, 1].flatMap(s => [{x: R.會議室.door - 30, y: 100 + s * 26}, {x: R.會議室.door, y: 100 + s * 26}, {x: R.會議室.door + 30, y: 100 + s * 26}]);
   S2.茶水間 = [0, 1, 2, 3].map(i => ({x: R.茶水間.x + 24 + i * 22, y: 128}));
-  S2.大廳 = [0, 1, 2].map(i => ({x: R.大廳.x + 30 + i * 26, y: 120}));
-  const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny");
+  // Josh 11/01：大廳改「出差／摸魚區」，沒在做事的負責人都窩到這裡（像真人：滑手機、躺沙發、打瞌睡）
+  S2.摸魚區 = [...Array(24)].map((_, i) => ({x: R.摸魚區.x + 22 + (i % 6) * ((R.摸魚區.w - 44) / 5) + (i % 2) * 4, y: 74 + Math.floor(i / 6) * 22}));
+  const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny" && !OF_SET.hide.includes(m.id));
   OF.desks = {};
   ms.forEach((m, i) => {
     const c = i % OF.cols, r = Math.floor(i / OF.cols), x = 40 + c * 150, y = OF_D0 + r * OF_ROW;
@@ -1289,7 +1312,8 @@ function ofRoomPt(n, i) { const s = OF.spots[n], p = s[(i ?? Math.floor(Math.ran
 function ofDeskPt(d, visit) { return visit ? {x: d.seat.x + 26, y: d.aisleY, lane: d.aisleY, desk: d} : {x: d.seat.x, y: d.seat.y, lane: d.aisleY, desk: d, sit: true}; }
 const OF_LINES = {
   desk: ["討論一下", "這個你看看", "幫我對一下", "資料好了"], 主管室: ["回報總機", "要 Josh 決定", "做完了"],
-  會議室: ["開會", "對答案", "排優先"], 茶水間: ["☕", "休息一下", "🍉"], 大廳: ["外出查證", "抓圖回來"],
+  會議室: ["開會", "對答案", "排優先"], 茶水間: ["☕", "休息一下", "🍉"], 摸魚區: ["外出查證", "抓圖回來"],
+  摸魚: ["摸魚中", "滑手機📱", "zzz", "等下班", "看股票", "發呆", "出差中✈️", "吃零食"],
   X: ["檢查中", "跑回測", "挑毛病", "補資料"], G: ["X 即時消息", "查證中", "抓圖", "上傳雲端"],
 };
 // 頭頂水果（Josh 11/01）：聯盟用自己的水果，其他專案照 id 固定分一個
@@ -1305,26 +1329,34 @@ function ofSync() {
   const ppl = [];
   Object.values(OF.desks).forEach(d => {
     const m = d.m, ai = m.ai || "", k = "p:" + m.id, look = /大C|Claude/.test(ai) ? "C" : /Sunny/.test(ai) ? "G" : "X";
-    const home = ofDeskPt(d, false), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
-    Object.assign(p, {name: m.name.replace(/（.*）/, ""), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: ofActive(m), fail: m.status === "FAILED"});
+    const act = ofActive(m), idx = Object.keys(OF.desks).indexOf(m.id);
+    const home = act ? ofDeskPt(d, false) : ofRoomPt("摸魚區", idx), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
+    Object.assign(p, {name: ofName(m), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: act, fail: m.status === "FAILED"});
     ppl.push(p);
   });
   const add = (k, o) => { const p = keep[k] || ofMk(Object.assign({key: k}, o.home, {at: o.home})); ppl.push(Object.assign(p, o)); };
-  add("boss", {name: "水果王", look: "boss", home: Object.assign(ofRoomPt("主管室", 0), {sit: true}), role: "boss", active: false});
+  add("boss", {name: OF_SET.fake ? "老闆" : "水果王", look: "boss", home: Object.assign(ofRoomPt("主管室", 0), {sit: true}), role: "boss", active: false});
   add("cc", {name: "總機", look: "cc", home: ofRoomPt("主管室", 1), role: "cc", active: true});
-  add("sunny", {name: "Sunny", look: "G", home: ofRoomPt("大廳", 1), role: "G", active: true});
+  add("sunny", {name: OF_SET.fake ? "外勤" : "Sunny", look: "G", home: ofRoomPt("摸魚區", 5), role: "G", active: true});
   const nx = Math.max(2, Math.min(5, Object.values(OF.desks).filter(d => ofActive(d.m)).length >> 1));
   for (let i = 0; i < nx; i++) add("x" + i, {name: "小C", look: "X", home: ofRoomPt("茶水間", i), role: "X", small: true, active: true});
   OF.ppl = ppl;
 }
 function ofThink(p) {
-  if (!p.active || p.role === "boss") { p.wait = 6; p.bubble = p.fail ? "!" : ""; return; }
+  const away = Math.hypot(p.x - p.home.x, p.y - p.home.y) > 4;
+  if (p.role === "boss") { p.wait = 6; return; }
+  if (!p.active) {   // 沒事做的：回摸魚區窩著，偶爾晃去茶水間
+    p.next = p.fail ? "!" : pick(OF_LINES.摸魚); p.wait = 6 + Math.random() * 10;
+    if (away) { p.path = ofRoute(p.at, p.home); p.at = p.home; p.sit = false; }
+    else if (Math.random() < 0.15) { const to = ofRoomPt("茶水間"); p.path = ofRoute(p.at, to); p.at = to; p.next = "☕"; }
+    else { p.bubble = Math.random() < 0.5 ? p.next : ""; p.bt = 3; }
+    return;
+  }
   const act = Object.values(OF.desks).filter(d => ofActive(d.m) && d !== p.desk);
-  const away = p.at !== p.home;
   let to, line;
   if (away && Math.random() < 0.7) { to = p.home; line = p.role === "owner" ? ofSay(p.m) : ""; }
   else if (p.role === "X") { const d = pick(act); to = d && Math.random() < 0.85 ? ofDeskPt(d, true) : ofRoomPt("茶水間"); line = pick(OF_LINES.X); }
-  else if (p.role === "G") { const d = pick(act); to = d && Math.random() < 0.6 ? ofDeskPt(d, true) : ofRoomPt("大廳"); line = pick(OF_LINES.G); }
+  else if (p.role === "G") { const d = pick(act); to = d && Math.random() < 0.6 ? ofDeskPt(d, true) : ofRoomPt("摸魚區"); line = pick(OF_LINES.G); }
   else if (p.role === "cc") { const d = pick(act); to = d && Math.random() < 0.5 ? ofDeskPt(d, true) : ofRoomPt("會議室"); line = to.desk ? "派工" : "開會"; }
   else {
     const r = Math.random(), d = pick(act), k = r < 0.45 && d ? "desk" : r < 0.65 ? "主管室" : r < 0.82 ? "會議室" : "茶水間";
@@ -1443,12 +1475,12 @@ function ofBg() {
   c.fillStyle = "#2B2F36"; ofRR(c, tr.x + tr.w - 36, 42, 20, 16, 3); c.fill();
   c.fillStyle = "#E24B4A"; c.beginPath(); c.arc(tr.x + tr.w - 18, 66, 2.5, 0, 7); c.fill(); }
   ofPlant(c, tr.x + tr.w - 16, 140, 0.8);
-  // 大廳：櫃台、地墊、兩盆植物
-  const lr = R.大廳;
-  c.fillStyle = "#00000022"; ofRR(c, lr.x + 16, 66, lr.w - 52, 18, 6); c.fill();
-  c.fillStyle = dark ? "#3E4A56" : "#9DB6C9"; ofRR(c, lr.x + 14, 60, lr.w - 52, 18, 6); c.fill();
-  c.fillStyle = dark ? "#53606D" : "#C3D4E1"; ofRR(c, lr.x + 14, 56, lr.w - 52, 8, 4); c.fill();
-  ofPlant(c, lr.x + lr.w - 18, 62, 1); ofPlant(c, lr.x + 18, 140, 0.8);
+  // 摸魚區（出差／沒事做）：懶骨頭、電視、行李箱、兩盆植物
+  const lr = R.摸魚區;
+  c.fillStyle = "#3B3F47"; ofRR(c, lr.x + lr.w / 2 - 26, 34, 52, 26, 3); c.fill(); c.fillStyle = "#8FD3F5"; c.fillRect(lr.x + lr.w / 2 - 23, 37, 46, 20);   // 電視
+  [["#F2A65A", 18], ["#E57373", 40], ["#81C784", lr.w - 40], ["#9FA8DA", lr.w - 62]].forEach(([col, dx]) => { c.fillStyle = col; c.beginPath(); c.ellipse(lr.x + dx, 140, 11, 7, 0, 0, 7); c.fill(); });   // 懶骨頭
+  c.fillStyle = "#5C6BC0"; ofRR(c, lr.x + lr.w - 22, 38, 12, 18, 3); c.fill(); c.fillStyle = "#3949AB"; c.fillRect(lr.x + lr.w - 19, 34, 6, 4);   // 出差行李箱
+  ofPlant(c, lr.x + 14, 62, 0.8);
   c.fillStyle = dark ? "#4A4038" : "#B79C7E"; ofRR(c, lr.door - 20, lr.y + lr.h - 14, 40, 10, 3); c.fill();
   // 辦公區：每排頭尾放盆栽
   Object.values(OF.desks).filter(d => d.x === 40).forEach(d => { ofPlant(c, 8, d.y + 40, 0.7); ofPlant(c, W - 8, d.y + 40, 0.7); });
@@ -1470,7 +1502,7 @@ function ofDraw(now) {
     if (!(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = "#2B2F36"; ofRR(c, d.x + 64, d.y + 2, 38, 22, 3); c.fill(); }
     if (fail || on || !(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7FD6FF" : "#B8ECFF") : "#46505C"; c.fillRect(...sx); }
     if (on && !fail) { c.fillStyle = "#FFFFFF99"; for (let k = 0; k < 3; k++) c.fillRect(sx[0] + 3, sx[1] + 2 + k * (sx[3] / 4), 6 + ((Math.floor(now / 500) + k + d.x) % 4) * 4, 1.5); }   // 螢幕上的字在跑
-    const nm = d.m.name.replace(/（.*）/, "").slice(0, 8);
+    const nm = ofName(d.m).slice(0, 8);
     c.font = "500 11px sans-serif"; const tw = c.measureText(nm).width + 10;
     c.fillStyle = P.tag; ofRR(c, d.x + 55 - tw / 2, d.y + 53, tw, 15, 7); c.fill();
     c.fillStyle = P.txt; c.textAlign = "center"; c.fillText(nm, d.x + 55, d.y + 64); c.textAlign = "left";
@@ -1486,7 +1518,7 @@ function ofPerson(c, p, now) {
   const bob = walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0;
   const x = p.x + (walk && vert ? p.lane : 0), y = p.y + (walk && !vert ? p.lane * 0.6 : 0) + bob + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
   const s = im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32), w = (im.spr ? 128 : 100) * s, h = (im.spr ? 160 : 120) * s;
-  const dim = !p.active && p.role === "owner";
+  const dim = false;   // 11/01 沒事做的改去摸魚區，不再變淡
   c.save(); c.globalAlpha = dim ? 0.6 : 1;
   if (walk) { c.fillStyle = "rgba(0,0,0,.16)"; c.beginPath(); c.ellipse(x, p.y + (vert ? 0 : p.lane * 0.6) + 2, w * 0.28, 2.5, 0, 0, 7); c.fill(); }
   // 往左走就把圖左右翻過來（圖本身是朝右走）
@@ -1521,8 +1553,8 @@ function ofPick(ev) {
   OF.sel = best;
   if (!best) { OF.info.innerHTML = ""; return; }
   const m = best.m, f = m && (S.feed || []).find(x => x.pid === m.id);
-  OF.info.innerHTML = m ? `<b>${esc(m.name)}</b> <span class="muted">${esc(m.ai || "")}｜${esc(m.status)}</span><div>${f ? esc(ago(f.t) + "：" + f.text.slice(0, 120)) : "最近沒有動態"}</div>`
-    : `<b>${esc(best.name)}</b> <span class="muted">${{boss: "Josh 本人", cc: "專案控制中心", G: "Grok Bot：X 即時消息、查證、看圖", X: "Codex：檢查員、跑回測、補資料"}[best.role] || ""}</span>`;
+  OF.info.innerHTML = m ? (OF_SET.fake ? `<b>${esc(ofName(m))}</b> <span class="muted">${best.active ? "工作中" : "摸魚中"}</span>` : `<b>${esc(m.name)}</b> <span class="muted">${esc(m.ai || "")}｜${esc(m.status)}</span><div>${f ? esc(ago(f.t) + "：" + f.text.slice(0, 120)) : "最近沒有動態"}</div>`)
+    : `<b>${esc(best.name)}</b> <span class="muted">${{boss: OF_SET.fake ? "老闆" : "Josh 本人", cc: "專案控制中心", G: "Grok Bot：X 即時消息、查證、看圖", X: "Codex：檢查員、跑回測、補資料"}[best.role] || ""}</span>`;
 }
 function officeAttach() {
   const mount = document.getElementById("officeMount"); if (!mount || !S || !S.machines) return;
@@ -1530,7 +1562,9 @@ function officeAttach() {
     OF.wrap = document.createElement("div"); OF.wrap.className = "office";
     OF.cv = document.createElement("canvas"); OF.cv.style.cssText = "width:100%;height:auto;display:block;border-radius:12px;touch-action:manipulation";
     OF.info = document.createElement("div"); OF.info.className = "officeinfo";
-    OF.wrap.append(OF.cv, OF.info); OF.ctx = OF.cv.getContext("2d");
+    OF.setBox = document.createElement("div"); OF.setBox.className = "officeset"; OF.setBox.style.cssText = "font-size:13px;margin:0 0 8px";
+    OF.wrap.append(OF.setBox, OF.cv, OF.info); OF.ctx = OF.cv.getContext("2d");
+    setTimeout(ofSettingsUI, 0);
     OF.cv.addEventListener("click", ofPick);
     addEventListener("resize", () => { if (OF.cv.isConnected) officeAttach(); });
     document.addEventListener("visibilitychange", () => { if (!document.hidden && !OF.raf) OF.raf = requestAnimationFrame(ofLoop); });
