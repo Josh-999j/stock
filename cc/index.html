@@ -1194,6 +1194,7 @@ const OF_LOOK = {
   G: {shirt: "#7F77DD", pants: "#26215C", hair: "#F2C14E", acc: "glasses"},
   cc: {shirt: "#185FA5", pants: "#2C2C2A", hair: "#2C2C2A", acc: "headset"},
   boss: {shirt: "#BA7517", pants: "#412402", hair: "#2C2C2A", acc: "crown"},
+  ol: {shirt: "#2C2C2A", pants: "#2C2C2A", hair: "#3A2418", acc: "ol"},   // 老闆秘書（Josh 11/01）；小C 畫好 ol_*.png 前先用這個
 };
 function ofSvg(c, leg, arm, type) {
   const skin = "#F6D2B0";
@@ -1202,6 +1203,7 @@ function ofSvg(c, leg, arm, type) {
     cap: `<path d="M27 31 Q50 5 73 31 Z" fill="#1D9E75"/><rect x="58" y="27" width="22" height="6" rx="3" fill="#0F6E56"/>`,
     glasses: `<rect x="34" y="38" width="13" height="8" rx="3" fill="#26215C"/><rect x="53" y="38" width="13" height="8" rx="3" fill="#26215C"/><line x1="47" y1="41" x2="53" y2="41" stroke="#26215C" stroke-width="2"/>`,
     headset: `<path d="M26 40 Q50 4 74 40" fill="none" stroke="#2C2C2A" stroke-width="4"/><rect x="22" y="36" width="8" height="12" rx="3" fill="#2C2C2A"/><path d="M26 48 Q30 58 42 56" fill="none" stroke="#2C2C2A" stroke-width="2"/>`,
+    ol: `<path d="M25 36 Q20 66 32 78 L36 42 Z" fill="#3A2418"/><path d="M75 36 Q80 66 68 78 L64 42 Z" fill="#3A2418"/><rect x="45" y="62" width="10" height="12" fill="#FFFFFF"/><path d="M46 52 Q50 55 54 52" stroke="#C2185B" stroke-width="2.2" fill="none"/>`,
     crown: `<path d="M34 16 L34 4 L42 11 L50 1 L58 11 L66 4 L66 16 Z" fill="#EF9F27" stroke="#BA7517" stroke-width="1.5"/><circle cx="50" cy="9" r="2" fill="#E24B4A"/>`,
   }[c.acc];
   const eyes = c.acc === "glasses" ? "" : `<ellipse cx="41" cy="42" rx="2.6" ry="3.4" fill="#2C2C2A"/><ellipse cx="59" cy="42" rx="2.6" ry="3.4" fill="#2C2C2A"/><circle cx="42" cy="41" r="1" fill="#fff"/><circle cx="60" cy="41" r="1" fill="#fff"/>`;
@@ -1221,12 +1223,13 @@ ${eyes}<ellipse cx="35" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/><el
 }
 const OF_FR = {stand: [0, 0, 0], w0: [18, 22, 0], w1: [0, 0, 0], w2: [-18, -22, 0], t0: [0, 0, 1], t1: [0, 12, 1]};
 // 11/01 小C 交的 Q 版人物圖（assets/web/office/，128×160）；圖載不到就退回上面的向量小人
+const OF_ART_VER = "1101-uniform";
 const OF_SPR = {stand: "idle", w0: "walk1", w1: "walk2", w2: "walk3", w3: "walk4", t0: "sit1", t1: "sit2"};
 function ofImg(look, fr) {
   const k = look + fr; if (OF.img[k]) return OF.img[k];
   const im = new Image(), svg = () => { const [leg, arm, type] = OF_FR[fr === "w3" ? "w1" : fr]; im.spr = false; im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(ofSvg(OF_LOOK[look], leg, arm, type)); };
   im.spr = true; im.onerror = () => { if (im.spr) svg(); };
-  im.src = aurl(`office/${look}_${OF_SPR[fr]}.png`);
+  im.src = aurl(`office/${look}_${OF_SPR[fr]}.png`) + "&a=" + OF_ART_VER;   // 換圖就改 OF_ART_VER，手機和電腦才不會用到舊快取
   return OF.img[k] = im;
 }
 const OF_FRUIT_PNG = {"🍉": "watermelon", "🍍": "pineapple", "🍒": "cherry", "🍎": "apple", "🍊": "orange", "🍋": "lemon", "🍇": "grape", "🍓": "strawberry", "🍑": "peach", "🥝": "kiwi", "🍌": "banana",
@@ -1249,7 +1252,7 @@ function ofSave() { try { localStorage.setItem("cc.office", JSON.stringify(OF_SE
 const OF_FAKE_A = ["星光", "藍海", "晨曦", "飛鷹", "青松", "極光", "火箭", "海豚", "北辰", "雲端", "橘子", "閃電", "銀河", "麥田", "燈塔", "彩虹"];
 const OF_FAKE_B = ["工作室", "研究所", "小組", "實驗室", "工坊", "企劃部", "分析室", "設計組"];
 function ofHash(t) { let h = 7; for (const ch of t) h = (h * 131 + ch.charCodeAt(0)) >>> 0; return h; }
-function ofName(m) { const real = m.name.replace(/（.*）/, ""); if (!OF_SET.fake) return real; const h = ofHash(m.id); return OF_FAKE_A[h % OF_FAKE_A.length] + OF_FAKE_B[(h >> 5) % OF_FAKE_B.length]; }
+function ofName(m) { const real = m.name.replace(/（.*）/, ""); if (!OF_SET.fake) return real; const h = ofHash(m.id); return OF_FAKE_A[h % OF_FAKE_A.length] + OF_FAKE_B[(h >>> 5) % OF_FAKE_B.length]; }
 function ofSay(m) {
   if (OF_SET.fake) return pick(["處理資料中", "寫程式中", "整理報告", "跑測試中", "開會回來"]);   // 錄影模式不露真實工作內容
   const f = (S.feed || []).find(x => x.pid === m.id);
@@ -1276,11 +1279,13 @@ function ofLayout() {
   ["主管室", "會議室", "茶水間", "摸魚區"].forEach((n, i) => R[n] = {x: 10 + i * (rw + 10), y: 10, w: rw, h: 150, door: 10 + i * (rw + 10) + rw / 2});
   // 房內固定站位（不亂站）
   const S2 = OF.spots = {};
-  S2.主管室 = [{x: R.主管室.x + 40, y: 128}, {x: R.主管室.x + R.主管室.w / 2, y: 140}];
-  S2.會議室 = [-1, 1].flatMap(s => [{x: R.會議室.door - 30, y: 100 + s * 26}, {x: R.會議室.door, y: 100 + s * 26}, {x: R.會議室.door + 30, y: 100 + s * 26}]);
-  S2.茶水間 = [0, 1, 2, 3].map(i => ({x: R.茶水間.x + 24 + i * 22, y: 128}));
+  // 0＝老闆、1＝總機、2＝秘書（固定的人專用）；3 以後＝來報告的人站的位置（Josh 11/01：人物不要重疊）
+  S2.主管室 = [{x: R.主管室.x + 40, y: 128}, {x: R.主管室.x + R.主管室.w / 2 + 8, y: 146}, {x: R.主管室.x + 82, y: 132}, {x: R.主管室.x + R.主管室.w - 34, y: 120}, {x: R.主管室.x + R.主管室.w - 62, y: 146}, {x: R.主管室.x + R.主管室.w - 34, y: 146}];
+  // Josh 11/01：會議室改方形長桌＋視訊電視；6 個座位（桌子後面 3、前面 3）
+  S2.會議室 = [{y: 92}, {y: 146}].flatMap(r => [-38, 0, 38].map(dx => ({x: R.會議室.door + dx, y: r.y})));
+  S2.茶水間 = [16, 42, 68].map(dx => ({x: R.茶水間.x + R.茶水間.w - 92 + dx, y: 146})).concat([{x: R.茶水間.x + 22, y: 96}, {x: R.茶水間.x + 58, y: 96}, {x: R.茶水間.x + 90, y: 100}, {x: R.茶水間.x + R.茶水間.w - 30, y: 96}, {x: R.茶水間.x + 84, y: 132}, {x: R.茶水間.x + 104, y: 150}]);   // 吧台高腳椅 3＋飲水機、零食架、咖啡機前、沙發旁
   // Josh 11/01：大廳改「出差／摸魚區」，沒在做事的負責人都窩到這裡（像真人：滑手機、躺沙發、打瞌睡）
-  S2.摸魚區 = [...Array(24)].map((_, i) => ({x: R.摸魚區.x + 22 + (i % 6) * ((R.摸魚區.w - 44) / 5) + (i % 2) * 4, y: 74 + Math.floor(i / 6) * 22}));
+  S2.摸魚區 = [...Array(35)].map((_, i) => ({x: R.摸魚區.x + 20 + (i % 7) * ((R.摸魚區.w - 40) / 6) + (Math.floor(i / 7) % 2) * 9, y: 66 + Math.floor(i / 7) * 18}));   // 7×5 錯開排，不疊在一起
   const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny" && !OF_SET.hide.includes(m.id));
   OF.desks = {};
   ms.forEach((m, i) => {
@@ -1294,6 +1299,12 @@ function ofLayout() {
 }
 // 一律走走道：起點先退到自己的走道 → 走到最近的直向通道 → 直走到目的地那條走道 → 橫走到目的地 → 進去
 function ofLane(p) { return p.y <= 160 ? {y: OF_TOP, enter: [{x: p.door, y: OF_TOP}, {x: p.door, y: 150}]} : {y: p.aisleY, enter: []}; }
+// 走到一半要改道時（散會、老闆叫、狀態變了），一律從「現在站的位置」出發：先回最近的走道或從房門出去，不會斜切穿桌子、穿牆（Josh 11/01）
+function ofFrom(q) {
+  if (!q.path.length) return q.at;
+  if (q.y < 162) { const r = Object.values(OF.rooms).find(r => q.x >= r.x && q.x <= r.x + r.w) || OF.rooms.主管室; return {x: q.x, y: q.y, lane: OF_TOP, inRoom: true, door: r.door}; }
+  return {x: q.x, y: q.y, lane: ofNearLane(q.y)};
+}
 function ofRoute(from, to) {
   const pts = [];
   const a = from.lane, b = to.lane;
@@ -1308,8 +1319,15 @@ function ofRoute(from, to) {
   else pts.push({x: tx, y: b}, {x: to.x, y: to.y});
   return pts;
 }
-function ofRoomPt(n, i) { const s = OF.spots[n], p = s[(i ?? Math.floor(Math.random() * s.length)) % s.length]; return {x: p.x, y: p.y, inRoom: true, door: OF.rooms[n].door, lane: OF_TOP, room: n}; }
-function ofDeskPt(d, visit) { return visit ? {x: d.seat.x + 26, y: d.aisleY, lane: d.aisleY, desk: d} : {x: d.seat.x, y: d.seat.y, lane: d.aisleY, desk: d, sit: true}; }
+// 沒指定位置時挑「沒人要去」的空位（別人的目的地 16px 內算有人）；主管室的 0～2 留給老闆、總機、秘書
+function ofFreeIdx(n) {
+  const s = OF.spots[n], start = n === "主管室" ? 3 : 0, idx = [...Array(s.length - start)].map((_, k) => k + start);
+  const free = idx.filter(k => !OF.ppl.some(q => q !== OF.cur && q.at && Math.hypot(q.at.x - s[k].x, q.at.y - s[k].y) < 16));
+  if (!free.length) { OF.jit = true; return idx[Math.floor(Math.random() * idx.length)]; }   // 全滿：隨便一格但錯開站
+  OF.jit = false; return n === "摸魚區" && OF.cur && OF.cur.role === "G" ? free[free.length - 1] : free[Math.floor(Math.random() * free.length)];   // Sunny 在摸魚區站最後面的空位
+}
+function ofRoomPt(n, i) { OF.jit = false; const s = OF.spots[n], p0 = s[(i ?? ofFreeIdx(n)) % s.length], p = OF.jit ? {x: p0.x + (Math.random() < 0.5 ? -16 : 16), y: p0.y + 6} : p0; return {x: p.x, y: p.y, inRoom: true, door: OF.rooms[n].door, lane: OF_TOP, room: n}; }
+function ofDeskPt(d, visit) { const k = visit ? OF.ppl.filter(q => q !== OF.cur && q.at && q.at.desk === d && !q.at.sit).length : 0; return visit ? {x: d.seat.x + 26 + Math.min(k, 3) * 20, y: d.aisleY, lane: d.aisleY, desk: d} : {x: d.seat.x, y: d.seat.y, lane: d.aisleY, desk: d, sit: true}; }
 const OF_LINES = {
   desk: ["討論一下", "這個你看看", "幫我對一下", "資料好了"], 主管室: ["回報總機", "要 Josh 決定", "做完了"],
   會議室: ["開會", "對答案", "排優先"], 茶水間: ["☕", "休息一下", "🍉"], 摸魚區: ["外出查證", "抓圖回來"],
@@ -1329,13 +1347,17 @@ function ofSync() {
   const ppl = [];
   Object.values(OF.desks).forEach(d => {
     const m = d.m, ai = m.ai || "", k = "p:" + m.id, look = /大C|Claude/.test(ai) ? "C" : /Sunny/.test(ai) ? "G" : "X";
-    const act = ofActive(m), idx = Object.keys(OF.desks).indexOf(m.id);
-    const home = act ? ofDeskPt(d, false) : ofRoomPt("摸魚區", idx), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
-    Object.assign(p, {name: ofName(m), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: act, fail: m.status === "FAILED"});
+    // Josh 11/01：「出差的人太多了，抓少一點，有的人在位置上睡」→ 超過 7 天沒動的、和一半的摸魚的，就趴在自己位子上睡；其他才去摸魚區
+    const act = ofActive(m), deskSleep = !act && (m.status === "STALE" || ofHash(m.id) % 2 === 0);
+    const idx = Object.values(OF.desks).filter(x => !ofActive(x.m) && !(x.m.status === "STALE" || ofHash(x.m.id) % 2 === 0)).indexOf(d);   // 摸魚區一人一格
+    const home = act || deskSleep ? ofDeskPt(d, false) : ofRoomPt("摸魚區", idx), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
+    p.deskSleep = deskSleep;
+    Object.assign(p, {name: ofName(m), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: act, fail: m.status === "FAILED", idleLv: act ? 0 : m.status === "STALE" ? 2 : 1});   // 打混等級：1＝摸魚滑手機、2＝超過 7 天沒動＝睡死結蜘蛛網
     ppl.push(p);
   });
   const add = (k, o) => { const p = keep[k] || ofMk(Object.assign({key: k}, o.home, {at: o.home})); ppl.push(Object.assign(p, o)); };
   add("boss", {name: OF_SET.fake ? "老闆" : "水果王", look: "boss", home: Object.assign(ofRoomPt("主管室", 0), {sit: true}), role: "boss", active: false});
+  add("ol", {name: "秘書", look: "ol", home: Object.assign(ofRoomPt("主管室", 2), {sit: false}), role: "ol", active: true});   // 上班下班都跟著老闆
   add("cc", {name: "總機", look: "cc", home: ofRoomPt("主管室", 1), role: "cc", active: true});
   add("sunny", {name: OF_SET.fake ? "外勤" : "Sunny", look: "G", home: ofRoomPt("摸魚區", 5), role: "G", active: true});
   const nx = Math.max(2, Math.min(5, Object.values(OF.desks).filter(d => ofActive(d.m)).length >> 1));
@@ -1343,28 +1365,66 @@ function ofSync() {
   OF.ppl = ppl;
 }
 function ofThink(p) {
+  OF.cur = p;
   const away = Math.hypot(p.x - p.home.x, p.y - p.home.y) > 4;
-  if (p.role === "boss") { p.wait = 6; return; }
+  if (p.role === "ol") { p.wait = 1; return; }   // 秘書的走位在 ofStep 跟著老闆
+  if (p.role === "boss") {   // Josh 11/01：水果王有時出去巡視，看到他的人要怕一下
+    if (away) { p.path = ofRoute(ofFrom(p), p.home); p.at = p.home; p.next = ""; p.patrol = false; p.wait = 30 + Math.random() * 60; return; }
+    if (Math.random() < 0.5) { const ds = Object.values(OF.desks), d = pick(ds); const to = Math.random() < 0.3 ? ofRoomPt("摸魚區") : ofDeskPt(d, true);
+      p.path = ofRoute(ofFrom(p), to); p.at = to; p.sit = false; p.patrol = true; p.bubble = pick(["巡視一下👀", "大家在忙什麼？", "今天賺多少？"]); p.bt = 3; p.next = pick(["嗯…", "繼續努力💰", "這個做好沒？"]); p.wait = 3; }
+    else p.wait = 20 + Math.random() * 40;
+    return;
+  }
   if (!p.active) {   // 沒事做的：回摸魚區窩著，偶爾晃去茶水間
     p.next = p.fail ? "!" : pick(OF_LINES.摸魚); p.wait = 6 + Math.random() * 10;
-    if (away) { p.path = ofRoute(p.at, p.home); p.at = p.home; p.sit = false; }
-    else if (Math.random() < 0.15) { const to = ofRoomPt("茶水間"); p.path = ofRoute(p.at, to); p.at = to; p.next = "☕"; }
+    if (away) { p.path = ofRoute(ofFrom(p), p.home); p.at = p.home; p.sit = false; }
+    else if (!p.deskSleep && Math.random() < 0.15) { const to = ofRoomPt("茶水間"); p.path = ofRoute(ofFrom(p), to); p.at = to; p.next = "☕"; }
     else { p.bubble = Math.random() < 0.5 ? p.next : ""; p.bt = 3; }
     return;
   }
   const act = Object.values(OF.desks).filter(d => ofActive(d.m) && d !== p.desk);
   let to, line;
-  if (away && Math.random() < 0.7) { to = p.home; line = p.role === "owner" ? ofSay(p.m) : ""; }
+  if (away && Math.random() < 0.7) { to = p.role === "X" ? ofRoomPt("茶水間") : p.role === "G" ? ofRoomPt("摸魚區") : p.home; line = p.role === "owner" ? ofSay(p.m) : ""; }   // 小C、Sunny 回來挑空位，不跟別人站同一格
   else if (p.role === "X") { const d = pick(act); to = d && Math.random() < 0.85 ? ofDeskPt(d, true) : ofRoomPt("茶水間"); line = pick(OF_LINES.X); }
   else if (p.role === "G") { const d = pick(act); to = d && Math.random() < 0.6 ? ofDeskPt(d, true) : ofRoomPt("摸魚區"); line = pick(OF_LINES.G); }
-  else if (p.role === "cc") { const d = pick(act); to = d && Math.random() < 0.5 ? ofDeskPt(d, true) : ofRoomPt("會議室"); line = to.desk ? "派工" : "開會"; }
+  else if (p.role === "cc") { const d = pick(act); to = d && Math.random() < 0.5 ? ofDeskPt(d, true) : ofRoomPt("主管室", 1); line = to.desk ? "派工" : "回報老闆"; }
   else {
-    const r = Math.random(), d = pick(act), k = r < 0.45 && d ? "desk" : r < 0.65 ? "主管室" : r < 0.82 ? "會議室" : "茶水間";
+    const r = Math.random(), d = pick(act), k = r < 0.55 && d ? "desk" : r < 0.75 ? "主管室" : "茶水間"   // 會議室只在開會時進去（不然會跟開會的人站同一格）;
     to = k === "desk" ? ofDeskPt(d, true) : ofRoomPt(k); line = pick(OF_LINES[k]);
   }
-  p.path = ofRoute(p.at, to); p.at = to; p.next = line; p.wait = 2.5 + Math.random() * 4; p.bubble = ""; p.sit = false;
+  p.path = ofRoute(ofFrom(p), to); p.at = to; p.next = line; p.wait = 2.5 + Math.random() * 4; p.bubble = ""; p.sit = false;
 }
+function ofNearLane(y) { return [OF_TOP].concat(Object.values(OF.desks).map(d => d.aisleY)).reduce((b, v) => Math.abs(v - y) < Math.abs(b - y) ? v : b, OF_TOP); }   // 走到一半改道時，先回最近的橫走道
 function ofStep(dt) {
+  // Josh 11/01：會議室要有 3～6 個人進去開會一下 → 每 40～80 秒找有在做事的人開一次會，開 20～30 秒散會
+  OF.meetT = (OF.meetT ?? 15) - dt;
+  if (OF.meetT <= 0) {
+    if (OF.meeting) { OF.ppl.filter(q => q.meeting).forEach(q => { q.meeting = false; q.path = ofRoute(ofFrom(q), q.home); q.at = q.home; q.next = pick(["散會", "回去做事", "會議紀錄我寫"]); q.wait = 4; }); OF.meeting = false; OF.meetT = 40 + Math.random() * 40; }
+    else {
+      const pool = OF.ppl.filter(q => !q.meeting && (q.role === "X" || q.role === "cc" || q.role === "G" || (q.role === "owner" && q.active))).sort(() => Math.random() - 0.5);
+      const n = pool.length >= 3 ? Math.min(pool.length, 3 + Math.floor(Math.random() * 4)) : 0;   // 走到一半的也叫來開會（從目前位置走過去）
+      pool.slice(0, n).forEach((q, i) => { OF.cur = q; const to = ofRoomPt("會議室", i); q.meeting = true; q.path = ofRoute(ofFrom(q), to); q.at = to; q.sit = false; q.next = pick(["開會", "我先報告", "這季目標…", "數據在這"]); q.wait = 999; });
+      OF.meeting = n > 0; OF.meetT = n ? 20 + Math.random() * 10 : 10;
+    }
+  }
+  const boss = OF.ppl.find(q => q.role === "boss");
+  const ol = OF.ppl.find(q => q.role === "ol");
+  if (ol && boss) {   // 秘書：老闆出去就跟在他左後方，老闆回辦公室她就回桌旁
+    // 老闆每換一個目的地，秘書就照走道路線跟去（站在老闆旁邊一點）；老闆回辦公室她也回桌旁
+    const out = boss.patrol || boss.path.length > 0;
+    if (ol.bossAt !== boss.at) {
+      ol.bossAt = boss.at; const back = boss.at === boss.home || boss.at.inRoom && boss.at.room === "主管室";
+      const to = back ? ol.home : Object.assign({}, boss.at, {x: boss.at.x - 16});
+      ol.path = ofRoute(ofFrom(ol), to); ol.at = to; ol.spd = 52;
+    }
+    if (!out && !ol.path.length && Math.random() < 0.002) { ol.bubble = pick(["老闆，下午三點開會", "報表準備好了", "咖啡幫您放桌上☕", "今天行程都排好了"]); ol.bt = 3; }
+    if (out && !ol.bubble && Math.random() < 0.004) { ol.bubble = pick(["老闆這邊走", "我記下來了📝", "這位是負責人"]); ol.bt = 2.5; }
+  }
+  if (boss && boss.patrol) OF.ppl.forEach(q => {   // 老闆走近 70px 內：嚇一跳、冒話；摸魚的趕快裝忙
+    if (q === boss || q.role === "ol" || (q.scareCd || 0) > performance.now() || Math.hypot(q.x - boss.x, q.y - boss.y) > 70) return;
+    q.scare = 0.6; q.scareCd = performance.now() + 9000; q.bt = 2.5;
+    q.bubble = q.active || q.role !== "owner" ? pick(["😱 老闆！", "老闆好！", "在忙在忙！", "😨"]) : pick(["😱 趕快裝忙！", "我在想策略…", "老闆我沒摸魚！"]);
+  });
   OF.ppl.forEach(p => {
     if (p.path.length) {
       const t = p.path[0], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy);
@@ -1377,6 +1437,7 @@ function ofStep(dt) {
       else { p.x += dx / d * v; p.y += dy / d * v; }
     } else if ((p.wait -= dt) <= 0) ofThink(p);
     if (p.bt > 0 && (p.bt -= dt) <= 0) p.bubble = p.fail ? "!" : "";
+    if (p.scare > 0) p.scare -= dt;
   });
 }
 function ofRR(c, x, y, w, h, r) { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); }
@@ -1461,19 +1522,38 @@ function ofBg() {
   ofPlant(c, R.主管室.x + R.主管室.w - 18, 70, 0.9);
   // 會議室：橢圓桌＋6 張椅子
   const mx = R.會議室.door;
-  if (mt) ofImgAt(c, mt, mx, 142, Math.min(130, R.會議室.w - 20)); else {
-  [-30, 0, 30].forEach(dx => [72, 128].forEach(cy => { c.fillStyle = P.chair; c.beginPath(); c.arc(mx + dx, cy, 6, 0, 7); c.fill(); }));
-  c.fillStyle = "#00000022"; c.beginPath(); c.ellipse(mx + 2, 103, 52, 14, 0, 0, 7); c.fill();
-  c.fillStyle = P.deskTop; c.beginPath(); c.ellipse(mx, 100, 52, 14, 0, 0, 7); c.fill();
-  c.fillStyle = P.deskEdge; c.beginPath(); c.ellipse(mx, 100, 52, 14, 0, 0, Math.PI); c.fill(); }
+  const tw2 = Math.min(150, R.會議室.w - 30);
+  c.fillStyle = "#2B2F36"; ofRR(c, mx - 34, 32, 68, 36, 3); c.fill();                                   // 視訊電視
+  [["#F6D2B0", "#4a3428"], ["#F6D2B0", "#2C2C2A"], ["#F6D2B0", "#F2C14E"], ["#F6D2B0", "#4a3428"]].forEach(([sk, hr], k) => {
+    const tx = mx - 31 + (k % 2) * 32, ty = 35 + Math.floor(k / 2) * 16; c.fillStyle = ["#CFE8F5", "#E8F5CF", "#F5E3CF", "#E3CFF5"][k]; c.fillRect(tx, ty, 30, 14);
+    c.fillStyle = sk; c.beginPath(); c.arc(tx + 15, ty + 8, 4, 0, 7); c.fill(); c.fillStyle = hr; c.beginPath(); c.arc(tx + 15, ty + 6, 4, Math.PI, 0); c.fill(); });
+  c.fillStyle = "#3B3F47"; c.fillRect(mx - 3, 68, 6, 4);
+  const ch = ofScene("chair");
+  [-38, 0, 38].forEach(dx => { if (ch) ofImgAt(c, ch, mx + dx, 96, 20); else { c.fillStyle = P.chair; c.beginPath(); c.arc(mx + dx, 86, 7, 0, 7); c.fill(); } });
+  c.fillStyle = "#00000022"; ofRR(c, mx - tw2 / 2 + 3, 101, tw2, 26, 5); c.fill();                     // 方形長桌
+  c.fillStyle = P.deskEdge; ofRR(c, mx - tw2 / 2, 108, tw2, 16, 5); c.fill();
+  c.fillStyle = P.deskTop; ofRR(c, mx - tw2 / 2, 96, tw2, 18, 5); c.fill();
+  [-38, 0, 38].forEach(dx => { c.fillStyle = "#FFFFFF"; c.fillRect(mx + dx - 6, 100, 12, 8); c.fillStyle = "#B5D4F4"; c.fillRect(mx + dx - 5, 101, 10, 2); });   // 桌上文件
   // 茶水間：沙發、咖啡機、盆栽
   const tr = R.茶水間;
-  if (sf) ofImgAt(c, sf, tr.x + 52, 116, 84); else { c.fillStyle = dark ? "#5B3F4A" : "#E59A8C"; ofRR(c, tr.x + 14, 84, 70, 14, 6); c.fill(); ofRR(c, tr.x + 10, 94, 78, 14, 6); c.fill(); }
+  if (sf) ofImgAt(c, sf, tr.x + 40, 152, 62); else { c.fillStyle = dark ? "#5B3F4A" : "#E59A8C"; ofRR(c, tr.x + 14, 84, 70, 14, 6); c.fill(); ofRR(c, tr.x + 10, 94, 78, 14, 6); c.fill(); }
   if (cf) ofImgAt(c, cf, tr.x + tr.w - 26, 86, 38); else {
   c.fillStyle = "#00000022"; c.fillRect(tr.x + 14, 106, 70, 3);
   c.fillStyle = "#6B6F78"; ofRR(c, tr.x + tr.w - 40, 36, 28, 40, 4); c.fill();
   c.fillStyle = "#2B2F36"; ofRR(c, tr.x + tr.w - 36, 42, 20, 16, 3); c.fill();
   c.fillStyle = "#E24B4A"; c.beginPath(); c.arc(tr.x + tr.w - 18, 66, 2.5, 0, 7); c.fill(); }
+  // Josh 11/01：茶水間要飲水機、零食、酒吧吧台＋高腳椅，爽一點的美式配置
+  c.save(); c.shadowColor = "#FF4FA3"; c.shadowBlur = 8; c.fillStyle = "#FF4FA3"; c.font = "700 13px sans-serif"; c.fillText("BAR", tr.x + tr.w - 78, 44); c.restore();   // 霓虹燈
+  c.fillStyle = "#ECEFF1"; ofRR(c, tr.x + 10, 46, 18, 34, 3); c.fill(); c.fillStyle = "#90CAF9"; ofRR(c, tr.x + 12, 34, 14, 14, 5); c.fill();   // 飲水機
+  c.fillStyle = "#E24B4A"; c.fillRect(tr.x + 13, 60, 4, 4); c.fillStyle = "#1E88E5"; c.fillRect(tr.x + 21, 60, 4, 4);
+  c.fillStyle = "#8D6E63"; c.fillRect(tr.x + 34, 40, 46, 3); c.fillRect(tr.x + 34, 56, 46, 3); c.fillRect(tr.x + 34, 72, 46, 3);   // 零食架
+  [["#FFC107", 0], ["#E53935", 9], ["#43A047", 18], ["#FB8C00", 27], ["#8E24AA", 36]].forEach(([col, dx], k) => { c.fillStyle = col; ofRR(c, tr.x + 36 + dx, 46 + (k % 2), 7, 10, 2); c.fill(); c.fillStyle = ["#6D4C41", "#FDD835", "#EF5350", "#26A69A", "#FFCA28"][k]; ofRR(c, tr.x + 36 + dx, 62, 7, 10, 2); c.fill(); });
+  const bx = tr.x + tr.w - 92, by = 104;   // 吧台＋高腳椅
+  c.fillStyle = "#00000022"; ofRR(c, bx + 3, by + 4, 84, 24, 5); c.fill();
+  c.fillStyle = "#4E342E"; ofRR(c, bx, by + 8, 84, 18, 4); c.fill();
+  c.fillStyle = "#795548"; ofRR(c, bx - 2, by, 88, 10, 4); c.fill();
+  [["#FFB300", 10], ["#C62828", 26], ["#2E7D32", 42]].forEach(([col, dx]) => { c.fillStyle = col; c.fillRect(bx + dx, by - 9, 4, 9); c.fillStyle = "#ECEFF1"; c.fillRect(bx + dx + 14, by - 5, 5, 5); });   // 酒瓶＋杯子
+  [16, 42, 68].forEach(dx => { c.fillStyle = "#9E9E9E"; c.fillRect(bx + dx - 1, by + 30, 2, 12); c.fillStyle = "#D32F2F"; c.beginPath(); c.ellipse(bx + dx, by + 30, 8, 3.5, 0, 0, 7); c.fill(); c.fillStyle = "#9E9E9E"; c.beginPath(); c.ellipse(bx + dx, by + 42, 6, 2, 0, 0, 7); c.fill(); });   // 紅色高腳椅
   ofPlant(c, tr.x + tr.w - 16, 140, 0.8);
   // 摸魚區（出差／沒事做）：懶骨頭、電視、行李箱、兩盆植物
   const lr = R.摸魚區;
@@ -1501,7 +1581,15 @@ function ofDraw(now) {
     const sx = OF_SCENE.desk && OF_SCENE.desk.naturalWidth ? [d.x + 39, d.y + 7, 31, 12] : [d.x + 67, d.y + 5, 32, 16];   // 小C 桌子圖的螢幕位置／手畫螢幕
     if (!(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = "#2B2F36"; ofRR(c, d.x + 64, d.y + 2, 38, 22, 3); c.fill(); }
     if (fail || on || !(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7FD6FF" : "#B8ECFF") : "#46505C"; c.fillRect(...sx); }
-    if (on && !fail) { c.fillStyle = "#FFFFFF99"; for (let k = 0; k < 3; k++) c.fillRect(sx[0] + 3, sx[1] + 2 + k * (sx[3] / 4), 6 + ((Math.floor(now / 500) + k + d.x) % 4) * 4, 1.5); }   // 螢幕上的字在跑
+    if (on && !fail) {   // Josh 11/01「機台跑的時候螢幕要有動畫」：機台在跑＝走勢圖＋進度條；只是最近有動態＝字在捲
+      c.save(); c.beginPath(); c.rect(...sx); c.clip();
+      if (d.m.status === "RUNNING") {
+        c.strokeStyle = "#1D9E75"; c.lineWidth = 1.4; c.beginPath();
+        for (let k = 0; k <= sx[2]; k += 2) { const t = (k + now / 60 + d.x) / 6; const yy = sx[1] + sx[3] * 0.55 + Math.sin(t) * sx[3] * 0.22 + Math.sin(t * 0.37) * sx[3] * 0.12; k ? c.lineTo(sx[0] + k, yy) : c.moveTo(sx[0] + k, yy); }
+        c.stroke(); const pr = ((now / 40 + d.x * 7) % 100) / 100; c.fillStyle = "#E24B4A"; c.fillRect(sx[0], sx[1] + sx[3] - 2, sx[2] * pr, 2);
+      } else { c.fillStyle = "#FFFFFFAA"; const off = (now / 90) % 4; for (let k = 0; k < 5; k++) c.fillRect(sx[0] + 3, sx[1] + 1 + k * 3 - off, 5 + ((k * 7 + d.x + Math.floor(now / 360)) % 5) * 4, 1.3); }
+      c.restore();
+    }
     const nm = ofName(d.m).slice(0, 8);
     c.font = "500 11px sans-serif"; const tw = c.measureText(nm).width + 10;
     c.fillStyle = P.tag; ofRR(c, d.x + 55 - tw / 2, d.y + 53, tw, 15, 7); c.fill();
@@ -1511,19 +1599,34 @@ function ofDraw(now) {
 }
 function ofPerson(c, p, now) {
   const walk = p.path.length > 0;
-  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step / 6) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : "stand";
+  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step / 6) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : p.sit ? "t0" : "stand";   // 在位子上睡的不打字
   const im = ofImg(p.look, fr);
   // 走在直的通道靠一邊、橫的走道靠上或下，兩人同路不會疊成一個；每兩格輕輕上下起伏
   const seg = walk ? p.path[0] : null, vert = seg && Math.abs(seg.x - p.x) < Math.abs(seg.y - p.y);
-  const bob = walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0;
+  const bob = (walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0) - (p.scare > 0 ? Math.abs(Math.sin(p.scare * 16)) * 5 : 0);   // 被老闆嚇到會跳一下
   const x = p.x + (walk && vert ? p.lane : 0), y = p.y + (walk && !vert ? p.lane * 0.6 : 0) + bob + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
   const s = im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32), w = (im.spr ? 128 : 100) * s, h = (im.spr ? 160 : 120) * s;
   const dim = false;   // 11/01 沒事做的改去摸魚區，不再變淡
   c.save(); c.globalAlpha = dim ? 0.6 : 1;
   if (walk) { c.fillStyle = "rgba(0,0,0,.16)"; c.beginPath(); c.ellipse(x, p.y + (vert ? 0 : p.lane * 0.6) + 2, w * 0.28, 2.5, 0, 0, 7); c.fill(); }
   // 往左走就把圖左右翻過來（圖本身是朝右走）
+  const idle = p.role === "owner" && !p.active && !walk && !p.sit ? p.idleLv : 0;
+  if (p.role === "owner" && !p.active && !walk && p.sit) {   // 趴在位子上睡：Z 往上飄，超過 7 天沒動的頭上再結蜘蛛網
+    c.save(); c.font = "500 10px sans-serif"; for (let k = 0; k < 3; k++) { const ph = ((now / 1300) + k / 3 + x / 97) % 1; c.globalAlpha = 1 - ph; c.fillStyle = "#5C6BC0"; c.fillText(k % 2 ? "z" : "Z", x + 8 + ph * 8, y - 40 - ph * 18); } c.restore();
+    if (p.idleLv === 2) { c.font = "11px sans-serif"; c.fillText("🕸️", x - 20, y - 36); }
+  }
+  if (idle === 2 && im.complete && im.naturalWidth && !(p.scare > 0)) {   // Josh 11/01「打混很久的也要呈現出來一些有趣動畫」：躺平睡死、Z 往上飄、頭上結蜘蛛網
+    c.save(); c.translate(x, y - w * 0.35); c.rotate(-Math.PI / 2 + Math.sin(now / 900 + x) * 0.04); c.drawImage(im, -w / 2, -h / 2, w, h); c.restore();
+    c.font = "500 10px sans-serif"; for (let k = 0; k < 3; k++) { const ph = ((now / 1200) + k / 3 + x / 97) % 1; c.globalAlpha = 1 - ph; c.fillStyle = "#5C6BC0"; c.fillText(k % 2 ? "z" : "Z", x + 10 + ph * 10, y - 18 - ph * 22); }
+    c.globalAlpha = 1; c.font = "11px sans-serif"; c.fillText("🕸️", x - 18, y - 26);
+  } else {
   if (im.complete && im.naturalWidth) { if (walk && p.dir < 0) { c.save(); c.translate(x, 0); c.scale(-1, 1); c.drawImage(im, -w / 2, y - h + 4, w, h); c.restore(); } else c.drawImage(im, x - w / 2, y - h + 4, w, h); }
-  if (p.fruit) {
+    if (idle === 1) {   // 摸魚：手上手機一閃一閃，偶爾冒一句
+      const g = 0.5 + 0.5 * Math.sin(now / 300 + x); c.fillStyle = "#2B2F36"; ofRR(c, x + w * 0.12, y - h * 0.38, 6, 9, 1.5); c.fill();
+      c.fillStyle = `rgba(143,211,245,${0.5 + g * 0.5})`; c.fillRect(x + w * 0.12 + 1, y - h * 0.38 + 1, 4, 6);
+    }
+  }
+  if (p.fruit && idle !== 2) {
     const fi = ofFruitImg(p.fruit), fs = p.small ? 14 : 18;
     if (fi && fi.complete && fi.naturalWidth && !fi.bad) c.drawImage(fi, x - fs / 2, y - h - fs * 0.35, fs, fs);
     else { c.font = (p.small ? 11 : 15) + "px sans-serif"; c.textAlign = "center"; c.fillText(p.fruit, x + 1, y - h + 12); c.textAlign = "left"; }
@@ -1554,7 +1657,7 @@ function ofPick(ev) {
   if (!best) { OF.info.innerHTML = ""; return; }
   const m = best.m, f = m && (S.feed || []).find(x => x.pid === m.id);
   OF.info.innerHTML = m ? (OF_SET.fake ? `<b>${esc(ofName(m))}</b> <span class="muted">${best.active ? "工作中" : "摸魚中"}</span>` : `<b>${esc(m.name)}</b> <span class="muted">${esc(m.ai || "")}｜${esc(m.status)}</span><div>${f ? esc(ago(f.t) + "：" + f.text.slice(0, 120)) : "最近沒有動態"}</div>`)
-    : `<b>${esc(best.name)}</b> <span class="muted">${{boss: OF_SET.fake ? "老闆" : "Josh 本人", cc: "專案控制中心", G: "Grok Bot：X 即時消息、查證、看圖", X: "Codex：檢查員、跑回測、補資料"}[best.role] || ""}</span>`;
+    : `<b>${esc(best.name)}</b> <span class="muted">${{boss: OF_SET.fake ? "老闆" : "Josh 本人", cc: "專案控制中心", ol: "老闆秘書，上班下班都跟著老闆", G: "Grok Bot：X 即時消息、查證、看圖", X: "Codex：檢查員、跑回測、補資料"}[best.role] || ""}</span>`;
 }
 function officeAttach() {
   const mount = document.getElementById("officeMount"); if (!mount || !S || !S.machines) return;
