@@ -224,6 +224,7 @@
   #onboard .obgrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px); gap: 16px; }
   @media (max-width:700px) { #onboard { margin: 12px 8px !important; } #onboard .obgrid { grid-template-columns: 1fr; } }
 .office .officeinfo{font-size:14px;margin-top:8px;line-height:1.6;min-height:1.6em}
+.bigc-head{font-size:15px;margin:4px 0 8px}.bigc-cur{border:1px solid var(--line);border-radius:10px;padding:8px 10px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -504,7 +505,7 @@ function render() {
 
   </section>`) +
   pg("machines", `
-  <section class="box"><h2>🏢 辦公室 <small>有在動的專案會走來走去；點人看他在做什麼</small></h2><div id="officeMount"></div></section>
+  <section class="box"><h2>🏢 辦公室 <small class="ofTitleNote">有在動的專案會走來走去；點人看他在做什麼</small></h2><div id="officeMount"></div></section>
   <section class="box factory ${hasArt ? "view-" + ui.view : ""}" ${A().bg ? `style="--bg:url('${aurl("bg_factory.jpg")}')"` : ""}>
     <h2>Factory Tool <small>每頁 ${ps} 台</small>
       ${hasArt ? `<span class="viewsw"><button class="${ui.view==="compact"?"on":""}" onclick="setView('compact')">精簡（10 台）</button><button class="${ui.view==="factory"?"on":""}" onclick="setView('factory')">工廠大圖（5 台）</button></span>` : ""}</h2>
@@ -548,6 +549,7 @@ function render() {
   ${bgPanel()}`) +
   pg("remote", `${remotePanel()}`) +
   pg("chan", `${channelsPanel()}`) +
+  pg("bigc", bigcPanel()) +
   pg("roster", `${modelPanel()}${rosterPanel()}${toolsPanel()}`) +
   pg("tidy", `${distributionPanel()}
   <section class="panels">
@@ -562,8 +564,23 @@ function render() {
   const ob = document.getElementById("onboard"); if (ob) ob.style.display = ui.tab === "tidy" ? "" : "none";
 }
 
+// ===== 📟 大C回報台（Josh 11/01 選 A）：傳聲筒本機服務執行大C 派給小C 的命令，這頁看進度；資料＝collector 每分鐘讀傳聲筒的進度檔 =====
+function bigcPanel() {
+  const B = S.bigc_board || {}, sv = B.service || {}, cur = B.current, q = B.queue || {};
+  const stIcon = {idle: "🟢 待命", running: "🔵 執行中", paused: "⏸️ 暫停"}[sv.state] || "—";
+  const tm = t => t ? String(t).replace("T", " ").slice(5, 16) : "";
+  const curHtml = cur ? `<div class="bigc-cur"><b>${esc(cur.project || "")}</b>｜${esc(cur.stage || "")}｜第 ${esc(cur.try || 1)} 次<div>${esc(cur.task || "").slice(0, 160)}</div>
+      <div class="muted">開始 ${tm(cur.started)}　最新：${esc(cur.progress || "—").slice(0, 160)}</div></div>` : `<div class="muted">目前沒有在跑的命令</div>`;
+  const rows = (B.recent || []).map(r => `<li><span class="${r.stage === "完成" ? "ok" : "bad"}">${r.stage === "完成" ? "✅" : "⛔"}</span> <b>${esc(r.project)}</b> <span class="muted">${tm(r.ended)}｜${esc(r.seconds)} 秒${r.tries > 1 ? "｜試 " + esc(r.tries) + " 次" : ""}</span><div>${esc((r.summary || "").slice(0, 140))}</div></li>`).join("") || '<li class="empty">還沒有紀錄</li>';
+  const ev = (B.events || []).slice(0, 15).map(e => `<li><span class="muted">${tm(e.time)}</span> 【${esc(e.stage)}】${esc(e.project || "")}｜${esc((e.text || "").slice(0, 100))}</li>`).join("") || '<li class="empty">沒有事件</li>';
+  return `<section class="box"><h2>📟 大C回報台 <small>大C 派給小C 的命令在這裡跑；Codex App「大C回報台」每 10 分鐘同步摘要＋接手備援　資料更新 ${tm(B.updated)}</small></h2>
+    <div class="bigc-head">服務：${stIcon}　排隊：待領 ${esc(q["待領"] ?? 0)}／處理中 ${esc(q["處理中"] ?? 0)}／已完成 ${esc(q["已完成"] ?? 0)}</div>${curHtml}</section>
+    <section class="panels"><div class="box"><h2>最近完成／卡住 <small>${(B.recent || []).length} 件</small></h2><ul class="feed">${rows}</ul></div>
+    <div class="box"><h2>事件流水 <small>開始／進度／完成／卡住</small></h2><ul class="feed">${ev}</ul></div></section>`;
+}
+
 // ===== 6 頁選單（Josh 10/09）=====
-const TABS = [["home", "🏠", "總覽"], ["machines", "🏢", "辦公室"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "📺", "頻道表"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
+const TABS = [["home", "🏠", "總覽"], ["machines", "🏢", "辦公室"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "📺", "頻道表"], ["bigc", "📟", "大C回報台"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
 function setTab(t) { ui.tab = t; store.set("cc.tab", t); render(); window.scrollTo(0, 0); }
 function tabCounts() {
   const c = {};
@@ -1194,7 +1211,8 @@ const OF_LOOK = {
   G: {shirt: "#7F77DD", pants: "#26215C", hair: "#F2C14E", acc: "glasses"},
   cc: {shirt: "#185FA5", pants: "#2C2C2A", hair: "#2C2C2A", acc: "headset"},
   boss: {shirt: "#BA7517", pants: "#412402", hair: "#2C2C2A", acc: "crown"},
-  ol: {shirt: "#2C2C2A", pants: "#2C2C2A", hair: "#3A2418", acc: "ol"},   // 老闆秘書（Josh 11/01）；小C 畫好 ol_*.png 前先用這個
+  ol: {shirt: "#2C2C2A", pants: "#2C2C2A", hair: "#3A2418", acc: "ol"},
+  ol2: {shirt: "#C62828", pants: "#C62828", hair: "#3A2418", acc: "ol"}, ol3: {shirt: "#FFFFFF", pants: "#2C2C2A", hair: "#3A2418", acc: "ol"}, ol4: {shirt: "#1A237E", pants: "#1A237E", hair: "#3A2418", acc: "ol"},   // 老闆秘書（Josh 11/01）；小C 畫好 ol_*.png 前先用這個
 };
 function ofSvg(c, leg, arm, type) {
   const skin = "#F6D2B0";
@@ -1223,7 +1241,9 @@ ${eyes}<ellipse cx="35" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/><el
 }
 const OF_FR = {stand: [0, 0, 0], w0: [18, 22, 0], w1: [0, 0, 0], w2: [-18, -22, 0], t0: [0, 0, 1], t1: [0, 12, 1]};
 // 11/01 小C 交的 Q 版人物圖（assets/web/office/，128×160）；圖載不到就退回上面的向量小人
-const OF_ART_VER = "1101-uniform";
+const OF_ART_VER = "1101-couple";
+// 秘書換裝（Josh 11/01「常換衣服」）：每 20 分鐘換一套；有新套裝就加進來（ol4 小禮服還在畫）
+const OF_OL_OUTFITS = ["ol", "ol2", "ol3", "ol4"];
 const OF_SPR = {stand: "idle", w0: "walk1", w1: "walk2", w2: "walk3", w3: "walk4", t0: "sit1", t1: "sit2"};
 function ofImg(look, fr) {
   const k = look + fr; if (OF.img[k]) return OF.img[k];
@@ -1253,6 +1273,7 @@ const OF_FAKE_A = ["星光", "藍海", "晨曦", "飛鷹", "青松", "極光", "
 const OF_FAKE_B = ["工作室", "研究所", "小組", "實驗室", "工坊", "企劃部", "分析室", "設計組"];
 function ofHash(t) { let h = 7; for (const ch of t) h = (h * 131 + ch.charCodeAt(0)) >>> 0; return h; }
 function ofName(m) { const real = m.name.replace(/（.*）/, ""); if (!OF_SET.fake) return real; const h = ofHash(m.id); return OF_FAKE_A[h % OF_FAKE_A.length] + OF_FAKE_B[(h >>> 5) % OF_FAKE_B.length]; }
+function ofGaming(m) { return !ofActive(m) && m.status !== "STALE" && ofHash(m.id) % 2 === 0 && (ofHash(m.id) >>> 3) % 2 === 0; }   // 在位子上摸魚的人裡，一部分是在打電動
 function ofSay(m) {
   if (OF_SET.fake) return pick(["處理資料中", "寫程式中", "整理報告", "跑測試中", "開會回來"]);   // 錄影模式不露真實工作內容
   const f = (S.feed || []).find(x => x.pid === m.id);
@@ -1261,10 +1282,13 @@ function ofSay(m) {
 function ofSettingsUI() {
   const box = OF.setBox; if (!box) return;
   const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny");
+  // Josh 11/01：錄影時設定列的字也會被錄進去 → 隱藏真名打開時，整列收成一個小齒輪（標題說明也藏），點齒輪才展開
+  document.querySelectorAll(".ofTitleNote").forEach(e => e.style.display = OF_SET.fake ? "none" : "");
+  if (OF_SET.fake && !OF.setOpen) { box.innerHTML = `<button id="ofGear" title="辦公室設定" style="padding:2px 8px;opacity:.55">⚙</button>`; box.querySelector("#ofGear").onclick = () => { OF.setOpen = true; ofSettingsUI(); }; return; }
   box.innerHTML = `<label style="margin-right:14px"><input type="checkbox" id="ofFake" ${OF_SET.fake ? "checked" : ""}> 隱藏真名（錄影／分享用，名稱亂搭、不顯示工作內容）</label>
     <button id="ofSetBtn">⚙️ 選要顯示的專案（${ms.length - OF_SET.hide.length}/${ms.length}）</button>
     <div id="ofList" style="display:${OF.setOpen ? "flex" : "none"};flex-wrap:wrap;gap:6px 14px;margin-top:8px">${ms.map(m => `<label><input type="checkbox" data-id="${esc(m.id)}" ${OF_SET.hide.includes(m.id) ? "" : "checked"}> ${esc(m.name.replace(/（.*）/, ""))}</label>`).join("")}</div>`;
-  box.querySelector("#ofFake").onchange = e => { OF_SET.fake = e.target.checked; ofSave(); OF.ppl = []; ofSync(); OF.info.innerHTML = ""; };
+  box.querySelector("#ofFake").onchange = e => { OF_SET.fake = e.target.checked; ofSave(); OF.ppl = []; ofSync(); OF.info.innerHTML = ""; OF.setOpen = false; ofSettingsUI(); };   // 勾了就馬上收起來
   box.querySelector("#ofSetBtn").onclick = () => { OF.setOpen = !OF.setOpen; ofSettingsUI(); };
   box.querySelectorAll("#ofList input").forEach(i => i.onchange = () => {
     const id = i.dataset.id; OF_SET.hide = OF_SET.hide.filter(x => x !== id); if (!i.checked) OF_SET.hide.push(id);
@@ -1351,13 +1375,13 @@ function ofSync() {
     const act = ofActive(m), deskSleep = !act && (m.status === "STALE" || ofHash(m.id) % 2 === 0);
     const idx = Object.values(OF.desks).filter(x => !ofActive(x.m) && !(x.m.status === "STALE" || ofHash(x.m.id) % 2 === 0)).indexOf(d);   // 摸魚區一人一格
     const home = act || deskSleep ? ofDeskPt(d, false) : ofRoomPt("摸魚區", idx), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
-    p.deskSleep = deskSleep;
+    p.deskSleep = deskSleep; p.gaming = ofGaming(m);   // Josh 11/01：有的摸魚在位置上打遊戲
     Object.assign(p, {name: ofName(m), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: act, fail: m.status === "FAILED", idleLv: act ? 0 : m.status === "STALE" ? 2 : 1});   // 打混等級：1＝摸魚滑手機、2＝超過 7 天沒動＝睡死結蜘蛛網
     ppl.push(p);
   });
   const add = (k, o) => { const p = keep[k] || ofMk(Object.assign({key: k}, o.home, {at: o.home})); ppl.push(Object.assign(p, o)); };
   add("boss", {name: OF_SET.fake ? "老闆" : "水果王", look: "boss", home: Object.assign(ofRoomPt("主管室", 0), {sit: true}), role: "boss", active: false});
-  add("ol", {name: "秘書", look: "ol", home: Object.assign(ofRoomPt("主管室", 2), {sit: false}), role: "ol", active: true});   // 上班下班都跟著老闆
+  add("ol", {name: "秘書", look: OF_OL_OUTFITS[Math.floor(Date.now() / 1200e3) % OF_OL_OUTFITS.length], home: Object.assign(ofRoomPt("主管室", 2), {sit: false}), role: "ol", active: true});   // 上班下班都跟著老闆
   add("cc", {name: "總機", look: "cc", home: ofRoomPt("主管室", 1), role: "cc", active: true});
   add("sunny", {name: OF_SET.fake ? "外勤" : "Sunny", look: "G", home: ofRoomPt("摸魚區", 5), role: "G", active: true});
   const nx = Math.max(2, Math.min(5, Object.values(OF.desks).filter(d => ofActive(d.m)).length >> 1));
@@ -1378,6 +1402,8 @@ function ofThink(p) {
   if (!p.active) {   // 沒事做的：回摸魚區窩著，偶爾晃去茶水間
     p.next = p.fail ? "!" : pick(OF_LINES.摸魚); p.wait = 6 + Math.random() * 10;
     if (away) { p.path = ofRoute(ofFrom(p), p.home); p.at = p.home; p.sit = false; }
+    else if (!p.deskSleep && Math.random() < 0.12) {   // Josh 11/01：有的人打混是去找人陪 → 摟著女生出去晃一圈再回來
+      const ds = Object.values(OF.desks), dd = pick(ds), to = ofDeskPt(dd, true); p.date = true; p.path = ofRoute(ofFrom(p), to); p.at = to; p.next = pick(["💕", "去約會一下", "噓…別跟老闆說"]); p.bubble = "💕"; p.bt = 2; }
     else if (!p.deskSleep && Math.random() < 0.15) { const to = ofRoomPt("茶水間"); p.path = ofRoute(ofFrom(p), to); p.at = to; p.next = "☕"; }
     else { p.bubble = Math.random() < 0.5 ? p.next : ""; p.bt = 3; }
     return;
@@ -1433,7 +1459,7 @@ function ofStep(dt) {
       const v = (p.small ? p.spd * 1.2 : p.spd) * p.vel * dt;
       p.step += v;   // 腳步跟著走的距離換格，走慢腳也慢，不會原地滑步
       if (Math.abs(dx) > 0.5) p.dir = dx < 0 ? -1 : 1;
-      if (d <= v) { p.x = t.x; p.y = t.y; p.path.shift(); if (!p.path.length) { p.vel = 0; p.bubble = p.next || ""; p.bt = 3.5; p.sit = !!p.at.sit; } }
+      if (d <= v) { p.x = t.x; p.y = t.y; p.path.shift(); if (!p.path.length) { p.vel = 0; if (p.date && p.at === p.home) p.date = false; p.bubble = p.next || ""; p.bt = 3.5; p.sit = !!p.at.sit; } }
       else { p.x += dx / d * v; p.y += dy / d * v; }
     } else if ((p.wait -= dt) <= 0) ofThink(p);
     if (p.bt > 0 && (p.bt -= dt) <= 0) p.bubble = p.fail ? "!" : "";
@@ -1580,7 +1606,14 @@ function ofDraw(now) {
     ofDesk(c, d, P);
     const sx = OF_SCENE.desk && OF_SCENE.desk.naturalWidth ? [d.x + 39, d.y + 7, 31, 12] : [d.x + 67, d.y + 5, 32, 16];   // 小C 桌子圖的螢幕位置／手畫螢幕
     if (!(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = "#2B2F36"; ofRR(c, d.x + 64, d.y + 2, 38, 22, 3); c.fill(); }
-    if (fail || on || !(OF_SCENE.desk && OF_SCENE.desk.naturalWidth)) { c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7FD6FF" : "#B8ECFF") : "#46505C"; c.fillRect(...sx); }
+    const game = !fail && !on && ofGaming(d.m);
+    if (game) {   // 螢幕上在打電動：黑底、方塊一直往下掉、小人跳來跳去
+      c.save(); c.beginPath(); c.rect(...sx); c.clip(); c.fillStyle = "#1A1A2E"; c.fillRect(...sx);
+      for (let k = 0; k < 5; k++) { const fy = (now / 18 + k * 37 + d.x) % (sx[3] + 6) - 6; c.fillStyle = ["#FF5252", "#FFD740", "#69F0AE", "#40C4FF", "#E040FB"][k]; c.fillRect(sx[0] + 3 + k * (sx[2] - 6) / 5, sx[1] + fy, 4, 4); }
+      const jx = sx[0] + ((now / 25 + d.x) % sx[2]), jy = sx[1] + sx[3] - 4 - Math.abs(Math.sin(now / 160)) * (sx[3] / 2); c.fillStyle = "#FFFFFF"; c.fillRect(jx, jy, 3, 3);
+      c.restore();
+    }
+    if (!game && (fail || on || !(OF_SCENE.desk && OF_SCENE.desk.naturalWidth))) { c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7FD6FF" : "#B8ECFF") : "#46505C"; c.fillRect(...sx); }
     if (on && !fail) {   // Josh 11/01「機台跑的時候螢幕要有動畫」：機台在跑＝走勢圖＋進度條；只是最近有動態＝字在捲
       c.save(); c.beginPath(); c.rect(...sx); c.clip();
       if (d.m.status === "RUNNING") {
@@ -1599,19 +1632,20 @@ function ofDraw(now) {
 }
 function ofPerson(c, p, now) {
   const walk = p.path.length > 0;
-  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step / 6) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : p.sit ? "t0" : "stand";   // 在位子上睡的不打字
-  const im = ofImg(p.look, fr);
+  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step / 6) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : p.sit ? (p.gaming ? (Math.floor(now / 120 + p.x) % 2 ? "t0" : "t1") : "t0") : "stand";   // 睡的不動、打電動的手按很快
+  const im = ofImg(p.date ? "couple" : p.look, fr);   // 摸魚溜出去約會：換成摟著女生的雙人圖
   // 走在直的通道靠一邊、橫的走道靠上或下，兩人同路不會疊成一個；每兩格輕輕上下起伏
   const seg = walk ? p.path[0] : null, vert = seg && Math.abs(seg.x - p.x) < Math.abs(seg.y - p.y);
   const bob = (walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0) - (p.scare > 0 ? Math.abs(Math.sin(p.scare * 16)) * 5 : 0);   // 被老闆嚇到會跳一下
   const x = p.x + (walk && vert ? p.lane : 0), y = p.y + (walk && !vert ? p.lane * 0.6 : 0) + bob + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
-  const s = im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32), w = (im.spr ? 128 : 100) * s, h = (im.spr ? 160 : 120) * s;
+  const s = im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32), h = (im.spr ? 160 : 120) * s, w = im.spr && im.naturalWidth ? h * im.naturalWidth / im.naturalHeight : (im.spr ? 128 : 100) * s;   // 情侶圖比較寬，照圖的比例畫
   const dim = false;   // 11/01 沒事做的改去摸魚區，不再變淡
   c.save(); c.globalAlpha = dim ? 0.6 : 1;
   if (walk) { c.fillStyle = "rgba(0,0,0,.16)"; c.beginPath(); c.ellipse(x, p.y + (vert ? 0 : p.lane * 0.6) + 2, w * 0.28, 2.5, 0, 0, 7); c.fill(); }
   // 往左走就把圖左右翻過來（圖本身是朝右走）
   const idle = p.role === "owner" && !p.active && !walk && !p.sit ? p.idleLv : 0;
-  if (p.role === "owner" && !p.active && !walk && p.sit) {   // 趴在位子上睡：Z 往上飄，超過 7 天沒動的頭上再結蜘蛛網
+  if (p.gaming && p.sit && !walk && !p.bubble && Math.random() < 0.003) { p.bubble = pick(["🎮 再一局", "差一點破關！", "吃雞了🐔", "這關好難", "老闆不在吧…"]); p.bt = 2.5; }
+  if (p.role === "owner" && !p.active && !walk && p.sit && !p.gaming) {   // 趴在位子上睡：Z 往上飄，超過 7 天沒動的頭上再結蜘蛛網
     c.save(); c.font = "500 10px sans-serif"; for (let k = 0; k < 3; k++) { const ph = ((now / 1300) + k / 3 + x / 97) % 1; c.globalAlpha = 1 - ph; c.fillStyle = "#5C6BC0"; c.fillText(k % 2 ? "z" : "Z", x + 8 + ph * 8, y - 40 - ph * 18); } c.restore();
     if (p.idleLv === 2) { c.font = "11px sans-serif"; c.fillText("🕸️", x - 20, y - 36); }
   }
@@ -1673,6 +1707,7 @@ function officeAttach() {
     document.addEventListener("visibilitychange", () => { if (!document.hidden && !OF.raf) OF.raf = requestAnimationFrame(ofLoop); });
   }
   mount.appendChild(OF.wrap);
+  document.querySelectorAll(".ofTitleNote").forEach(e => e.style.display = OF_SET.fake ? "none" : "");   // 每 30 秒重畫頁面後也要藏
   const cols = OF.cols, n = Object.keys(OF.desks).length; ofLayout();
   if (cols !== OF.cols || n !== Object.keys(OF.desks).length) OF.ppl = [];   // 版面變了：大家回自己位子重來
   ofSync();
