@@ -223,6 +223,7 @@
   }
   #onboard .obgrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,420px); gap: 16px; }
   @media (max-width:700px) { #onboard { margin: 12px 8px !important; } #onboard .obgrid { grid-template-columns: 1fr; } }
+.office .officeinfo{font-size:14px;margin-top:8px;line-height:1.6;min-height:1.6em}
 </style>
 </head>
 <body>
@@ -503,6 +504,7 @@ function render() {
 
   </section>`) +
   pg("machines", `
+  <section class="box"><h2>🏢 辦公室 <small>有在動的專案會走來走去；點人看他在做什麼</small></h2><div id="officeMount"></div></section>
   <section class="box factory ${hasArt ? "view-" + ui.view : ""}" ${A().bg ? `style="--bg:url('${aurl("bg_factory.jpg")}')"` : ""}>
     <h2>Factory Tool <small>每頁 ${ps} 台</small>
       ${hasArt ? `<span class="viewsw"><button class="${ui.view==="compact"?"on":""}" onclick="setView('compact')">精簡（10 台）</button><button class="${ui.view==="factory"?"on":""}" onclick="setView('factory')">工廠大圖（5 台）</button></span>` : ""}</h2>
@@ -556,12 +558,12 @@ function render() {
           <div class="x">${esc(f.text)}</div></span>
         <span class="t">${ago(f.t)}</span></li>`).join("") || '<li class="empty">沒有動態</li>'}</ul></div>
   </section>`);
-  renderTabs();
+  renderTabs(); officeAttach();
   const ob = document.getElementById("onboard"); if (ob) ob.style.display = ui.tab === "tidy" ? "" : "none";
 }
 
 // ===== 6 頁選單（Josh 10/09）=====
-const TABS = [["home", "🏠", "總覽"], ["machines", "🏭", "機台"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "📺", "頻道表"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
+const TABS = [["home", "🏠", "總覽"], ["machines", "🏢", "辦公室"], ["sched", "⏰", "排程"], ["remote", "📱", "遠端"], ["chan", "📺", "頻道表"], ["roster", "📋", "名冊"], ["tidy", "🧹", "整理"]];
 function setTab(t) { ui.tab = t; store.set("cc.tab", t); render(); window.scrollTo(0, 0); }
 function tabCounts() {
   const c = {};
@@ -1180,6 +1182,243 @@ function load() {
   document.head.appendChild(s);
 }
 function tick() { document.getElementById("clock").textContent = new Date().toLocaleString("zh-TW", {hour12: false, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit"}); }
+// ===== 🏢 虛擬辦公室（Josh 11/01：產線改 office、每個專案一位負責人；有在動的專案會走來走去，大C／小C／Sunny 都會走）=====
+// Josh 11/01 第二版：只走走道、固定路線（座位→身後走道→直向通道→目的地走道／房門→房內固定點），人物改 Q 版全身。
+// 只做動畫、不準確同步；資料沿用 S（每 30 秒重載），不花 AI 額度。只在辦公室頁看得到時才跑動畫。
+const OF = {cv: null, ctx: null, wrap: null, info: null, ppl: [], desks: {}, rooms: {}, spots: {}, aisles: [], W: 960, H: 600, cols: 6, last: 0, sel: null, raf: 0, img: {}};
+const OF_TOP = 186, OF_ROW = 96, OF_D0 = 214;   // 上方大走廊 y、每排間距、第一排桌子 y
+// Q 版人物（跟 11/01 給 Josh 看的設定圖同一套）：預先畫成小圖，canvas 直接貼
+const OF_LOOK = {
+  C: {shirt: "#D97757", pants: "#3C3489", hair: "#4a3428", acc: "spark"},
+  X: {shirt: "#1D9E75", pants: "#2C2C2A", hair: "#2C2C2A", acc: "cap"},
+  G: {shirt: "#7F77DD", pants: "#26215C", hair: "#F2C14E", acc: "glasses"},
+  cc: {shirt: "#185FA5", pants: "#2C2C2A", hair: "#2C2C2A", acc: "headset"},
+  boss: {shirt: "#BA7517", pants: "#412402", hair: "#2C2C2A", acc: "crown"},
+};
+function ofSvg(c, leg, arm, type) {
+  const skin = "#F6D2B0";
+  const acc = {
+    spark: `<g transform="translate(50 76)">${[0, 45, 90, 135].map(a => `<line x1="0" y1="-5" x2="0" y2="5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" transform="rotate(${a})"/>`).join("")}</g>`,
+    cap: `<path d="M27 31 Q50 5 73 31 Z" fill="#1D9E75"/><rect x="58" y="27" width="22" height="6" rx="3" fill="#0F6E56"/>`,
+    glasses: `<rect x="34" y="38" width="13" height="8" rx="3" fill="#26215C"/><rect x="53" y="38" width="13" height="8" rx="3" fill="#26215C"/><line x1="47" y1="41" x2="53" y2="41" stroke="#26215C" stroke-width="2"/>`,
+    headset: `<path d="M26 40 Q50 4 74 40" fill="none" stroke="#2C2C2A" stroke-width="4"/><rect x="22" y="36" width="8" height="12" rx="3" fill="#2C2C2A"/><path d="M26 48 Q30 58 42 56" fill="none" stroke="#2C2C2A" stroke-width="2"/>`,
+    crown: `<path d="M34 16 L34 4 L42 11 L50 1 L58 11 L66 4 L66 16 Z" fill="#EF9F27" stroke="#BA7517" stroke-width="1.5"/><circle cx="50" cy="9" r="2" fill="#E24B4A"/>`,
+  }[c.acc];
+  const eyes = c.acc === "glasses" ? "" : `<ellipse cx="41" cy="42" rx="2.6" ry="3.4" fill="#2C2C2A"/><ellipse cx="59" cy="42" rx="2.6" ry="3.4" fill="#2C2C2A"/><circle cx="42" cy="41" r="1" fill="#fff"/><circle cx="60" cy="41" r="1" fill="#fff"/>`;
+  const aL = type ? -60 - arm : -arm, aR = type ? 60 + arm : arm, bob = Math.abs(leg) > 1 ? -2 : 0;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+<ellipse cx="50" cy="114" rx="22" ry="4" fill="#000" opacity=".15"/>
+<g transform="rotate(${leg} 44 92)"><rect x="40" y="88" width="9" height="20" rx="4" fill="${c.pants}"/><ellipse cx="44" cy="109" rx="7" ry="4" fill="#2C2C2A"/></g>
+<g transform="rotate(${-leg} 56 92)"><rect x="51" y="88" width="9" height="20" rx="4" fill="${c.pants}"/><ellipse cx="56" cy="109" rx="7" ry="4" fill="#2C2C2A"/></g>
+<g transform="translate(0 ${bob})">
+<g transform="rotate(${aL} 34 70)"><rect x="26" y="66" width="9" height="20" rx="4.5" fill="${c.shirt}"/><circle cx="30" cy="87" r="4.5" fill="${skin}"/></g>
+<g transform="rotate(${aR} 66 70)"><rect x="65" y="66" width="9" height="20" rx="4.5" fill="${c.shirt}"/><circle cx="70" cy="87" r="4.5" fill="${skin}"/></g>
+<rect x="33" y="62" width="34" height="30" rx="11" fill="${c.shirt}"/>
+<circle cx="50" cy="38" r="25" fill="${skin}"/>
+<path d="M25 38 Q24 12 50 12 Q76 12 75 38 Q70 24 56 22 Q46 30 30 30 Z" fill="${c.hair}"/>
+${eyes}<ellipse cx="35" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/><ellipse cx="65" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/>
+<path d="M45 52 Q50 56 55 52" fill="none" stroke="#2C2C2A" stroke-width="1.8" stroke-linecap="round"/>${acc}</g></svg>`;
+}
+const OF_FR = {stand: [0, 0, 0], w0: [18, 22, 0], w1: [0, 0, 0], w2: [-18, -22, 0], t0: [0, 0, 1], t1: [0, 12, 1]};
+function ofImg(look, fr) {
+  const k = look + fr; if (OF.img[k]) return OF.img[k];
+  const [leg, arm, type] = OF_FR[fr], im = new Image();
+  im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(ofSvg(OF_LOOK[look], leg, arm, type));
+  return OF.img[k] = im;
+}
+function ofActive(m) {
+  if (m.status === "RUNNING") return true;
+  const f = (S.feed || []).find(x => x.pid === m.id);
+  return !!(f && (Date.now() - new Date(f.t.replace(" ", "T")).getTime()) < 36 * 3600e3);
+}
+function ofSay(m) {
+  const f = (S.feed || []).find(x => x.pid === m.id);
+  return f ? f.text.replace(/\s+/g, " ").slice(0, 12) + "…" : "";
+}
+function ofLayout() {
+  const w = OF.wrap.clientWidth || 360;
+  OF.cols = w < 560 ? 3 : w < 820 ? 4 : 6;
+  OF.W = 40 + OF.cols * 150;
+  const rw = (OF.W - 50) / 4, R = OF.rooms;
+  ["主管室", "會議室", "茶水間", "大廳"].forEach((n, i) => R[n] = {x: 10 + i * (rw + 10), y: 10, w: rw, h: 150, door: 10 + i * (rw + 10) + rw / 2});
+  // 房內固定站位（不亂站）
+  const S2 = OF.spots = {};
+  S2.主管室 = [{x: R.主管室.x + 40, y: 128}, {x: R.主管室.x + R.主管室.w / 2, y: 140}];
+  S2.會議室 = [-1, 1].flatMap(s => [{x: R.會議室.door - 30, y: 100 + s * 26}, {x: R.會議室.door, y: 100 + s * 26}, {x: R.會議室.door + 30, y: 100 + s * 26}]);
+  S2.茶水間 = [0, 1, 2, 3].map(i => ({x: R.茶水間.x + 24 + i * 22, y: 128}));
+  S2.大廳 = [0, 1, 2].map(i => ({x: R.大廳.x + 30 + i * 26, y: 120}));
+  const ms = S.machines.filter(m => m.id !== "control-center" && m.id !== "sunny");
+  OF.desks = {};
+  ms.forEach((m, i) => {
+    const c = i % OF.cols, r = Math.floor(i / OF.cols), x = 40 + c * 150, y = OF_D0 + r * OF_ROW;
+    OF.desks[m.id] = {x, y, r, m, seat: {x: x + 36, y: y + 12}, aisleY: y - 14};
+  });
+  // 直向通道：最左、每兩欄之間、最右
+  OF.aisles = [16].concat([...Array(OF.cols - 1)].map((_, c) => 40 + c * 150 + 130), [OF.W - 16]);
+  OF.H = OF_D0 + Math.ceil(ms.length / OF.cols) * OF_ROW + 10;
+  OF.cv.width = OF.W; OF.cv.height = OF.H;
+}
+// 一律走走道：起點先退到自己的走道 → 走到最近的直向通道 → 直走到目的地那條走道 → 橫走到目的地 → 進去
+function ofLane(p) { return p.y <= 160 ? {y: OF_TOP, enter: [{x: p.door, y: OF_TOP}, {x: p.door, y: 150}]} : {y: p.aisleY, enter: []}; }
+function ofRoute(from, to) {
+  const pts = [];
+  const a = from.lane, b = to.lane;
+  if (from.inRoom) pts.push({x: from.door, y: from.y}, {x: from.door, y: 150}, {x: from.door, y: OF_TOP});
+  else pts.push({x: from.x, y: a});
+  const sx = from.inRoom ? from.door : from.x, tx = to.inRoom ? to.door : to.x;
+  if (a !== b) {
+    const mid = (sx + tx) / 2, ax = OF.aisles.reduce((best, v) => Math.abs(v - mid) < Math.abs(best - mid) ? v : best, OF.aisles[0]);
+    pts.push({x: ax, y: a}, {x: ax, y: b});
+  }
+  if (to.inRoom) pts.push({x: to.door, y: b}, {x: to.door, y: 150}, {x: to.door, y: to.y}, {x: to.x, y: to.y});
+  else pts.push({x: tx, y: b}, {x: to.x, y: to.y});
+  return pts;
+}
+function ofRoomPt(n, i) { const s = OF.spots[n], p = s[(i ?? Math.floor(Math.random() * s.length)) % s.length]; return {x: p.x, y: p.y, inRoom: true, door: OF.rooms[n].door, lane: OF_TOP, room: n}; }
+function ofDeskPt(d, visit) { return visit ? {x: d.seat.x + 26, y: d.aisleY, lane: d.aisleY, desk: d} : {x: d.seat.x, y: d.seat.y, lane: d.aisleY, desk: d, sit: true}; }
+const OF_LINES = {
+  desk: ["討論一下", "這個你看看", "幫我對一下", "資料好了"], 主管室: ["回報總機", "要 Josh 決定", "做完了"],
+  會議室: ["開會", "對答案", "排優先"], 茶水間: ["☕", "休息一下", "🍉"], 大廳: ["外出查證", "抓圖回來"],
+  X: ["檢查中", "跑回測", "挑毛病", "補資料"], G: ["X 即時消息", "查證中", "抓圖", "上傳雲端"],
+};
+// 頭頂水果（Josh 11/01）：聯盟用自己的水果，其他專案照 id 固定分一個
+const OF_FRUIT = {"high-win-alliance": "🍉", "yt-scan": "🍒", "busy-pineapple": "🍍", "operator": "🍎", "etf-alliance": "🍊"};
+const OF_FRUITS = ["🍋", "🍇", "🍓", "🍑", "🥝", "🍌", "🍐", "🥭", "🫐", "🍈", "🥥", "🍏"];
+function ofFruit(id) { if (OF_FRUIT[id]) return OF_FRUIT[id]; let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return OF_FRUITS[h % OF_FRUITS.length]; }
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function ofMk(o) { return Object.assign({path: [], wait: Math.random() * 3, bubble: "", bt: 0, step: 0}, o); }
+function ofSync() {
+  const keep = {};
+  OF.ppl.forEach(p => keep[p.key] = p);
+  const ppl = [];
+  Object.values(OF.desks).forEach(d => {
+    const m = d.m, ai = m.ai || "", k = "p:" + m.id, look = /大C|Claude/.test(ai) ? "C" : /Sunny/.test(ai) ? "G" : "X";
+    const home = ofDeskPt(d, false), p = keep[k] || ofMk(Object.assign({key: k}, home, {at: home}));
+    Object.assign(p, {name: m.name.replace(/（.*）/, ""), look, fruit: ofFruit(m.id), home, desk: d, m, role: "owner", active: ofActive(m), fail: m.status === "FAILED"});
+    ppl.push(p);
+  });
+  const add = (k, o) => { const p = keep[k] || ofMk(Object.assign({key: k}, o.home, {at: o.home})); ppl.push(Object.assign(p, o)); };
+  add("boss", {name: "水果王", look: "boss", home: Object.assign(ofRoomPt("主管室", 0), {sit: true}), role: "boss", active: false});
+  add("cc", {name: "總機", look: "cc", home: ofRoomPt("主管室", 1), role: "cc", active: true});
+  add("sunny", {name: "Sunny", look: "G", home: ofRoomPt("大廳", 1), role: "G", active: true});
+  const nx = Math.max(2, Math.min(5, Object.values(OF.desks).filter(d => ofActive(d.m)).length >> 1));
+  for (let i = 0; i < nx; i++) add("x" + i, {name: "小C", look: "X", home: ofRoomPt("茶水間", i), role: "X", small: true, active: true});
+  OF.ppl = ppl;
+}
+function ofThink(p) {
+  if (!p.active || p.role === "boss") { p.wait = 6; p.bubble = p.fail ? "!" : ""; return; }
+  const act = Object.values(OF.desks).filter(d => ofActive(d.m) && d !== p.desk);
+  const away = p.at !== p.home;
+  let to, line;
+  if (away && Math.random() < 0.7) { to = p.home; line = p.role === "owner" ? ofSay(p.m) : ""; }
+  else if (p.role === "X") { const d = pick(act); to = d && Math.random() < 0.85 ? ofDeskPt(d, true) : ofRoomPt("茶水間"); line = pick(OF_LINES.X); }
+  else if (p.role === "G") { const d = pick(act); to = d && Math.random() < 0.6 ? ofDeskPt(d, true) : ofRoomPt("大廳"); line = pick(OF_LINES.G); }
+  else if (p.role === "cc") { const d = pick(act); to = d && Math.random() < 0.5 ? ofDeskPt(d, true) : ofRoomPt("會議室"); line = to.desk ? "派工" : "開會"; }
+  else {
+    const r = Math.random(), d = pick(act), k = r < 0.45 && d ? "desk" : r < 0.65 ? "主管室" : r < 0.82 ? "會議室" : "茶水間";
+    to = k === "desk" ? ofDeskPt(d, true) : ofRoomPt(k); line = pick(OF_LINES[k]);
+  }
+  p.path = ofRoute(p.at, to); p.at = to; p.next = line; p.wait = 2.5 + Math.random() * 4; p.bubble = ""; p.sit = false;
+}
+function ofStep(dt) {
+  OF.ppl.forEach(p => {
+    if (p.path.length) {
+      const t = p.path[0], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy), v = (p.small ? 62 : 50) * dt;
+      p.step += dt;
+      if (d <= v) { p.x = t.x; p.y = t.y; p.path.shift(); if (!p.path.length) { p.bubble = p.next || ""; p.bt = 3.5; p.sit = !!p.at.sit; } }
+      else { p.x += dx / d * v; p.y += dy / d * v; }
+    } else if ((p.wait -= dt) <= 0) ofThink(p);
+    if (p.bt > 0 && (p.bt -= dt) <= 0) p.bubble = p.fail ? "!" : "";
+  });
+}
+function ofRR(c, x, y, w, h, r) { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); }
+function ofDark() { const t = document.documentElement.dataset.theme; return t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches); }
+function ofDraw(now) {
+  const c = OF.ctx, W = OF.W, H = OF.H, dark = ofDark(), txt = dark ? "#cfd3da" : "#5F5E5A";
+  c.fillStyle = dark ? "#23262b" : "#EFE8DC"; c.fillRect(0, 0, W, H);
+  // 走道（地毯）：上方大走廊、每排桌子後面的橫走道、直向通道
+  c.fillStyle = dark ? "#30353d" : "#E2D6C2";
+  c.fillRect(0, OF_TOP - 10, W, 20);
+  Object.values(OF.desks).filter(d => d.x === 40).forEach(d => c.fillRect(0, d.aisleY - 9, W, 18));
+  const lastY = OF.H - 10;
+  OF.aisles.forEach(x => c.fillRect(x - 9, OF_TOP, 18, lastY - OF_TOP));
+  Object.entries(OF.rooms).forEach(([n, r], i) => {
+    c.fillStyle = dark ? ["#2f2b3a", "#26323a", "#3a3226", "#2a3326"][i] : ["#E9E3F5", "#DDEBF2", "#F6E7D2", "#E3EFD9"][i];
+    ofRR(c, r.x, r.y, r.w, r.h, 10); c.fill(); c.strokeStyle = dark ? "#555" : "#CFC6B8"; c.lineWidth = 2; c.stroke();
+    c.fillStyle = dark ? "#23262b" : "#EFE8DC"; c.fillRect(r.door - 14, r.y + r.h - 2, 28, 6);   // 門口
+    c.fillStyle = txt; c.font = "500 14px sans-serif"; c.fillText(n, r.x + 10, r.y + 22);
+    c.fillStyle = dark ? "#54483a" : "#C9A57A";
+    if (n === "會議室") { ofRR(c, r.door - 50, 106, 100, 20, 10); c.fill(); }
+    if (n === "茶水間") { c.fillRect(r.x + r.w - 36, r.y + 34, 24, 34); c.fillStyle = "#6b4a2b"; c.fillRect(r.x + r.w - 30, r.y + 42, 12, 10); }
+    if (n === "主管室") { c.fillRect(r.x + 18, 110, 46, 14); }
+    if (n === "大廳") { c.fillStyle = "#6a9a5a"; c.beginPath(); c.arc(r.x + r.w - 22, r.y + 40, 12, 0, 7); c.fill(); }
+  });
+  c.lineWidth = 1;
+  const seated = OF.ppl.filter(p => p.sit && !p.path.length);
+  seated.forEach(p => ofPerson(c, p, now));
+  Object.values(OF.desks).forEach(d => {
+    const on = ofActive(d.m), fail = d.m.status === "FAILED";
+    c.fillStyle = dark ? "#5a4a38" : "#C9A57A"; ofRR(c, d.x, d.y + 22, 110, 26, 4); c.fill();
+    c.fillStyle = "#2b2f36"; c.fillRect(d.x + 64, d.y + 4, 34, 20);
+    c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7fd6ff" : "#b8ecff") : "#46505c"; c.fillRect(d.x + 66, d.y + 6, 30, 15);
+    c.fillStyle = txt; c.font = "12px sans-serif"; c.textAlign = "center";
+    c.fillText(d.m.name.replace(/（.*）/, "").slice(0, 8), d.x + 55, d.y + 62); c.textAlign = "left";
+  });
+  OF.ppl.filter(p => !seated.includes(p)).sort((a, b) => a.y - b.y).forEach(p => ofPerson(c, p, now));
+}
+function ofPerson(c, p, now) {
+  const walk = p.path.length > 0, s = p.small ? 0.26 : 0.32;
+  const fr = walk ? ["w0", "w1", "w2", "w1"][Math.floor(p.step * 8) % 4] : p.sit && p.active ? (Math.floor(now / 220 + p.x) % 2 ? "t0" : "t1") : "stand";
+  const im = ofImg(p.look, fr), w = 100 * s, h = 120 * s, x = p.x, y = p.y + (p.sit ? 6 : 0);
+  const dim = !p.active && p.role === "owner";
+  c.save(); c.globalAlpha = dim ? 0.6 : 1;
+  if (im.complete) c.drawImage(im, x - w / 2, y - h + 4, w, h);
+  if (p.fruit) { c.font = (p.small ? 11 : 15) + "px sans-serif"; c.textAlign = "center"; c.fillText(p.fruit, x + 1, y - h + 12); c.textAlign = "left"; }
+  c.globalAlpha = 1;
+  if (p.role !== "owner" || OF.sel === p) { c.font = "500 11px sans-serif"; const t = p.name, tw = c.measureText(t).width + 8; c.fillStyle = "#fff"; c.strokeStyle = OF_LOOK[p.look].shirt; ofRR(c, x - tw / 2, y + 4, tw, 15, 4); c.fill(); c.stroke(); c.fillStyle = "#333"; c.textAlign = "center"; c.fillText(t, x, y + 15); c.textAlign = "left"; }
+  const b = p.fail && !p.bubble ? "!" : p.bubble || (dim && Math.floor(now / 1500 + x) % 4 === 0 ? "z" : "");
+  if (b) {
+    c.font = "12px sans-serif"; const bw = c.measureText(b).width + 12, bx = Math.min(Math.max(x - bw / 2, 2), OF.W - bw - 2), by = y - h - 16;
+    c.fillStyle = b === "!" ? "#FCEBEB" : "#fff"; c.strokeStyle = b === "!" ? "#E24B4A" : "#bbb"; ofRR(c, bx, by, bw, 18, 8); c.fill(); c.stroke();
+    c.fillStyle = b === "!" ? "#A32D2D" : "#333"; c.fillText(b, bx + 6, by + 13);
+  }
+  c.restore();
+}
+function ofLoop(now) {
+  OF.raf = 0;
+  if (!OF.cv || !OF.cv.isConnected || document.hidden || ui.tab !== "machines") return;
+  const dt = Math.min(0.1, (now - (OF.last || now)) / 1000); OF.last = now;
+  ofStep(dt); ofDraw(now);
+  OF.raf = requestAnimationFrame(ofLoop);
+}
+function ofPick(ev) {
+  const r = OF.cv.getBoundingClientRect(), k = OF.W / r.width, x = (ev.clientX - r.left) * k, y = (ev.clientY - r.top) * k;
+  let best = null, bd = 28;
+  OF.ppl.forEach(p => { const d = Math.hypot(p.x - x, p.y - 18 - y); if (d < bd) { bd = d; best = p; } });
+  if (!best) Object.values(OF.desks).forEach(d => { if (x > d.x && x < d.x + 110 && y > d.y && y < d.y + 66) best = OF.ppl.find(p => p.desk === d); });
+  OF.sel = best;
+  if (!best) { OF.info.innerHTML = ""; return; }
+  const m = best.m, f = m && (S.feed || []).find(x => x.pid === m.id);
+  OF.info.innerHTML = m ? `<b>${esc(m.name)}</b> <span class="muted">${esc(m.ai || "")}｜${esc(m.status)}</span><div>${f ? esc(ago(f.t) + "：" + f.text.slice(0, 120)) : "最近沒有動態"}</div>`
+    : `<b>${esc(best.name)}</b> <span class="muted">${{boss: "Josh 本人", cc: "專案控制中心", G: "Grok Bot：X 即時消息、查證、看圖", X: "Codex：檢查員、跑回測、補資料"}[best.role] || ""}</span>`;
+}
+function officeAttach() {
+  const mount = document.getElementById("officeMount"); if (!mount || !S || !S.machines) return;
+  if (!OF.cv) {
+    OF.wrap = document.createElement("div"); OF.wrap.className = "office";
+    OF.cv = document.createElement("canvas"); OF.cv.style.cssText = "width:100%;height:auto;display:block;border-radius:12px;touch-action:manipulation";
+    OF.info = document.createElement("div"); OF.info.className = "officeinfo";
+    OF.wrap.append(OF.cv, OF.info); OF.ctx = OF.cv.getContext("2d");
+    OF.cv.addEventListener("click", ofPick);
+    addEventListener("resize", () => { if (OF.cv.isConnected) officeAttach(); });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && !OF.raf) OF.raf = requestAnimationFrame(ofLoop); });
+  }
+  mount.appendChild(OF.wrap);
+  const cols = OF.cols, n = Object.keys(OF.desks).length; ofLayout();
+  if (cols !== OF.cols || n !== Object.keys(OF.desks).length) OF.ppl = [];   // 版面變了：大家回自己位子重來
+  ofSync();
+  if (!OF.raf) { OF.last = 0; OF.raf = requestAnimationFrame(ofLoop); }
+}
 load(); tick();
 setInterval(load, 30000); setInterval(tick, 1000);
 </script>
