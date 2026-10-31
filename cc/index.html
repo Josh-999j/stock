@@ -1229,7 +1229,8 @@ function ofImg(look, fr) {
   im.src = aurl(`office/${look}_${OF_SPR[fr]}.png`);
   return OF.img[k] = im;
 }
-const OF_FRUIT_PNG = {"🍉": "watermelon", "🍍": "pineapple", "🍒": "cherry", "🍎": "apple", "🍊": "orange", "🍋": "lemon", "🍇": "grape", "🍓": "strawberry", "🍑": "peach", "🥝": "kiwi", "🍌": "banana"};
+const OF_FRUIT_PNG = {"🍉": "watermelon", "🍍": "pineapple", "🍒": "cherry", "🍎": "apple", "🍊": "orange", "🍋": "lemon", "🍇": "grape", "🍓": "strawberry", "🍑": "peach", "🥝": "kiwi", "🍌": "banana",
+  "🍐": "pear", "🥭": "mango", "🫐": "blueberry", "🍈": "melon", "🥥": "coconut", "🍏": "green_apple"};   // 後 6 個 11/01 助手找小C 補畫
 function ofFruitImg(f) {
   const n = OF_FRUIT_PNG[f]; if (!n) return null;
   const k = "fruit:" + n; if (OF.img[k]) return OF.img[k];
@@ -1296,7 +1297,8 @@ const OF_FRUIT = {"high-win-alliance": "🍉", "yt-scan": "🍒", "busy-pineappl
 const OF_FRUITS = ["🍋", "🍇", "🍓", "🍑", "🥝", "🍌", "🍐", "🥭", "🫐", "🍈", "🥥", "🍏"];
 function ofFruit(id) { if (OF_FRUIT[id]) return OF_FRUIT[id]; let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return OF_FRUITS[h % OF_FRUITS.length]; }
 const pick = a => a[Math.floor(Math.random() * a.length)];
-function ofMk(o) { return Object.assign({path: [], wait: Math.random() * 3, bubble: "", bt: 0, step: 0}, o); }
+// 走路自然一點（Josh 11/01）：每人速度略不同、走道上各靠一點邊不疊在一起、起步收步有加減速
+function ofMk(o) { return Object.assign({path: [], wait: Math.random() * 3, bubble: "", bt: 0, step: 0, vel: 0, dir: 1, spd: 42 + Math.random() * 14, lane: Math.random() * 8 - 4}, o); }
 function ofSync() {
   const keep = {};
   OF.ppl.forEach(p => keep[p.key] = p);
@@ -1333,9 +1335,13 @@ function ofThink(p) {
 function ofStep(dt) {
   OF.ppl.forEach(p => {
     if (p.path.length) {
-      const t = p.path[0], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy), v = (p.small ? 62 : 50) * dt;
-      p.step += dt;
-      if (d <= v) { p.x = t.x; p.y = t.y; p.path.shift(); if (!p.path.length) { p.bubble = p.next || ""; p.bt = 3.5; p.sit = !!p.at.sit; } }
+      const t = p.path[0], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy);
+      const left = d + p.path.slice(1).reduce((s, q, i, a) => s + Math.hypot(q.x - (i ? a[i - 1].x : t.x), q.y - (i ? a[i - 1].y : t.y)), 0);
+      p.vel = Math.min(1, p.vel + dt * 2.5, 0.35 + left / 40);   // 起步 0.4 秒內加到全速，最後 25px 慢下來
+      const v = (p.small ? p.spd * 1.2 : p.spd) * p.vel * dt;
+      p.step += v;   // 腳步跟著走的距離換格，走慢腳也慢，不會原地滑步
+      if (Math.abs(dx) > 0.5) p.dir = dx < 0 ? -1 : 1;
+      if (d <= v) { p.x = t.x; p.y = t.y; p.path.shift(); if (!p.path.length) { p.vel = 0; p.bubble = p.next || ""; p.bt = 3.5; p.sit = !!p.at.sit; } }
       else { p.x += dx / d * v; p.y += dy / d * v; }
     } else if ((p.wait -= dt) <= 0) ofThink(p);
     if (p.bt > 0 && (p.bt -= dt) <= 0) p.bubble = p.fail ? "!" : "";
@@ -1343,47 +1349,130 @@ function ofStep(dt) {
 }
 function ofRR(c, x, y, w, h, r) { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); }
 function ofDark() { const t = document.documentElement.dataset.theme; return t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches); }
-function ofDraw(now) {
-  const c = OF.ctx, W = OF.W, H = OF.H, dark = ofDark(), txt = dark ? "#cfd3da" : "#5F5E5A";
-  c.fillStyle = dark ? "#23262b" : "#EFE8DC"; c.fillRect(0, 0, W, H);
-  // 走道（地毯）：上方大走廊、每排桌子後面的橫走道、直向通道
-  c.fillStyle = dark ? "#30353d" : "#E2D6C2";
-  c.fillRect(0, OF_TOP - 10, W, 20);
-  Object.values(OF.desks).filter(d => d.x === 40).forEach(d => c.fillRect(0, d.aisleY - 9, W, 18));
-  const lastY = OF.H - 10;
-  OF.aisles.forEach(x => c.fillRect(x - 9, OF_TOP, 18, lastY - OF_TOP));
+// 辦公室美化（Josh 11/01「辦公室可以美化一點嗎 也太醜了吧」）：木地板、各房間不同地坪、窗戶牆、地毯走道、
+// 有椅子和螢幕的辦公桌、盆栽、沙發、咖啡機、會議桌、老闆桌、大廳櫃台。不會動的部分畫一次存起來（ofBg），每格只重畫螢幕和人。
+const OF_PAL = {
+  light: {wood1: "#E8D3B2", wood2: "#DFC7A3", seam: "#CDB28A", wall: "#F4EEE6", wallLine: "#C9B9A4", glass: "#BFE3F5", glassHi: "#E6F6FD",
+    rug: "#D7E1EA", rugEdge: "#B9C8D6", desk: "#B9875A", deskTop: "#D3A574", deskEdge: "#8E6440", chair: "#3E4652", txt: "#4A4740", tag: "#FFFFFFE6",
+    room: ["#EDE6F6", "#E2EEF6", "#F7EFE2", "#E5F0DE"], roomEdge: "#B9AE9F"},
+  dark: {wood1: "#3A332C", wood2: "#352F28", seam: "#2A2520", wall: "#2B2E33", wallLine: "#444A52", glass: "#2F4A5A", glassHi: "#3E6074",
+    rug: "#2E3540", rugEdge: "#3A4350", desk: "#5A4330", deskTop: "#6B5038", deskEdge: "#3E2E20", chair: "#1E2228", txt: "#D6D9DE", tag: "#2B2F36E6",
+    room: ["#302B3B", "#27323B", "#3A3227", "#2A3427"], roomEdge: "#4A4F57"},
+};
+function ofPlant(c, x, y, s) {
+  c.fillStyle = "#B5653E"; ofRR(c, x - 7 * s, y - 2 * s, 14 * s, 11 * s, 3 * s); c.fill();
+  [["#4E9A50", 0, -10, 9], ["#5FB061", -6, -6, 7], ["#3F8742", 6, -6, 7], ["#6CC06E", 0, -16, 6]].forEach(([col, dx, dy, r]) => { c.fillStyle = col; c.beginPath(); c.arc(x + dx * s, y + dy * s, r * s, 0, 7); c.fill(); });
+}
+function ofChair(c, x, y, P) {
+  c.fillStyle = P.chair; ofRR(c, x - 9, y - 12, 18, 14, 6); c.fill();        // 椅背
+  c.fillStyle = "#00000022"; c.beginPath(); c.ellipse(x, y + 4, 10, 3, 0, 0, 7); c.fill();
+}
+function ofDesk(c, d, P) {
+  const x = d.x, y = d.y;
+  c.fillStyle = "#00000022"; ofRR(c, x + 2, y + 25, 110, 28, 5); c.fill();                // 影子
+  c.fillStyle = P.deskEdge; ofRR(c, x, y + 30, 110, 20, 5); c.fill();                       // 桌子正面
+  c.fillStyle = P.deskTop; ofRR(c, x, y + 20, 110, 16, 5); c.fill();                        // 桌面
+  c.fillStyle = "#00000018"; c.fillRect(x + 4, y + 33, 102, 2);
+  c.fillStyle = "#3B3F47"; c.fillRect(x + 80, y + 20, 6, 6);                                // 螢幕腳
+  c.fillStyle = "#E9E9EC"; ofRR(c, x + 50, y + 26, 26, 6, 2); c.fill();                    // 鍵盤
+  c.fillStyle = "#D9D2C5"; c.beginPath(); c.arc(x + 16, y + 28, 4, 0, 7); c.fill();          // 杯子
+}
+function ofBg() {
+  const W = OF.W, H = OF.H, dark = ofDark(), P = dark ? OF_PAL.dark : OF_PAL.light;
+  const bg = OF.bg = OF.bg || document.createElement("canvas"); bg.width = W; bg.height = H; OF.bgDark = dark;
+  const c = bg.getContext("2d");
+  // 木地板：一條條木板，接縫錯開
+  for (let y = 0, row = 0; y < H; y += 14, row++) {
+    c.fillStyle = row % 2 ? P.wood1 : P.wood2; c.fillRect(0, y, W, 14);
+    c.fillStyle = P.seam; c.fillRect(0, y, W, 1);
+    for (let x = (row % 3) * 37; x < W; x += 110) c.fillRect(x, y, 1, 14);
+  }
+  // 地毯走道（有滾邊）
+  const rug = (x, y, w, h) => { c.fillStyle = P.rugEdge; c.fillRect(x, y, w, h); c.fillStyle = P.rug; c.fillRect(x + 2, y + 2, w - 4, h - 4); };
+  rug(0, OF_TOP - 11, W, 22);
+  Object.values(OF.desks).filter(d => d.x === 40).forEach(d => rug(0, d.aisleY - 9, W, 18));
+  OF.aisles.forEach(x => rug(x - 9, OF_TOP, 18, H - 10 - OF_TOP));
+  // 房間：地坪、牆、窗、門
   Object.entries(OF.rooms).forEach(([n, r], i) => {
-    c.fillStyle = dark ? ["#2f2b3a", "#26323a", "#3a3226", "#2a3326"][i] : ["#E9E3F5", "#DDEBF2", "#F6E7D2", "#E3EFD9"][i];
-    ofRR(c, r.x, r.y, r.w, r.h, 10); c.fill(); c.strokeStyle = dark ? "#555" : "#CFC6B8"; c.lineWidth = 2; c.stroke();
-    c.fillStyle = dark ? "#23262b" : "#EFE8DC"; c.fillRect(r.door - 14, r.y + r.h - 2, 28, 6);   // 門口
-    c.fillStyle = txt; c.font = "500 14px sans-serif"; c.fillText(n, r.x + 10, r.y + 22);
-    c.fillStyle = dark ? "#54483a" : "#C9A57A";
-    if (n === "會議室") { ofRR(c, r.door - 50, 106, 100, 20, 10); c.fill(); }
-    if (n === "茶水間") { c.fillRect(r.x + r.w - 36, r.y + 34, 24, 34); c.fillStyle = "#6b4a2b"; c.fillRect(r.x + r.w - 30, r.y + 42, 12, 10); }
-    if (n === "主管室") { c.fillRect(r.x + 18, 110, 46, 14); }
-    if (n === "大廳") { c.fillStyle = "#6a9a5a"; c.beginPath(); c.arc(r.x + r.w - 22, r.y + 40, 12, 0, 7); c.fill(); }
+    c.fillStyle = "#00000014"; ofRR(c, r.x + 3, r.y + 4, r.w, r.h, 12); c.fill();
+    c.fillStyle = P.room[i]; ofRR(c, r.x, r.y, r.w, r.h, 12); c.fill();
+    if (n === "茶水間") { c.fillStyle = "#00000010"; for (let tx = r.x; tx < r.x + r.w; tx += 16) for (let ty = r.y + 30; ty < r.y + r.h; ty += 16) if (((tx - r.x) / 16 + (ty - r.y - 30) / 16) % 2 < 1) c.fillRect(tx, ty, 16, 16); }
+    if (n === "主管室") { c.fillStyle = dark ? "#4A3A55" : "#D9CBE8"; ofRR(c, r.x + 14, r.y + 52, r.w - 28, r.h - 66, 10); c.fill(); }
+    if (n === "會議室") { c.fillStyle = dark ? "#2F4150" : "#CFE1EE"; ofRR(c, r.x + 12, r.y + 48, r.w - 24, r.h - 60, 12); c.fill(); }
+    c.fillStyle = P.wall; ofRR(c, r.x, r.y, r.w, 28, 12); c.fill(); c.fillRect(r.x, r.y + 14, r.w, 14);   // 上牆
+    for (let wx = r.x + 54; wx + 26 < r.x + r.w - 6; wx += 34) {                              // 窗戶
+      c.fillStyle = P.glass; c.fillRect(wx, r.y + 6, 26, 16); c.fillStyle = P.glassHi; c.fillRect(wx + 2, r.y + 8, 8, 12);
+      c.fillStyle = P.wallLine; c.fillRect(wx + 12, r.y + 6, 2, 16);
+    }
+    c.strokeStyle = P.roomEdge; c.lineWidth = 3; ofRR(c, r.x, r.y, r.w, r.h, 12); c.stroke();
+    c.fillStyle = P.rug; c.fillRect(r.door - 15, r.y + r.h - 3, 30, 7);                       // 門口
+    c.fillStyle = P.txt; c.font = "500 13px sans-serif"; c.fillText(n, r.x + 10, r.y + 20);
   });
-  c.lineWidth = 1;
+  const R = OF.rooms;
+  // 主管室：老闆大桌＋旗子般的小盆栽
+  c.fillStyle = "#00000022"; ofRR(c, R.主管室.x + 22, 114, 54, 18, 5); c.fill();
+  c.fillStyle = dark ? "#4A3424" : "#7A5236"; ofRR(c, R.主管室.x + 18, 108, 54, 18, 5); c.fill();
+  c.fillStyle = dark ? "#5C4330" : "#946646"; ofRR(c, R.主管室.x + 18, 104, 54, 9, 4); c.fill();
+  ofPlant(c, R.主管室.x + R.主管室.w - 18, 70, 0.9);
+  // 會議室：橢圓桌＋6 張椅子
+  const mx = R.會議室.door;
+  [-30, 0, 30].forEach(dx => [72, 128].forEach(cy => { c.fillStyle = P.chair; c.beginPath(); c.arc(mx + dx, cy, 6, 0, 7); c.fill(); }));
+  c.fillStyle = "#00000022"; c.beginPath(); c.ellipse(mx + 2, 103, 52, 14, 0, 0, 7); c.fill();
+  c.fillStyle = P.deskTop; c.beginPath(); c.ellipse(mx, 100, 52, 14, 0, 0, 7); c.fill();
+  c.fillStyle = P.deskEdge; c.beginPath(); c.ellipse(mx, 100, 52, 14, 0, 0, Math.PI); c.fill();
+  // 茶水間：沙發、咖啡機、盆栽
+  const tr = R.茶水間;
+  c.fillStyle = dark ? "#5B3F4A" : "#E59A8C"; ofRR(c, tr.x + 14, 84, 70, 14, 6); c.fill(); ofRR(c, tr.x + 10, 94, 78, 14, 6); c.fill();
+  c.fillStyle = "#00000022"; c.fillRect(tr.x + 14, 106, 70, 3);
+  c.fillStyle = "#6B6F78"; ofRR(c, tr.x + tr.w - 40, 36, 28, 40, 4); c.fill();
+  c.fillStyle = "#2B2F36"; ofRR(c, tr.x + tr.w - 36, 42, 20, 16, 3); c.fill();
+  c.fillStyle = "#E24B4A"; c.beginPath(); c.arc(tr.x + tr.w - 18, 66, 2.5, 0, 7); c.fill();
+  ofPlant(c, tr.x + tr.w - 16, 140, 0.8);
+  // 大廳：櫃台、地墊、兩盆植物
+  const lr = R.大廳;
+  c.fillStyle = "#00000022"; ofRR(c, lr.x + 16, 66, lr.w - 52, 18, 6); c.fill();
+  c.fillStyle = dark ? "#3E4A56" : "#9DB6C9"; ofRR(c, lr.x + 14, 60, lr.w - 52, 18, 6); c.fill();
+  c.fillStyle = dark ? "#53606D" : "#C3D4E1"; ofRR(c, lr.x + 14, 56, lr.w - 52, 8, 4); c.fill();
+  ofPlant(c, lr.x + lr.w - 18, 62, 1); ofPlant(c, lr.x + 18, 140, 0.8);
+  c.fillStyle = dark ? "#4A4038" : "#B79C7E"; ofRR(c, lr.door - 20, lr.y + lr.h - 14, 40, 10, 3); c.fill();
+  // 辦公區：每排頭尾放盆栽
+  Object.values(OF.desks).filter(d => d.x === 40).forEach(d => { ofPlant(c, 8, d.y + 40, 0.7); ofPlant(c, W - 8, d.y + 40, 0.7); });
+  // 椅子（人坐上去會蓋住）
+  Object.values(OF.desks).forEach(d => ofChair(c, d.seat.x, d.y + 26, P));
+}
+function ofDraw(now) {
+  const c = OF.ctx, dark = ofDark(), P = dark ? OF_PAL.dark : OF_PAL.light;
+  if (!OF.bg || OF.bg.width !== OF.W || OF.bg.height !== OF.H || OF.bgDark !== dark || OF.bgKey !== OF.W + "x" + OF.H + Object.keys(OF.desks).length) { ofBg(); OF.bgKey = OF.W + "x" + OF.H + Object.keys(OF.desks).length; }
+  c.drawImage(OF.bg, 0, 0);
   const seated = OF.ppl.filter(p => p.sit && !p.path.length);
   seated.forEach(p => ofPerson(c, p, now));
   Object.values(OF.desks).forEach(d => {
     const on = ofActive(d.m), fail = d.m.status === "FAILED";
-    c.fillStyle = dark ? "#5a4a38" : "#C9A57A"; ofRR(c, d.x, d.y + 22, 110, 26, 4); c.fill();
-    c.fillStyle = "#2b2f36"; c.fillRect(d.x + 64, d.y + 4, 34, 20);
-    c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7fd6ff" : "#b8ecff") : "#46505c"; c.fillRect(d.x + 66, d.y + 6, 30, 15);
-    c.fillStyle = txt; c.font = "12px sans-serif"; c.textAlign = "center";
-    c.fillText(d.m.name.replace(/（.*）/, "").slice(0, 8), d.x + 55, d.y + 62); c.textAlign = "left";
+    ofDesk(c, d, P);
+    c.fillStyle = "#2B2F36"; ofRR(c, d.x + 64, d.y + 2, 38, 22, 3); c.fill();             // 螢幕外框
+    c.fillStyle = fail ? "#E24B4A" : on ? (Math.floor(now / 400 + d.x) % 7 ? "#7FD6FF" : "#B8ECFF") : "#46505C"; c.fillRect(d.x + 67, d.y + 5, 32, 16);
+    if (on && !fail) { c.fillStyle = "#FFFFFF99"; for (let k = 0; k < 3; k++) c.fillRect(d.x + 70, d.y + 8 + k * 4, 10 + ((Math.floor(now / 500) + k + d.x) % 4) * 4, 1.5); }   // 螢幕上的字在跑
+    const nm = d.m.name.replace(/（.*）/, "").slice(0, 8);
+    c.font = "500 11px sans-serif"; const tw = c.measureText(nm).width + 10;
+    c.fillStyle = P.tag; ofRR(c, d.x + 55 - tw / 2, d.y + 53, tw, 15, 7); c.fill();
+    c.fillStyle = P.txt; c.textAlign = "center"; c.fillText(nm, d.x + 55, d.y + 64); c.textAlign = "left";
   });
   OF.ppl.filter(p => !seated.includes(p)).sort((a, b) => a.y - b.y).forEach(p => ofPerson(c, p, now));
 }
 function ofPerson(c, p, now) {
   const walk = p.path.length > 0;
-  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step * 7) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : "stand";
-  const im = ofImg(p.look, fr), x = p.x, y = p.y + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
+  const fr = walk ? ["w0", "w1", "w2", "w3"][Math.floor(p.step / 6) % 4] : p.sit && p.active ? (Math.floor(now / 260 + p.x) % 2 ? "t0" : "t1") : "stand";
+  const im = ofImg(p.look, fr);
+  // 走在直的通道靠一邊、橫的走道靠上或下，兩人同路不會疊成一個；每兩格輕輕上下起伏
+  const seg = walk ? p.path[0] : null, vert = seg && Math.abs(seg.x - p.x) < Math.abs(seg.y - p.y);
+  const bob = walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0;
+  const x = p.x + (walk && vert ? p.lane : 0), y = p.y + (walk && !vert ? p.lane * 0.6 : 0) + bob + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
   const s = im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32), w = (im.spr ? 128 : 100) * s, h = (im.spr ? 160 : 120) * s;
   const dim = !p.active && p.role === "owner";
   c.save(); c.globalAlpha = dim ? 0.6 : 1;
-  if (im.complete && im.naturalWidth) c.drawImage(im, x - w / 2, y - h + 4, w, h);
+  if (walk) { c.fillStyle = "rgba(0,0,0,.16)"; c.beginPath(); c.ellipse(x, p.y + (vert ? 0 : p.lane * 0.6) + 2, w * 0.28, 2.5, 0, 0, 7); c.fill(); }
+  // 往左走就把圖左右翻過來（圖本身是朝右走）
+  if (im.complete && im.naturalWidth) { if (walk && p.dir < 0) { c.save(); c.translate(x, 0); c.scale(-1, 1); c.drawImage(im, -w / 2, y - h + 4, w, h); c.restore(); } else c.drawImage(im, x - w / 2, y - h + 4, w, h); }
   if (p.fruit) {
     const fi = ofFruitImg(p.fruit), fs = p.small ? 14 : 18;
     if (fi && fi.complete && fi.naturalWidth && !fi.bad) c.drawImage(fi, x - fs / 2, y - h - fs * 0.35, fs, fs);
