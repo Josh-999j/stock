@@ -589,7 +589,7 @@ function tabCounts() {
   const act = S.machines.filter(m => !isPaused(m.id));
   c.machines = [act.filter(m => m.status === "FAILED").length, act.filter(m => m.status === "BLOCKED").length];
   const tasks = ((S.background || {}).tasks || []).filter(t => t.state !== "Disabled");
-  const badTask = tasks.filter(t => t.result && !["0", "267009", "267011", "267008", "2147946720"].includes(t.result)).length;
+  const badTask = tasks.filter(t => t.result && !okCode(t.result)).length;
   c.sched = [badTask, clashes().length + tasks.concat(((S.background || {}).tasks || []).filter(t => t.state === "Disabled")).filter(t => taskIssues(t).length).length];
   const R = S.remote || {}, ss = R.sessions || [];
   c.remote = [R.entry && !R.entry.on ? 1 : 0, 0];
@@ -949,6 +949,8 @@ function remotePanel() {
 
 // 背景執行面板（Josh 10/08：所有背景程式、排程都要看得到、知道怎麼關）。只顯示，不能在這裡停。
 const shortWhat = w => ((w || "").match(/[^\\\/"\s]+\.(?:py|pyw|ps1|js|vbs|cmd|bat|mjs)\b/gi) || []).pop() || (w || "").slice(0, 50);
+// 不算失敗的結果碼只有 collector 一份（state.ok_codes，🍍 PA-R44）；舊 state 沒有才用備用
+const okCode = r => (S.ok_codes || ["0", "267009", "267011", "267008", "2147946720"]).includes(r);
 const TASK_ZH = {Running: "執行中", Ready: "待命", Disabled: "已停用", Queued: "排隊中"};
 // AI傳聲筒心跳（heartbeat.json，每 10 秒）：一行看懂傳聲筒有沒有在跑、各線輪到誰
 function relayLine() {
@@ -965,14 +967,14 @@ function bgPanel() {
   const B = S.background; if (!B) return "";
   const procs = B.procs || [], tasks = B.tasks || [];
   const pop = tasks.filter(t => t.window === "會跳視窗" && t.state !== "Disabled").length;
-  const bad = tasks.filter(t => t.state !== "Disabled" && t.result && !["0", "267009", "267011", "267008", "2147946720"].includes(t.result)).length;
+  const bad = tasks.filter(t => t.state !== "Disabled" && t.result && !okCode(t.result)).length;
   const procRows = procs.map(p => `<li>
       <span class="dot" style="--c:var(--${p.window === "背景" ? "RUNNING" : "blue"})"></span>
       <span class="body"><span class="p">${esc(p.project || "（不屬於專案）")}</span> ${esc(shortWhat(p.what))}
         <div class="x" title="${esc(p.what)}">${esc(p.name)} · 開始 ${ago(p.start)} · PID ${esc(p.pid)}</div></span></li>`).join("");
   const taskRows = tasks.map(t => {
     const st = TASK_ZH[t.state] || t.state || "";
-    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : t.result === "2147946720" ? "（上一輪還在跑，這次略過）" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
+    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : t.result === "2147946720" ? "（上一輪還在跑，這次略過）" : t.result === "267008" ? "（就緒）" : okCode(t.result) ? "" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
     return `<li class="${t.state === "Disabled" ? "muted" : ""}">
       <span class="dot" style="--c:var(--${t.state === "Disabled" ? "IDLE" : t.state === "Running" ? "RUNNING" : "WAITING"})"></span>
       <span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(t.project || "")}</span>
