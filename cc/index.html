@@ -569,9 +569,9 @@ function bigcPanel() {
   const B = S.bigc_board || {}, sv = B.service || {}, cur = B.current, q = B.queue || {};
   const stIcon = {idle: "🟢 待命", running: "🔵 執行中", paused: "⏸️ 暫停"}[sv.state] || "—";
   const tm = t => t ? String(t).replace("T", " ").slice(5, 16) : "";
-  const curHtml = cur ? `<div class="bigc-cur"><b>${esc(cur.project || "")}</b>｜${esc(cur.stage || "")}｜第 ${esc(cur.try || 1)} 次<div>${esc(cur.task || "").slice(0, 160)}</div>
+  const curHtml = cur ? `<div class="bigc-cur"><b>${esc(cur.project || "")}</b>｜${esc(cur.stage || "")}${cur.window ? `｜🪟 ${esc(cur.window)}` : ""}｜第 ${esc(cur.try || 1)} 次<div>${esc(cur.task || "").slice(0, 160)}</div>
       <div class="muted">開始 ${tm(cur.started)}　最新：${esc(cur.progress || "—").slice(0, 160)}</div></div>` : `<div class="muted">目前沒有在跑的命令</div>`;
-  const rows = (B.recent || []).map(r => `<li><span class="${r.stage === "完成" ? "ok" : "bad"}">${r.stage === "完成" ? "✅" : "⛔"}</span> <b>${esc(r.project)}</b> <span class="muted">${tm(r.ended)}｜${esc(r.seconds)} 秒${r.tries > 1 ? "｜試 " + esc(r.tries) + " 次" : ""}</span><div>${esc((r.summary || "").slice(0, 140))}</div></li>`).join("") || '<li class="empty">還沒有紀錄</li>';
+  const rows = (B.recent || []).map(r => `<li><span class="${r.stage === "完成" ? "ok" : "bad"}">${r.stage === "完成" ? "✅" : "⛔"}</span> <b>${esc(r.project)}</b> <span class="muted">${r.window ? `🪟 ${esc(r.window)}｜` : ""}${tm(r.ended)}｜${esc(r.seconds)} 秒${r.tries > 1 ? "｜試 " + esc(r.tries) + " 次" : ""}</span><div>${esc((r.summary || "").slice(0, 140))}</div></li>`).join("") || '<li class="empty">還沒有紀錄</li>';
   const ev = (B.events || []).slice(0, 15).map(e => `<li><span class="muted">${tm(e.time)}</span> 【${esc(e.stage)}】${esc(e.project || "")}｜${esc((e.text || "").slice(0, 100))}</li>`).join("") || '<li class="empty">沒有事件</li>';
   return `<section class="box"><h2>📟 大C回報台 <small>大C 派給小C 的命令在這裡跑；Codex App「大C回報台」每 10 分鐘同步摘要＋接手備援　資料更新 ${tm(B.updated)}</small></h2>
     <div class="bigc-head">服務：${stIcon}　排隊：待領 ${esc(q["待領"] ?? 0)}／處理中 ${esc(q["處理中"] ?? 0)}／已完成 ${esc(q["已完成"] ?? 0)}</div>${curHtml}</section>
