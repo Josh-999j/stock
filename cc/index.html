@@ -277,7 +277,7 @@ const modelCls = x => ({"Claude+Codex": "duo", Code: "code", Codex: "codex", Cla
 const modelChip = m => m.model ? `<span class="model m-${modelCls(m.model)}" title="型號：${esc(MODEL_ZH[m.model] || m.model)}">${esc(m.model)}</span>` : "";
 const opText = m => { const o = m.operator; if (!o) return ""; return `${esc(MODEL_ZH[o.who] || o.who)}・${esc(o.what)}${o.t ? " " + ago(o.t) : ""}`; };
 const autoText = m => { const a = m.automations || []; if (!a.length) return ""; const on = a.filter(x => x.on).length; return `${on} 個開著${a.length - on ? `・${a.length - on} 個停用` : ""}`; };
-const KIND_ZH = {stock: "股票", data: "資料", web: "網頁", spider: "爬蟲", tool: "工具", ai: "大C小C", general: "通用"};
+const KIND_ZH = {stock: "股票", data: "資料", web: "網頁", spider: "爬蟲", tool: "工具", ai: "大C小C", study: "學習", general: "通用"};
 const A = () => (S && S.assets) || {machines: [], icons: []};
 const aurl = p => `assets/web/${p}?v=${A().ver || 0}`;
 // 機台圖：該狀態沒圖就退回其他狀態的圖；完全沒有素材就回傳空字串（網頁維持方塊樣式）
