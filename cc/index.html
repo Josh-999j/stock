@@ -974,7 +974,7 @@ function bgPanel() {
         <div class="x" title="${esc(p.what)}">${esc(p.name)} · 開始 ${ago(p.start)} · PID ${esc(p.pid)}</div></span></li>`).join("");
   const taskRows = tasks.map(t => {
     const st = TASK_ZH[t.state] || t.state || "";
-    const r = !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? "（還在跑）" : t.result === "2147946720" ? "（上一輪還在跑，這次略過）" : t.result === "267008" ? "（就緒）" : okCode(t.result) ? "" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
+    const r = t.state === "Disabled" || !t.result || t.result === "0" || t.result === "267011" ? "" : t.result === "267009" ? (t.state === "Running" ? "（還在跑）" : "（上次沒正常結束）") : t.result === "2147946720" ? "（上一輪還在跑，這次略過）" : t.result === "267008" ? "（就緒）" : okCode(t.result) ? "" : `<span class="bad">上次失敗 ${esc(t.result)}</span>`;
     return `<li class="${t.state === "Disabled" ? "muted" : ""}">
       <span class="dot" style="--c:var(--${t.state === "Disabled" ? "IDLE" : t.state === "Running" ? "RUNNING" : "WAITING"})"></span>
       <span class="body"><span class="p">${esc(t.name)}</span> <span class="muted">${esc(t.project || "")}</span>
