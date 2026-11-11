@@ -1459,8 +1459,9 @@ function ofStep(dt) {
     const out = boss.patrol || boss.path.length > 0;
     if (ol.bossAt !== boss.at) {
       ol.bossAt = boss.at; const back = boss.at === boss.home || boss.at.inRoom && boss.at.room === "主管室";
-      const to = back ? ol.home : Object.assign({}, boss.at, {x: boss.at.x - 16});
-      ol.path = ofRoute(ofFrom(ol), to); ol.at = to; ol.spd = 52;
+      // 11/12 Josh「水果王跟秘書走路重疊看不到，間距拉開」→ 停下時隔 36px；走路時兩人走道各靠一邊、秘書速度略慢跟在後面
+      const to = back ? ol.home : Object.assign({}, boss.at, {x: boss.at.x - 36});
+      ol.path = ofRoute(ofFrom(ol), to); ol.at = to; ol.spd = boss.spd * 0.9; boss.lane = -9; ol.lane = 9;
     }
     if (!out && !ol.path.length && Math.random() < 0.002) { ol.bubble = pick(["老闆，下午三點開會", "報表準備好了", "咖啡幫您放桌上☕", "今天行程都排好了"]); ol.bt = 3; }
     if (out && !ol.bubble && Math.random() < 0.004) { ol.bubble = pick(["老闆這邊走", "我記下來了📝", "這位是負責人"]); ol.bt = 2.5; }
@@ -1471,6 +1472,8 @@ function ofStep(dt) {
     q.bubble = q.active || q.role !== "owner" ? pick(["😱 老闆！", "老闆好！", "在忙在忙！", "😨"]) : pick(["😱 趕快裝忙！", "我在想策略…", "老闆我沒摸魚！"]);
   });
   OF.ppl.forEach(p => {
+    // 秘書離走路中的老闆不到 36px 就先停一下，讓老闆先走開，兩人不疊在一起（Josh 11/12）
+    if (p.role === "ol" && boss && boss.path.length && p.path.length && Math.hypot(p.x - boss.x, p.y - boss.y) < 36) { p.vel = 0; return; }
     if (p.path.length) {
       const t = p.path[0], dx = t.x - p.x, dy = t.y - p.y, d = Math.hypot(dx, dy);
       const left = d + p.path.slice(1).reduce((s, q, i, a) => s + Math.hypot(q.x - (i ? a[i - 1].x : t.x), q.y - (i ? a[i - 1].y : t.y)), 0);
