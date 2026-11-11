@@ -1360,6 +1360,21 @@ const OF_LINES = {
   摸魚: ["摸魚中", "滑手機📱", "zzz", "等下班", "看股票", "發呆", "出差中✈️", "吃零食"],
   X: ["檢查中", "跑回測", "挑毛病", "補資料"], G: ["X 即時消息", "查證中", "抓圖", "上傳雲端"],
 };
+// 每天的辦公室氣氛（Josh 11/12「要有不同的狀況，多幾個模板，每天隨機」）：照日期挑一個，手機電腦同一天看到的一樣
+// meet＝開會間隔倍數（越小越常開）、tea＝做事的人去茶水間的機率加成、fx＝畫面特效
+const OF_MOODS = [
+  {icon: "☀️", name: "平常日", meet: 1, tea: 0, fx: "", lines: []},
+  {icon: "🔥", name: "趕專案日", meet: 0.6, tea: -0.1, fx: "fire", lines: ["趕 deadline！", "今天要加班", "快快快", "先別吵我"]},
+  {icon: "🎉", name: "慶功日", meet: 1.2, tea: 0.25, fx: "confetti", lines: ["🎉 乾杯", "賺錢啦💰", "今天請客", "勝率創新高"]},
+  {icon: "🎵", name: "週五放鬆", meet: 1.4, tea: 0.2, fx: "notes", lines: ["週末去哪？", "🍕 訂披薩", "下班唱歌🎤", "放鬆一下"]},
+  {icon: "☔", name: "下雨天", meet: 0.9, tea: 0.15, fx: "rain", lines: ["外面好大雨", "帶傘了嗎☂️", "喝杯熱的☕", "雨天適合寫程式"]},
+  {icon: "📊", name: "月底結算", meet: 0.5, tea: -0.1, fx: "", lines: ["對帳中", "報表呢？", "數字對不起來", "結算！"]},
+  {icon: "🎂", name: "同事生日", meet: 1.1, tea: 0.3, fx: "balloon", lines: ["生日快樂🎂", "蛋糕在茶水間", "許願了沒", "🎁 禮物"]},
+  {icon: "📈", name: "大漲日", meet: 0.8, tea: 0.1, fx: "up", lines: ["漲停了！", "紅通通🔴", "抱緊不要賣", "太爽了"]},
+  {icon: "😰", name: "大跌日", meet: 0.6, tea: -0.05, fx: "down", lines: ["穩住別慌", "照表操作", "停損了…", "撿便宜？"]},
+  {icon: "❄️", name: "寒流來襲", meet: 1, tea: 0.25, fx: "snow", lines: ["好冷🥶", "冷氣關掉啦", "來杯薑茶", "手好冰"]},
+];
+const OF_MOOD = (() => { const d = Math.floor((Date.now() + 8 * 3600e3) / 864e5); let h = (d * 2654435761) >>> 0; h ^= h >>> 15; return OF_MOODS[h % OF_MOODS.length]; })();
 // 頭頂水果（Josh 11/01）：聯盟用自己的水果，其他專案照 id 固定分一個
 const OF_FRUIT = {"high-win-alliance": "🍉", "yt-scan": "🍒", "busy-pineapple": "🍍", "operator": "🍎", "etf-alliance": "🍊"};
 const OF_FRUITS = ["🍋", "🍇", "🍓", "🍑", "🥝", "🍌", "🍐", "🥭", "🫐", "🍈", "🥥", "🍏"];
@@ -1417,22 +1432,22 @@ function ofThink(p) {
   else if (p.role === "G") { const d = pick(act); to = d && Math.random() < 0.6 ? ofDeskPt(d, true) : ofRoomPt("摸魚區"); line = pick(OF_LINES.G); }
   else if (p.role === "cc") { const d = pick(act); to = d && Math.random() < 0.5 ? ofDeskPt(d, true) : ofRoomPt("主管室", 1); line = to.desk ? "派工" : "回報老闆"; }
   else {
-    const r = Math.random(), d = pick(act), k = r < 0.55 && d ? "desk" : r < 0.75 ? "主管室" : "茶水間"   // 會議室只在開會時進去（不然會跟開會的人站同一格）;
-    to = k === "desk" ? ofDeskPt(d, true) : ofRoomPt(k); line = pick(OF_LINES[k]);
+    const r = Math.random(), d = pick(act), t1 = 0.55 - OF_MOOD.tea / 2, t2 = 0.75 - OF_MOOD.tea, k = r < t1 && d ? "desk" : r < t2 ? "主管室" : "茶水間"   // 會議室只在開會時進去（不然會跟開會的人站同一格）；氣氛加成會多去茶水間
+    to = k === "desk" ? ofDeskPt(d, true) : ofRoomPt(k); line = OF_MOOD.lines.length && Math.random() < 0.35 ? pick(OF_MOOD.lines) : pick(OF_LINES[k]);
   }
   p.path = ofRoute(ofFrom(p), to); p.at = to; p.next = line; p.wait = 2.5 + Math.random() * 4; p.bubble = ""; p.sit = false;
 }
 function ofNearLane(y) { return [OF_TOP].concat(Object.values(OF.desks).map(d => d.aisleY)).reduce((b, v) => Math.abs(v - y) < Math.abs(b - y) ? v : b, OF_TOP); }   // 走到一半改道時，先回最近的橫走道
 function ofStep(dt) {
-  // Josh 11/01：會議室要有 3～6 個人進去開會一下 → 每 40～80 秒找有在做事的人開一次會，開 20～30 秒散會
-  OF.meetT = (OF.meetT ?? 15) - dt;
+  // Josh 11/01：會議室要有 3～6 個人進去開會一下；11/12「會議室很少人去開會，頻率拉高」→ 散會後 15～35 秒就再開、每次開 35～55 秒（約六成時間有人在開會），再乘當天氣氛倍數
+  OF.meetT = (OF.meetT ?? 6) - dt;
   if (OF.meetT <= 0) {
-    if (OF.meeting) { OF.ppl.filter(q => q.meeting).forEach(q => { q.meeting = false; q.path = ofRoute(ofFrom(q), q.home); q.at = q.home; q.next = pick(["散會", "回去做事", "會議紀錄我寫"]); q.wait = 4; }); OF.meeting = false; OF.meetT = 40 + Math.random() * 40; }
+    if (OF.meeting) { OF.ppl.filter(q => q.meeting).forEach(q => { q.meeting = false; q.path = ofRoute(ofFrom(q), q.home); q.at = q.home; q.next = pick(["散會", "回去做事", "會議紀錄我寫"]); q.wait = 4; }); OF.meeting = false; OF.meetT = (15 + Math.random() * 20) * OF_MOOD.meet; }
     else {
       const pool = OF.ppl.filter(q => !q.meeting && (q.role === "X" || q.role === "cc" || q.role === "G" || (q.role === "owner" && q.active))).sort(() => Math.random() - 0.5);
       const n = pool.length >= 3 ? Math.min(pool.length, 3 + Math.floor(Math.random() * 4)) : 0;   // 走到一半的也叫來開會（從目前位置走過去）
-      pool.slice(0, n).forEach((q, i) => { OF.cur = q; const to = ofRoomPt("會議室", i); q.meeting = true; q.path = ofRoute(ofFrom(q), to); q.at = to; q.sit = false; q.next = pick(["開會", "我先報告", "這季目標…", "數據在這"]); q.wait = 999; });
-      OF.meeting = n > 0; OF.meetT = n ? 20 + Math.random() * 10 : 10;
+      pool.slice(0, n).forEach((q, i) => { OF.cur = q; const to = ofRoomPt("會議室", i); q.meeting = true; q.path = ofRoute(ofFrom(q), to); q.at = to; q.sit = false; q.next = pick(["開會", "我先報告", "這季目標…", "數據在這"].concat(OF_MOOD.lines.slice(0, 2))); q.wait = 999; });
+      OF.meeting = n > 0; OF.meetT = n ? 35 + Math.random() * 20 : 6;
     }
   }
   const boss = OF.ppl.find(q => q.role === "boss");
@@ -1631,6 +1646,21 @@ function ofDraw(now) {
     c.fillStyle = P.txt; c.textAlign = "center"; c.fillText(nm, d.x + 55, d.y + 64); c.textAlign = "left";
   });
   OF.ppl.filter(p => !seated.includes(p)).sort((a, b) => a.y - b.y).forEach(p => ofPerson(c, p, now));
+  ofMoodFx(c, now);
+}
+function ofMoodFx(c, now) {   // 當天氣氛：特效＋右上角小牌子
+  const W = OF.W, H = OF.cv.height, fx = OF_MOOD.fx, t = now / 1000;
+  c.save();
+  if (fx === "rain") { c.strokeStyle = "rgba(90,140,200,.35)"; c.lineWidth = 1; c.beginPath(); for (let i = 0; i < 70; i++) { const x = (i * 97.3 + t * 40) % W, y = (i * 53.7 + t * 420) % H; c.moveTo(x, y); c.lineTo(x - 3, y + 11); } c.stroke(); }
+  else if (fx === "snow") { c.fillStyle = "rgba(255,255,255,.85)"; for (let i = 0; i < 50; i++) { const x = (i * 97.3 + Math.sin(t + i) * 12) % W, y = (i * 61.1 + t * 30) % H; c.beginPath(); c.arc(x, y, 1.6 + (i % 3) * 0.6, 0, 7); c.fill(); } }
+  else if (fx === "confetti") { const cl = ["#E24B4A", "#FFD740", "#1D9E75", "#40C4FF", "#E040FB"]; for (let i = 0; i < 45; i++) { const x = (i * 83.9 + Math.sin(t * 2 + i) * 8) % W, y = (i * 47.3 + t * 55) % H; c.fillStyle = cl[i % 5]; c.save(); c.translate(x, y); c.rotate(t * 3 + i); c.fillRect(-2.5, -1.2, 5, 2.4); c.restore(); } }
+  else if (fx === "notes" || fx === "up" || fx === "down" || fx === "fire" || fx === "balloon") {
+    const em = {notes: ["🎵", "🎶"], up: ["📈", "🔴"], down: ["📉", "🟢"], fire: ["🔥", "💦"], balloon: ["🎈", "🎈", "🎁"]}[fx];
+    c.font = "13px sans-serif"; for (let i = 0; i < 9; i++) { const ph = (t / 7 + i / 9) % 1, x = (i * 131.7) % (W - 20) + 10; c.globalAlpha = Math.min(1, (1 - ph) * 1.5) * 0.8; c.fillText(em[i % em.length], x + Math.sin(t + i) * 6, fx === "down" ? 20 + ph * (H - 40) : H - 10 - ph * (H - 30)); }
+  }
+  c.globalAlpha = 1; c.font = "600 12px sans-serif"; const lb = OF_MOOD.icon + " 今天：" + OF_MOOD.name, lw = c.measureText(lb).width + 14;
+  c.fillStyle = "rgba(255,255,255,.88)"; ofRR(c, W - lw - 8, 4, lw, 20, 10); c.fill(); c.fillStyle = "#333"; c.fillText(lb, W - lw - 1, 18);
+  c.restore();
 }
 function ofPerson(c, p, now) {
   const walk = p.path.length > 0;
