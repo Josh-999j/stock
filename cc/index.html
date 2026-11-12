@@ -1213,6 +1213,7 @@ const OF_TOP = 186, OF_ROW = 96, OF_D0 = 214;   // 上方大走廊 y、每排間
 const OF_LOOK = {
   C: {shirt: "#D97757", pants: "#3C3489", hair: "#4a3428", acc: "spark"},
   X: {shirt: "#1D9E75", pants: "#2C2C2A", hair: "#2C2C2A", acc: "cap"},
+  Xm: {shirt: "#F0C8A0", pants: "#1A1A1A", hair: "#3A2418", acc: "cap"},
   Cf: {shirt: "#D97757", pants: "#1F2A5C", hair: "#5A3A28", acc: "spark"}, Xf: {shirt: "#1D9E75", pants: "#1A1A1A", hair: "#1A1A1A", acc: "cap"},   // 11/12 Josh「辦公室女生多一點、大小C員工有的換女生」
   G: {shirt: "#7F77DD", pants: "#26215C", hair: "#F2C14E", acc: "glasses"},
   cc: {shirt: "#185FA5", pants: "#2C2C2A", hair: "#2C2C2A", acc: "headset"},
@@ -1247,7 +1248,7 @@ ${eyes}<ellipse cx="35" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/><el
 }
 const OF_FR = {stand: [0, 0, 0], w0: [18, 22, 0], w1: [0, 0, 0], w2: [-18, -22, 0], t0: [0, 0, 1], t1: [0, 12, 1]};
 // 11/01 小C 交的 Q 版人物圖（assets/web/office/，128×160）；圖載不到就退回上面的向量小人
-const OF_ART_VER = "1112-girls";
+const OF_ART_VER = "1112-themes";
 // 秘書換裝（Josh 11/01「常換衣服」）：每 20 分鐘換一套；11/12 Josh「全要這超漂亮的啊，直接上線」→ 加比基尼 bk1～bk6；11/12 再加 bk7 黑金、bk8 酒紅
 // 11/12 Josh「套裝比例降低，比基尼為主」→ 每套比基尼一輪出現 6 次，套裝 4 套各 1 次（約 1 成）
 const OF_BK_COLORS = ["#D32F2F", "#FAFAFA", "#212121", "#F48FB1", "#1E40AF", "#D4E157", "#212121", "#8E1B3A"];
@@ -1395,7 +1396,7 @@ function ofSync() {
   OF.ppl.forEach(p => keep[p.key] = p);
   const ppl = [];
   Object.values(OF.desks).forEach(d => {
-    const m = d.m, ai = m.ai || "", k = "p:" + m.id, look0 = /大C|Claude/.test(ai) ? "C" : /Sunny/.test(ai) ? "G" : "X", look = look0 !== "G" && ofHash(m.id) % 2 ? look0 + "f" : look0;   // 11/12：大小C 員工約一半換女生（Cf／Xf，依專案固定）
+    const m = d.m, ai = m.ai || "", k = "p:" + m.id, look0 = /大C|Claude/.test(ai) ? "C" : /Sunny/.test(ai) ? "G" : "X", look = look0 !== "G" && ofHash(m.id) % 2 ? look0 + "f" : look0 === "X" && ofHash(m.id) % 4 === 0 ? "Xm" : look0;   // 11/12：大小C 員工約一半換女生（Cf／Xf，依專案固定）；男小C 約一半換裸上身猛男 Xm（Josh：「一些男員工換成裸上身的猛男小C」）
     // Josh 11/01：「出差的人太多了，抓少一點，有的人在位置上睡」→ 超過 7 天沒動的、和一半的摸魚的，就趴在自己位子上睡；其他才去摸魚區
     const act = ofActive(m), deskSleep = !act && (m.status === "STALE" || ofHash(m.id) % 2 === 0);
     const idx = Object.values(OF.desks).filter(x => !ofActive(x.m) && !(x.m.status === "STALE" || ofHash(x.m.id) % 2 === 0)).indexOf(d);   // 摸魚區一人一格
@@ -1510,16 +1511,17 @@ const OF_PAL = {
 // 辦公室主題（Josh 11/12：挑模版 1 霓虹科技、4 日系漫畫，跟原版「三十分鐘換一次」）；素材 office/<k>_<物件>.png，缺的退回原版 scene_
 const OF_THEMES = [
   {k: "scene", name: "原版"},
-  {k: "neon", name: "霓虹科技", wash: "#00000000", rugWash: "#00000033", boss: "#2E2350", meet: "#1E2E48",
+  {k: "neon", name: "霓虹科技", ready: false, wash: "#00000000", rugWash: "#00000033", boss: "#2E2350", meet: "#1E2E48",
     pal: {wood1: "#1B1830", wood2: "#1E1B36", seam: "#2A2550", wall: "#141226", wallLine: "#7C4DFF", glass: "#1F6F8B", glassHi: "#4DD0E1",
       rug: "#2A2350", rugEdge: "#7C4DFF", desk: "#3A3560", deskTop: "#4A4478", deskEdge: "#2A2548", chair: "#2B2F45", txt: "#E0E6FF", tag: "#141226E6",
       room: ["#231C3D", "#1A2440", "#2A2038", "#1C2E36"], roomEdge: "#00E5FF"}},
-  {k: "anime", name: "日系漫畫", wash: "#FFFFFF33", rugWash: "#FFFFFF55", boss: "#FFD9CF", meet: "#C9ECFF",
+  {k: "anime", name: "日系漫畫", ready: false, wash: "#FFFFFF33", rugWash: "#FFFFFF55", boss: "#FFD9CF", meet: "#C9ECFF",
     pal: {wood1: "#F5E6C8", wood2: "#F0DDBA", seam: "#E2C9A0", wall: "#FFFFFF", wallLine: "#9FC5E8", glass: "#A8DAFF", glassHi: "#E8F6FF",
       rug: "#CDEBDF", rugEdge: "#7FCBB0", desk: "#D9A86C", deskTop: "#EBC08A", deskEdge: "#B07F48", chair: "#5C6B7A", txt: "#3A3A4A", tag: "#FFFFFFE6",
       room: ["#FFE9E3", "#DDF3FF", "#FFF6C9", "#E3F7D9"], roomEdge: "#4A4A5A"}},
 ];
-const ofTheme = () => OF_THEMES[Math.floor(Date.now() / 1800e3) % OF_THEMES.length];
+const OF_THEME_ON = OF_THEMES.filter(t => t.ready !== false);   // ready:false＝素材還沒好，先不輪
+const ofTheme = () => OF_THEME_ON[Math.floor(Date.now() / 1800e3) % OF_THEME_ON.length];
 const ofPal = dark => ofTheme().pal || (dark ? OF_PAL.dark : OF_PAL.light);
 // 11/01 小C 畫的場景圖（assets/web/office/scene_*.png）；還沒載到就用下面手畫的
 const OF_SCENE = {};
