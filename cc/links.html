@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全部網頁入口</title>
+<style>
+  :root { --bg: #f3f5f8; --card: #fff; --line: #e3e7ed; --text: #1f2933; --muted: #7a8593; --ok: #1f9d3a; --off: #b7bec8; --accent: #D97757; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14171c; --card: #1b1f26; --line: #2a313b; --text: #e6e9ee; --muted: #8e98a5; --off: #4a525e; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .grp { font-size: 12px; color: var(--muted); margin: 18px 0 6px; letter-spacing: .5px; }
+  .list { background: var(--card); border-radius: 12px; padding: 2px 14px; }
+  a.row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; min-width: 0; }
+  a.row:last-child { border-bottom: 0; }
+  a.row:hover .n { color: var(--accent); }
+  .ic { font-size: 18px; width: 24px; text-align: center; flex: none; }
+  .n { font-weight: 600; white-space: nowrap; }
+  .d { color: var(--muted); font-size: 12px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .st { flex: none; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--off); }
+  .dot.ok { background: var(--ok); }
+  @media (max-width: 480px) { a.row { flex-wrap: wrap; row-gap: 0; } .d { order: 9; flex-basis: 100%; padding-left: 34px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌐 全部網頁入口</h1>
+  <div class="sub">本機的要電腦上的程式開著才進得去（綠點＝現在開著）；網路版手機也能開。最後更新 2026-11-11（照各專案 project.json 的 site）。</div>
+  <div id="app"></div>
+</div>
+<script>
+const G = [
+  ["💻 本機（這台電腦）", [
+    ["🧭", "專案控制中心", "總機控制台（本機版，資料最即時）", "http://127.0.0.1:8770/dashboard.html", 1],
+    ["📈", "大盤監控", "大盤預估、收盤統整、游庭皓影片", "http://localhost:3000/", 1],
+    ["⏪", "台股回放模擬所", "用歷史行情回放練習", "http://127.0.0.1:8765/ui", 1],
+    ["⚡", "光速當沖王", "當沖情報局的自動交易面板（入口捷徑「光速當沖王｜開啟」會自動開）", "http://127.0.0.1:8791/", 1],
+    ["🍍", "任務清單", "沒事找事做的任務清單（續做／中止）", "http://127.0.0.1:8793/", 1],
+    ["🗣️", "EngApp（家用）", "英文 App 家用備用網址（自簽憑證）", "https://192.168.68.62:8766/", 1],
+    ["🎬", "影片下載", "貼 FB／IG／Threads 網址下載影片（要從入口捷徑「影片下載｜開啟」進，需要金鑰；這裡直接點會顯示 no，綠點只代表有開著）", "http://127.0.0.1:8790/", 1],
+  ]],
+  ["☁️ 網路版（手機也能開）", [
+    ["🧭", "專案控制中心", "手機版控制台（要密碼）", "https://josh-999j.github.io/stock/cc/"],
+    ["🦐", "紅蝦AI選股網", "選股網站（含「當沖」分頁）", "https://redshrimp.pages.dev"],
+    ["🚨", "處置神氣小弟", "處置股網站", "https://disposition-tool.pages.dev"],
+    ["🗣️", "EngApp", "英文 App（手機／Mac 要開 Tailscale）", "https://aidesktop.tail1e8c11.ts.net"],
+    ["📈", "大盤監控", "大盤網站（雲端版）", "https://taiex-monitor.pages.dev/"],
+    ["📚", "英文學習圈", "每週打卡行事曆", "https://weekly-checkin-calendar.vercel.app/"],
+    ["💤", "正二曝險網站", "已暫停，併入紅蝦AI選股網", "https://stock-beta-rebalance.vercel.app/"],
+  ]],
+];
+document.getElementById("app").innerHTML = G.map(([g, rows]) =>
+  `<div class="grp">${g}</div><div class="list">${rows.map(([ic, n, d, u, local], i) =>
+    `<a class="row" href="${u}" target="_blank" rel="noopener"><span class="ic">${ic}</span><span class="n">${n}</span><span class="d">${d}</span>${local ? `<span class="st"><span class="dot" data-u="${u}"></span></span>` : ""}</a>`).join("")}</div>`).join("");
+// 本機的看有沒有開著（連得上＝綠點）
+document.querySelectorAll(".dot[data-u]").forEach(el => {
+  const c = new AbortController(); setTimeout(() => c.abort(), 2500);
+  fetch(el.dataset.u, {mode: "no-cors", signal: c.signal}).then(() => { el.classList.add("ok"); el.title = "開著"; }).catch(() => { el.title = "沒開"; });
+});
+</script>
+</body>
+</html>
