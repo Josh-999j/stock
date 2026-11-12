@@ -1248,7 +1248,7 @@ ${eyes}<ellipse cx="35" cy="50" rx="4" ry="2.4" fill="#F09595" opacity=".6"/><el
 }
 const OF_FR = {stand: [0, 0, 0], w0: [18, 22, 0], w1: [0, 0, 0], w2: [-18, -22, 0], t0: [0, 0, 1], t1: [0, 12, 1]};
 // 11/01 小C 交的 Q 版人物圖（assets/web/office/，128×160）；圖載不到就退回上面的向量小人
-const OF_ART_VER = "1112-anime";
+const OF_ART_VER = "1113-xm";
 // 秘書換裝（Josh 11/01「常換衣服」）：每 20 分鐘換一套；11/12 Josh「全要這超漂亮的啊，直接上線」→ 加比基尼 bk1～bk6；11/12 再加 bk7 黑金、bk8 酒紅
 // 11/12 Josh「套裝比例降低，比基尼為主」→ 每套比基尼一輪出現 6 次，套裝 4 套各 1 次（約 1 成）
 const OF_BK_COLORS = ["#D32F2F", "#FAFAFA", "#212121", "#F48FB1", "#1E40AF", "#D4E157", "#212121", "#8E1B3A"];
@@ -1383,7 +1383,7 @@ const OF_MOODS = [
   {icon: "😰", name: "大跌日", meet: 0.6, tea: -0.05, fx: "down", lines: ["穩住別慌", "照表操作", "停損了…", "撿便宜？"]},
   {icon: "❄️", name: "寒流來襲", meet: 1, tea: 0.25, fx: "snow", lines: ["好冷🥶", "冷氣關掉啦", "來杯薑茶", "手好冰"]},
 ];
-const OF_MOOD = (() => { const d = Math.floor((Date.now() + 8 * 3600e3) / 864e5); let h = (d * 2654435761) >>> 0; h ^= h >>> 15; return OF_MOODS[h % OF_MOODS.length]; })();
+const OF_MOOD = (() => { const d = Math.floor((Date.now() + 8 * 3600e3) / 864e5); let h = (d * 2654435761) >>> 0; h ^= h >>> 15; return OF_MOODS[(h >>> 0) % OF_MOODS.length];   /* 11/13 修：^= 後會變負數→抓不到氣氛→辦公室停住 */ })();
 // 頭頂水果（Josh 11/01）：聯盟用自己的水果，其他專案照 id 固定分一個
 const OF_FRUIT = {"high-win-alliance": "🍉", "yt-scan": "🍒", "busy-pineapple": "🍍", "operator": "🍎", "etf-alliance": "🍊"};
 const OF_FRUITS = ["🍋", "🍇", "🍓", "🍑", "🥝", "🍌", "🍐", "🥭", "🫐", "🍈", "🥥", "🍏"];
@@ -1698,7 +1698,7 @@ function ofPerson(c, p, now) {
   const bob = (walk ? -Math.abs(Math.sin(p.step / 12 * Math.PI)) * 1.6 : 0) - (p.scare > 0 ? Math.abs(Math.sin(p.scare * 16)) * 5 : 0);   // 被老闆嚇到會跳一下
   const x = p.x + (walk && vert ? p.lane : 0), y = p.y + (walk && !vert ? p.lane * 0.6 : 0) + bob + (p.sit ? (im.spr ? -2 : 6) : 0);   // Q 版坐姿圖比較矮，抬高一點讓上半身露出桌面
   // 11/12 Josh「秘書比例太小，放大一點」→ 秘書 1.2 倍
-  const s = (im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32)) * ((p.role === "ol" || /f$/.test(p.look)) && !p.date ? 1.2 : 1), h =   /* 11/12 Josh：女員工身材跟秘書一樣大 */ (im.spr ? 160 : 120) * s, w = im.spr && im.naturalWidth ? h * im.naturalWidth / im.naturalHeight : (im.spr ? 128 : 100) * s;   // 情侶圖比較寬，照圖的比例畫
+  const s = (im.spr ? (p.small ? 0.22 : 0.28) : (p.small ? 0.26 : 0.32)) * ((p.role === "ol" || /f$/.test(p.look)) && !p.date ? 1.2 : p.look === "Xm" ? 1.35 : 1), h =   /* 11/12 Josh：女員工身材跟秘書一樣大 */ (im.spr ? 160 : 120) * s, w = im.spr && im.naturalWidth ? h * im.naturalWidth / im.naturalHeight : (im.spr ? 128 : 100) * s;   // 情侶圖比較寬，照圖的比例畫
   const dim = false;   // 11/01 沒事做的改去摸魚區，不再變淡
   c.save(); c.globalAlpha = dim ? 0.6 : 1;
   if (walk) { c.fillStyle = "rgba(0,0,0,.16)"; c.beginPath(); c.ellipse(x, p.y + (vert ? 0 : p.lane * 0.6) + 2, w * 0.28, 2.5, 0, 0, 7); c.fill(); }
